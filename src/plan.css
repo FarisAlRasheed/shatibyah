@@ -1,0 +1,111 @@
+/* الحفظ tab (PlanScreen.tsx). Uses the theme variables from styles.css only. */
+.plan-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+.plan-head .large-title { margin-bottom: 0; }
+.plan-head small { font-size: 13px; color: var(--muted); }
+.plan-screen .group-title { margin-top: 10px; }
+
+/* Today card */
+.today-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+  padding: 20px 16px 16px; border-radius: 20px;
+  background: var(--accent-soft); border: 0.5px solid color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.today-card.rest { background: var(--raised); border-color: var(--line); }
+.today-card.done { background: var(--raised); border-color: var(--line); }
+.today-card.done > svg { color: var(--accent); }
+.today-kicker { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--accent); }
+.today-range { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.today-review {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 2px;
+  font-size: 13px; color: var(--text); background: var(--raised); padding: 4px 10px; border-radius: 999px;
+}
+.today-card.rest .today-review, .today-card.done .today-review { background: var(--surface); }
+.today-actions { display: flex; gap: 8px; width: 100%; margin-top: 8px; }
+.today-actions .btn { flex: 1; padding: 11px 10px; }
+.today-actions .btn:first-child:not(.secondary) { flex: 2; }
+.today-card:not(.rest) .today-actions .btn.secondary { background: var(--raised); }
+.today-done { margin-top: 2px; }
+.today-card:not(.rest) .today-done { background: var(--raised); color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.link-btn {
+  display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 6px;
+  font-size: 13px; color: var(--accent);
+}
+.link-btn.muted { color: var(--muted); }
+
+/* Behind banner */
+.plan-behind {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px;
+  background: color-mix(in srgb, var(--danger) 10%, var(--raised)); color: var(--danger);
+  border: 0.5px solid color-mix(in srgb, var(--danger) 30%, transparent);
+}
+.plan-behind > span { flex: 1; display: flex; flex-direction: column; }
+.plan-behind small { font-size: 12px; color: var(--muted); }
+.plan-behind .btn { padding: 8px 12px; font-size: 14px; white-space: nowrap; }
+
+/* Stats under the progress bar */
+.plan-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+.plan-stats > div { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.plan-stats svg { color: var(--accent); }
+.progress-card .plan-stats strong { font-size: 16px; font-weight: 600; }
+.progress-card .plan-stats small { font-size: 12px; }
+
+/* Heatmap */
+.heatmap-card { padding: 12px 14px; }
+.heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.hm-head { text-align: center; font-size: 10px; white-space: nowrap; color: var(--muted); padding-bottom: 2px; }
+.hm-day {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px;
+  font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.hm-day.none { opacity: 0.35; }
+.hm-day.future, .hm-day.today { background: var(--surface); }
+.hm-day.done { background: var(--accent); color: var(--on-accent); }
+.hm-day.missed { background: color-mix(in srgb, var(--danger) 22%, transparent); color: var(--danger); }
+.hm-day.off {
+  background: repeating-linear-gradient(135deg, var(--surface) 0 4px, transparent 4px 8px);
+  border: 0.5px solid var(--line);
+}
+.hm-day.is-today { outline: 2px solid var(--accent); outline-offset: 1px; font-weight: 700; color: var(--text); }
+.hm-day.done.is-today { color: var(--on-accent); }
+.hm-legend { display: flex; justify-content: center; gap: 16px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.hm-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.hm-legend i { width: 12px; height: 12px; border-radius: 4px; aspect-ratio: auto; }
+.heatmap-card.group > * + * { border-top: 0; }
+
+/* Upcoming list */
+.plan-up { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.plan-up small { font-size: 12px; }
+
+/* Plan summary rows */
+.field-row small.muted { font-size: 14px; text-align: left; }
+.plan-action { width: 100%; border: 0; background: none; color: var(--accent); text-align: right; }
+.plan-action > span { display: inline-flex; align-items: center; gap: 8px; }
+.plan-action.danger { color: var(--danger); }
+.plan-confirm .btn { padding: 8px 14px; font-size: 14px; }
+.btn.danger { background: var(--danger); color: #fff; }
+
+/* Builder */
+.plan-check { width: 100%; border: 0; background: none; color: inherit; text-align: right; }
+.plan-check.child { padding-inline-start: 30px; }
+.plan-check-end { display: inline-flex; align-items: center; gap: 10px; }
+.check {
+  width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line);
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+.check.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.plan-num { display: flex; align-items: center; gap: 8px; }
+.field-row .plan-num input[type=number] { width: 84px; }
+.plan-date {
+  padding: 6px 10px; border: 0.5px solid var(--line); border-radius: 10px; background: var(--surface);
+  min-height: 34px; direction: ltr;
+}
+.weekday-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.weekday-pick .chip { padding: 8px 4px; }
+.plan-preview {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; align-items: center; margin-top: 8px;
+  padding: 14px 10px; border-radius: 16px; background: var(--accent-soft); text-align: center;
+}
+.plan-preview > div { display: flex; flex-direction: column; gap: 2px; }
+.plan-preview strong { font-size: 20px; color: var(--accent); }
+.plan-preview small { font-size: 12px; color: var(--muted); }
+.plan-preview > span { grid-column: 1 / -1; font-size: 14px; }
