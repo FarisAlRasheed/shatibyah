@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>quick check</title>
+<body dir="rtl" style="font:20px serif;padding:12px">
+<audio id="a"></audio><div id="l">loading…</div>
+<script>
+const B='../data/reciters/mahmud-haleem/';
+(async()=>{
+const r=await (await fetch(B+'reciter.json')).json();
+const e=await (await fetch('../data/editions/qasim/edition.json')).json();
+const t={};e.verses.forEach(v=>t[v.n]=v);
+const a=document.getElementById('a'),l=document.getElementById('l');l.textContent='';
+let end=0,cur='',tm;
+const go=v=>{clearInterval(tm);a.pause();a.currentTime=v.start;end=v.end;
+ a.play();tm=setInterval(()=>{if(a.currentTime>=end){a.pause();clearInterval(tm)}},20)};
+r.verses.slice().sort((x,y)=>x.confidence-y.confidence).forEach(v=>{
+ const b=document.createElement('button');b.textContent='▶';
+ b.onclick=()=>{const f=r.files.find(f=>f.id==v.file).path;
+  if(cur!=f){cur=f;a.src=B+f;a.onloadedmetadata=()=>go(v)}else go(v)};
+ const d=document.createElement('p');d.append(b,` ${v.n} (${v.confidence}) ${t[v.n].a} … ${t[v.n].b}`);l.append(d)});
+})();
+</script>
+</body>

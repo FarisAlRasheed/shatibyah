@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>فحص التوقيت</title>
+<style>
+  body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#faf8f3;color:#222}
+  h1{font-size:18px;margin:0 0 8px}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .v{background:#fff;border:1px solid #ddd;border-radius:8px;padding:10px;margin-bottom:8px}
+  .v.low{border-color:#d9822b}
+  .txt{font-family:"Amiri","Traditional Arabic",serif;font-size:20px;line-height:1.9}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:13px;direction:ltr;margin-top:6px}
+  button{padding:4px 10px;font-size:14px;cursor:pointer}
+  .t{min-width:56px;text-align:center;font-variant-numeric:tabular-nums}
+  .conf{font-weight:600}
+  #msg{font-size:13px;color:#a33}
+</style>
+</head>
+<body>
+<h1>فحص توقيت الآيات</h1>
+<div class="bar">
+  <span id="msg"></span>
+  <label>reciter.json <input type="file" id="fr" accept=".json"></label>
+  <label>edition.json <input type="file" id="fe" accept=".json"></label>
+  <label><input type="checkbox" id="sortc" checked> الأقل ثقة أولاً</label>
+  <button id="exp">Export reciter.json</button>
+</div>
+<div id="list"></div>
+<audio id="au"></audio>
+<script>
+const BASE='../data/reciters/mahmud-haleem/';
+let rec,ed,order=[];
+const au=document.getElementById('au'),msg=document.getElementById('msg');
+let stopAt=null,curFile=null;
+au.addEventListener('timeupdate',()=>{if(stopAt!==null&&au.currentTime>=stopAt){au.pause();stopAt=null}});
+async function init(){
+  try{
+    rec=await (await fetch(BASE+'reciter.json')).json();
+    ed=await (await fetch('../data/editions/'+rec.editionId+'/edition.json')).json();
+    render();
+  }catch(e){msg.textContent='Cannot fetch files (open via a local server from the project root, or choose the files below).'}
+}
+fr.onchange=async()=>{rec=JSON.parse(await fr.files[0].text());tryRender()};
+fe.onchange=async()=>{ed=JSON.parse(await fe.files[0].text());tryRender()};
+function tryRender(){if(rec&&ed){msg.textContent='';render()}}
+sortc.onchange=()=>render();
+function render(){
+  const text={};ed.verses.forEach(v=>text[v.n]=v);
+  const vs=rec.verses.slice();
+  if(sortc.checked)vs.sort((a,b)=>a.confidence-b.confidence||a.n-b.n);else vs.sort((a,b)=>a.n-b.n);
+  const L=document.getElementById('list');L.textContent='';
+  for(const v of vs){
+    const t=text[v.n]||{a:'',b:''};
+    const d=document.createElement('div');d.className='v'+(v.confidence<0.8?' low':'');
+    d.innerHTML=`<div class="txt"></div><div class="meta"></div>`;
+    d.querySelector('.txt').textContent=`${v.n}. ${t.a} … ${t.b}`;
+    const m=d.querySelector('.meta');
+    const play=document.createElement('button');play.textContent='▶ Play';
+    play.onclick=()=>{
+      const f=rec.files.find(f=>f.id===v.file);
+      if(curFile!==f.id){au.src=BASE+f.path;curFile=f.id}
+      au.currentTime=v.start;stopAt=v.end;au.play();
+    };
+    m.append(play,`${v.file}`);
+    for(const k of ['start','end']){
+      const minus=btn('−0.1',()=>nudge(v,k,-0.1,s)),plus=btn('+0.1',()=>nudge(v,k,0.1,s));
+      const s=document.createElement('span');s.className='t';s.textContent=k+' '+v[k].toFixed(2);
+      m.append(minus,s,plus);
+    }
+    const c=document.createElement('span');c.className='conf';c.textContent='conf '+v.confidence;
+    m.append(c);
+    L.append(d);
+  }
+}
+function btn(l,f){const b=document.createElement('button');b.textContent=l;b.onclick=f;return b}
+function nudge(v,k,dx,span){
+  const n=Math.round((v[k]+dx)*100)/100;
+  if(n<0||(k==='start'&&n>=v.end)||(k==='end'&&n<=v.start))return;
+  v[k]=n;span.textContent=k+' '+n.toFixed(2);
+}
+exp.onclick=()=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(rec,null,1)],{type:'application/json'}));
+  a.download='reciter.json';a.click();
+};
+init();
+</script>
+</body>
+</html>
