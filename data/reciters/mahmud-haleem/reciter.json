@@ -2132,29 +2132,29 @@
       "n": 672,
       "file": "s39",
       "start": 333.21,
-      "end": 345.43,
-      "confidence": 0.89
+      "end": 341.15,
+      "confidence": 0.9
     },
     {
       "n": 673,
       "file": "s39",
-      "start": 345.83,
-      "end": 349.58,
-      "confidence": 0.83
+      "start": 341.45,
+      "end": 349.75,
+      "confidence": 0.9
     },
     {
       "n": 674,
       "file": "s39",
       "start": 350.06,
-      "end": 353.71,
-      "confidence": 0.5
+      "end": 357.95,
+      "confidence": 0.9
     },
     {
       "n": 675,
       "file": "s39",
-      "start": 354.15,
+      "start": 358.25,
       "end": 366.24,
-      "confidence": 0.68
+      "confidence": 0.9
     },
     {
       "n": 676,
@@ -3006,7 +3006,7 @@
     {
       "n": 797,
       "file": "s47",
-      "start": 0.76,
+      "start": 5.9,
       "end": 13.27,
       "confidence": 0.9
     },
@@ -4532,23 +4532,23 @@
     {
       "n": 1015,
       "file": "s70",
-      "start": 4.4,
-      "end": 12.66,
-      "confidence": 0.74
+      "start": 0.44,
+      "end": 8.3,
+      "confidence": 0.9
     },
     {
       "n": 1016,
       "file": "s70",
-      "start": 12.81,
-      "end": 20.97,
-      "confidence": 0.63
+      "start": 8.65,
+      "end": 16.85,
+      "confidence": 0.9
     },
     {
       "n": 1017,
       "file": "s70",
-      "start": 21.07,
+      "start": 17.15,
       "end": 25.9,
-      "confidence": 0.57
+      "confidence": 0.9
     },
     {
       "n": 1018,
@@ -4644,16 +4644,16 @@
     {
       "n": 1031,
       "file": "s72",
-      "start": 2.7,
-      "end": 7.98,
-      "confidence": 0.81
+      "start": 4.0,
+      "end": 12.45,
+      "confidence": 0.9
     },
     {
       "n": 1032,
       "file": "s72",
-      "start": 8.38,
+      "start": 12.75,
       "end": 21.01,
-      "confidence": 0.8
+      "confidence": 0.9
     },
     {
       "n": 1033,
@@ -5639,8 +5639,8 @@
       "n": 1173,
       "file": "s82",
       "start": 345.6,
-      "end": 357.55,
-      "confidence": 0.83
+      "end": 355.15,
+      "confidence": 0.9
     }
   ],
   "notes": [
@@ -5650,6 +5650,7 @@
     "Cuts for الأنعام (1610.5), الأعراف (2020.63) and الأنفال start (2304.76) are the owner-given ones, kept exactly.",
     "Several verses (e.g. 674, 1016, 1017, 1149, 1150) have damaged or abjad-letter text in the PDF text layer, so their whisper match is low; their timing follows the pause/length fit and neighbours that match well.",
     "No repeated, skipped or inserted verse was detected: every section's verse count fit its duration at about 0.2 s per letter.",
-    "Section ids follow the literal order of the PDF table of contents (entries 2-4 النسخ المعتمدة / رموز القراء / الأضداد are counted). If the text agent excluded them, ids shift by 3."
+    "Section ids follow the literal order of the PDF table of contents (entries 2-4 النسخ المعتمدة / رموز القراء / الأضداد are counted). If the text agent excluded them, ids shift by 3.",
+    "2026-10-21: verses 672–675, 797, 1015–1017, 1031–1032 and 1173 corrected by hand. The automatic fit had set boundaries at the middle of verses, inside a spoken chapter title, or after the closing words «تم بحمد الله». The fix was checked with a whisper word-level transcript and snapped to the pause between verses."
   ]
 }
