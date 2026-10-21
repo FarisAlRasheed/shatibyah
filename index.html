@@ -3,16 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#1f4d3a" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- "default": dark text on a light bar, light text on a dark bar, following the phone's appearance.
+         "black-translucent" would keep white text over the light and sepia themes. -->
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="الشاطبية" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>متن الشاطبية</title>
+    <script>
+      // Apply the saved theme before first paint, so the loading screen and app don't flash.
+      // Colors match --bg in src/styles.css; App's useTheme takes over once React mounts.
+      ;(function () {
+        var bg = { light: '#ffffff', sepia: '#f7f1e3', dark: '#121210' }
+        var theme = 'auto'
+        try {
+          theme = JSON.parse(localStorage.getItem('shatibiyyah:settings') || '{}').theme || 'auto'
+        } catch (e) {}
+        if (!bg[theme]) theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        document.documentElement.dataset.theme = theme
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', bg[theme])
+      })()
+    </script>
+    <style>
+      html, body { margin: 0; background: #ffffff; }
+      html[data-theme='sepia'], html[data-theme='sepia'] body { background: #f7f1e3; }
+      html[data-theme='dark'], html[data-theme='dark'] body { background: #121210; }
+      .splash {
+        position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+        color: #96773a; font-family: 'Amiri', 'Geeza Pro', 'Times New Roman', serif;
+        animation: splash-in 0.4s ease-out both;
+      }
+      html[data-theme='sepia'] .splash { color: #8a6d3b; }
+      html[data-theme='dark'] .splash { color: #d6b26a; }
+      .splash img { width: 88px; height: 88px; border-radius: 20px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.14); }
+      .splash p { margin: 0; font-size: 26px; line-height: 1.4; }
+      .splash i { display: block; width: 72px; height: 3px; border-radius: 2px; overflow: hidden; position: relative; }
+      .splash i::before { content: ''; position: absolute; inset: 0; background: currentColor; opacity: 0.18; }
+      .splash i::after {
+        content: ''; position: absolute; inset: 0; width: 40%; border-radius: 2px; background: currentColor;
+        animation: splash-bar 1.1s ease-in-out infinite;
+      }
+      @keyframes splash-in { from { opacity: 0; } }
+      @keyframes splash-bar { from { transform: translateX(160%); } to { transform: translateX(-260%); } }
+      @media (prefers-reduced-motion: reduce) { .splash, .splash i::after { animation: none; } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="splash" role="status" aria-label="جارٍ التحميل">
+        <img src="/icon.svg" alt="" />
+        <p>متن الشاطبية</p>
+        <i></i>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Check, ChevronLeft, Download, Search, Trash2 } from 'lucide-react'
+import { BookOpen, Bookmark, Check, ChevronLeft, Download, GraduationCap, Hash, NotebookPen, Search, SearchX, Trash2, X } from 'lucide-react'
 import { normalize, toArabicDigits, toLatinDigits } from './arabic'
 import { APP_VERSION } from './config'
-import { audioUrl, verseRange } from './data'
+import { audioUrl, sectionOf, verseRange } from './data'
 import { download, formatMB, isDownloaded, offlineSupported, remove } from './offline'
 import type { Bookmarks, Mastered, Notes, Settings, Theme, VerseFont } from './store'
-import type { Edition, Manifest, Reciter } from './types'
-import { VersePreview, type SetState } from './sheets'
+import { fold, matches, matchRanges, queryPattern } from './search'
+import type { Edition, Manifest, Reciter, Verse } from './types'
+import { plural, VERSES, VersePreview, type SetState } from './sheets'
 
 function Screen({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -44,18 +45,37 @@ export function IndexScreen(p: {
     notes: Object.values(p.notes).filter((t) => t.trim()).length,
     mastered: Object.keys(p.mastered).length,
   }
-  const views: [IndexView, string][] = [
+  const views: [IndexView, string, number?][] = [
     ['sections', 'الأبواب'],
-    ['bookmarks', `العلامات ${toArabicDigits(counts.bookmarks)}`],
-    ['notes', `الملاحظات ${toArabicDigits(counts.notes)}`],
-    ['mastered', `المتقَن ${toArabicDigits(counts.mastered)}`],
+    ['bookmarks', 'العلامات', counts.bookmarks],
+    ['notes', 'الملاحظات', counts.notes],
+    ['mastered', 'المتقَن', counts.mastered],
   ]
+  const here = p.current != null ? sectionOf(p.edition, p.current) : undefined
+  const resume = p.current != null ? p.edition.verses.find((v) => v.n === p.current) : undefined
   return (
     <Screen title="الفهرس">
+      {resume && (
+        <button className="resume-card" onClick={() => p.onJump(resume.n)}>
+          <span className="resume-icon">
+            <BookOpen size={22} />
+          </span>
+          <span className="resume-text">
+            <small>تابع من حيث توقفت</small>
+            <strong>
+              {here?.title}
+              <span className="resume-n"> · البيت {toArabicDigits(resume.n)}</span>
+            </strong>
+            <span className="verse-text resume-verse">{resume.a}</span>
+          </span>
+          <ChevronLeft size={20} className="chev" />
+        </button>
+      )}
       <div className="seg">
-        {views.map(([k, label]) => (
+        {views.map(([k, label, n]) => (
           <button key={k} className={view === k ? 'on' : ''} onClick={() => setView(k)}>
             {label}
+            {!!n && <span className="seg-count">{toArabicDigits(n)}</span>}
           </button>
         ))}
       </div>
@@ -64,17 +84,23 @@ export function IndexScreen(p: {
           <PilotNote edition={p.edition} />
           <ul className="group list">
             {p.edition.sections.map((s) => {
-              const here = p.current != null && s.start <= p.current && p.current <= s.end
+              const isHere = here?.id === s.id
+              const ns = p.edition.verses.filter((v) => v.n >= s.start && v.n <= s.end)
+              const done = ns.filter((v) => p.mastered[v.n]).length
               return (
                 <li key={s.id} className={s.parent != null ? 'child' : ''}>
                   <button onClick={() => p.onJump(s.start)}>
-                    <span className="list-title">
-                      {s.title}
-                      {here && <span className="here">أنت هنا</span>}
+                    <span className="list-main">
+                      <span className="list-title">
+                        <span className="verse-text section-title">{s.title}</span>
+                        {isHere && <span className="here">أنت هنا</span>}
+                      </span>
+                      <small>
+                        الأبيات {toArabicDigits(s.start)}–{toArabicDigits(s.end)}
+                        {done > 0 && ` · أتقنت ${toArabicDigits(done)} من ${toArabicDigits(ns.length)}`}
+                      </small>
                     </span>
-                    <small>
-                      {toArabicDigits(s.start)}–{toArabicDigits(s.end)}
-                    </small>
+                    <ProgressRing value={ns.length ? done / ns.length : 0} />
                     <ChevronLeft size={18} className="chev" />
                   </button>
                 </li>
@@ -89,15 +115,75 @@ export function IndexScreen(p: {
   )
 }
 
+/** Small mastery ring for a chapter row; a check when the whole chapter is mastered. */
+function ProgressRing({ value }: { value: number }) {
+  const r = 9
+  const c = 2 * Math.PI * r
+  const full = value >= 1
+  return (
+    <span className={`mini-ring${full ? ' full' : ''}`} aria-label={`أتقنت ${toArabicDigits(Math.round(value * 100))}٪`}>
+      {full ? (
+        <Check size={14} strokeWidth={3} />
+      ) : (
+        <svg width="24" height="24" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r={r} className="mini-ring-track" />
+          <circle
+            cx="12"
+            cy="12"
+            r={r}
+            className="mini-ring-fill"
+            strokeDasharray={c}
+            strokeDashoffset={c * (1 - value)}
+            transform="rotate(-90 12 12)"
+          />
+        </svg>
+      )}
+    </span>
+  )
+}
+
+function Highlight({ text, ranges }: { text: string; ranges: [number, number][] }) {
+  const parts: ReactNode[] = []
+  let at = 0
+  for (const [a, b] of ranges) {
+    if (a > at) parts.push(text.slice(at, a))
+    parts.push(<mark key={a}>{text.slice(a, b)}</mark>)
+    at = b
+  }
+  parts.push(text.slice(at))
+  return <>{parts}</>
+}
+
+/** A search result: the verse with the matched words marked. */
+function VerseHit({ v, re }: { v: Verse; re: RegExp }) {
+  const half = (s: string) => <Highlight text={s} ranges={matchRanges(re, s)} />
+  return (
+    <div className="preview">
+      <span className="vnum small">{toArabicDigits(v.n)}</span>
+      <span className="verse-text">
+        {half(v.a)} <span className="sep">...</span> {half(v.b)}
+      </span>
+    </div>
+  )
+}
+
 export function SearchScreen({ edition, onJump }: { edition: Edition; onJump: (n: number) => void }) {
   const [q, setQ] = useState('')
-  const index = useMemo(() => edition.verses.map((v) => ({ v, text: normalize(`${v.a} ${v.b}`) })), [edition])
+  const index = useMemo(() => edition.verses.map((v) => ({ v, text: fold(`${v.a} ${v.b}`).text })), [edition])
   const query = normalize(toLatinDigits(q))
   const num = /^\d+$/.test(query) ? +query : null
   const all = verseRange(edition)
+  const re = num == null ? queryPattern(q) : null
 
-  const sections = query && num == null ? edition.sections.filter((s) => normalize(s.title).includes(query)) : []
-  const verses = query && num == null ? index.filter((x) => x.text.includes(query)).slice(0, 100) : []
+  const sections = re ? edition.sections.filter((s) => matches(re, s.title)) : []
+  const verses = re
+    ? index
+        .filter((x) => {
+          re.lastIndex = 0
+          return re.test(x.text)
+        })
+        .slice(0, 100)
+    : []
 
   return (
     <Screen title="البحث">
@@ -105,11 +191,19 @@ export function SearchScreen({ edition, onJump }: { edition: Edition; onJump: (n
         <Search size={18} />
         <input
           type="search"
+          enterKeyHint="search"
           placeholder="كلمة، أو رقم بيت، أو اسم باب"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && num != null && num >= all.from && num <= all.to && onJump(num)}
         />
+        {q && (
+          <button className="clear-btn" aria-label="مسح" onClick={() => setQ('')}>
+            <span>
+              <X size={13} strokeWidth={3} />
+            </span>
+          </button>
+        )}
       </label>
       {num != null &&
         (num >= all.from && num <= all.to ? (
@@ -117,22 +211,49 @@ export function SearchScreen({ edition, onJump }: { edition: Edition; onJump: (n
             <VersePreview edition={edition} n={num} />
           </button>
         ) : (
-          <p className="muted">البيت {toArabicDigits(num)} غير موجود في هذه النسخة{edition.partial ? ' التجريبية' : ''}.</p>
+          <Empty icon={<Hash size={26} />}>
+            البيت {toArabicDigits(num)} غير موجود في هذه النسخة{edition.partial ? ' التجريبية' : ''}.
+          </Empty>
         ))}
+      {sections.length > 0 && <h2 className="group-title">الأبواب</h2>}
       {sections.map((s) => (
-        <button key={s.id} className="result" onClick={() => onJump(s.start)}>
-          <strong>{s.title}</strong>
+        <button key={s.id} className="result section-hit" onClick={() => onJump(s.start)}>
+          <strong className="verse-text">
+            <Highlight text={s.title} ranges={matchRanges(re!, s.title)} />
+          </strong>
+          <small>
+            {toArabicDigits(s.start)}–{toArabicDigits(s.end)}
+          </small>
         </button>
       ))}
-      {verses.length > 0 && <p className="muted">{toArabicDigits(verses.length)} نتيجة</p>}
+      {verses.length > 0 && (
+        <h2 className="group-title">
+          {verses.length === 100 ? 'أول ' : ''}
+          {plural(verses.length, VERSES)}
+        </h2>
+      )}
       {verses.map(({ v }) => (
         <button key={v.n} className="result" onClick={() => onJump(v.n)}>
-          <VersePreview edition={edition} n={v.n} />
+          <VerseHit v={v} re={re!} />
         </button>
       ))}
-      {query && num == null && !sections.length && !verses.length && <p className="muted">لا نتائج.</p>}
-      {!query && <p className="muted center">ابحث دون تشكيل، مثل: وانجلى، أو اكتب رقم البيت.</p>}
+      {re && !sections.length && !verses.length && <Empty icon={<SearchX size={26} />}>لا نتائج لـ«{q.trim()}».</Empty>}
+      {!query && (
+        <Empty icon={<Search size={26} />}>
+          ابحث دون تشكيل، مثل: وانجلى، أو اكتب رقم البيت.
+        </Empty>
+      )}
     </Screen>
+  )
+}
+
+/** A quiet centred message for empty lists. */
+function Empty({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+  return (
+    <div className="empty">
+      {icon}
+      <p>{children}</p>
+    </div>
   )
 }
 
@@ -169,7 +290,7 @@ function SavedLists(p: {
             </div>
           ))
         ) : (
-          <p className="muted center">لا توجد علامات. اضغط على بيت ثم «علامة».</p>
+          <Empty icon={<Bookmark size={26} />}>لا توجد علامات بعد. اضغط على بيت في القراءة ثم «علامة».</Empty>
         ))}
       {tab === 'notes' &&
         (notes.length ? (
@@ -180,7 +301,7 @@ function SavedLists(p: {
             </button>
           ))
         ) : (
-          <p className="muted center">لا توجد ملاحظات.</p>
+          <Empty icon={<NotebookPen size={26} />}>لا توجد ملاحظات بعد. اضغط على بيت ثم «ملاحظة».</Empty>
         ))}
       {tab === 'mastered' && (
         <>
@@ -193,6 +314,7 @@ function SavedLists(p: {
             </div>
             <span className="muted">أبيات علّمتها «أتقنته» في وضع «اختبر نفسك»</span>
           </div>
+          {!done.length && <Empty icon={<GraduationCap size={26} />}>لم تُتقن أبياتًا بعد. افتح «وضع الحفظ» ثم «اختبر نفسك».</Empty>}
           {done.map((n) => (
             <button key={n} className="result" onClick={() => p.onJump(n)}>
               <VersePreview edition={p.edition} n={n} />
@@ -337,6 +459,13 @@ function Downloads({ edition, reciter }: { edition: Edition; reciter: Reciter })
   )
 }
 
+/** [«نسخة القاسم», «مع التلاوة»]: the editor's family name, and whether a recitation exists. */
+function editionLabel(e: { id: string; name: string }, m: Manifest) {
+  const who = e.name.replace(/^متن الشاطبية\s*—\s*/, '').trim().split(/\s+/).pop()
+  const audio = m.reciters.some((r) => r.editionId === e.id)
+  return [`نسخة ${who}`, audio ? 'مع التلاوة' : 'نص فقط'] as const
+}
+
 export function SettingsScreen(p: FieldProps & {
   manifest: Manifest
   editionId?: string
@@ -350,16 +479,19 @@ export function SettingsScreen(p: FieldProps & {
     <Screen title="الإعدادات">
       <h2 className="group-title">النص</h2>
       <div className="group">
-        <label className="field-row">
-          <span>النسخة</span>
-          <select value={p.editionId} onChange={(e) => setSettings((x) => ({ ...x, editionId: e.target.value }))}>
-            {p.manifest.editions.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.name.replace(/^متن الشاطبية — (نسخة )?/, '')}
-              </option>
-            ))}
-          </select>
-        </label>
+        {p.manifest.editions.map((e) => {
+          const [name, kind] = editionLabel(e, p.manifest)
+          const on = e.id === p.editionId
+          return (
+            <button key={e.id} className="check-row" aria-pressed={on} onClick={() => setSettings((x) => ({ ...x, editionId: e.id }))}>
+              <span className="list-title">
+                {name}
+                <small>{kind}</small>
+              </span>
+              {on && <Check size={20} className="check" />}
+            </button>
+          )
+        })}
         {p.reciters.length > 0 && (
           <label className="field-row">
             <span>القارئ</span>

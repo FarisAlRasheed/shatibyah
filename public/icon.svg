@@ -1,1 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#1f4d3a"/><text x="256" y="330" font-size="260" text-anchor="middle" fill="#faf7f0" font-family="serif">ش</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- متن الشاطبية: gold «ش» (Amiri Bold, OFL) in a double banner frame. Source of the PNG icons. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#21443a"/>
+      <stop offset="1" stop-color="#132a22"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#f3dda0"/>
+      <stop offset="0.5" stop-color="#d4af62"/>
+      <stop offset="1" stop-color="#a47c38"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="58" y="58" width="396" height="396" rx="30" fill="none" stroke="url(#gold)" stroke-width="5"/>
+  <rect x="72" y="72" width="368" height="368" rx="20" fill="none" stroke="url(#gold)" stroke-width="1.75" opacity="0.8"/>
+  <g fill="url(#gold)">
+    <path d="M256 46l12 12-12 12-12-12z M256 442l12 12-12 12-12-12z M46 256l12-12 12 12-12 12z M442 256l12-12 12 12-12 12z"/>
+    <path transform="translate(256 262) scale(0.28) translate(-495.5 239.5)" d="M885 -382Q892 -408 913 -386Q934 -364 934 -314Q934 -217 897 -159Q885 -140 863 -134Q819 -122 764 -163Q716 -86 636 -92Q633 -53 626 -17.5Q619 18 608 50Q587 112 531 156Q414 248 279 245Q111 241 69 91Q57 49 72 -24Q80 -61 94.5 -100.5Q109 -140 131 -181Q138 -194 148 -189Q158 -183 152 -169Q103 -53 114 -15Q147 109 290 109Q498 110 581 -15Q584 -80 533 -177Q524 -194 530 -207L572 -285Q581 -302 599 -278Q608 -266 616.5 -252Q625 -238 632 -221Q741 -205 771 -333Q777 -355 790 -354Q812 -351 801 -292Q835 -271 876 -272Q876 -277 866 -293Q863 -299 867 -314L885 -382ZM771 -607Q777 -616 789 -612Q809 -605 827.5 -594Q846 -583 862 -569Q870 -561 865 -551L817 -475Q809 -464 800 -472Q796 -476 784 -483.5Q772 -491 754 -502L723 -453Q716 -443 705 -450Q700 -454 681.5 -465.5Q663 -477 632 -496Q622 -502 629 -512L677 -584Q689 -601 743 -565L771 -607ZM701 -719Q707 -727 718 -724Q738 -717 756.5 -706Q775 -695 791 -681Q799 -673 794 -663L746 -587Q739 -577 728 -585Q718 -593 656 -630Q645 -636 652 -646L701 -719Z"/>
+  </g>
+</svg>

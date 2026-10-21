@@ -1,11 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Bookmark, BookmarkCheck, Flag, GraduationCap, Pencil, Play, Repeat, X } from 'lucide-react'
 import { toArabicDigits } from './arabic'
+import { useSwipe } from './gestures'
 import { APP_VERSION, OWNER_EMAIL, OWNER_WHATSAPP } from './config'
 import { sectionOf, verseRange } from './data'
 import type { PlayState } from './player'
 import type { Notes, RepeatSettings, Settings } from './store'
-import type { Edition, Reciter } from './types'
+import type { Edition, Reciter, VerseTiming } from './types'
 import { FontSizeField, FontField, ThemeField } from './screens'
 
 export type SetState<T> = (next: T | ((prev: T) => T)) => void
@@ -16,9 +17,10 @@ export function Sheet({ title, onClose, children }: { title?: string; onClose: (
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
+  const swipeRef = useSwipe<HTMLElement>({ onDismiss: onClose })
   return (
     <div className="overlay" onClick={onClose}>
-      <section className="sheet" role="dialog" aria-label={title} onClick={(e) => e.stopPropagation()}>
+      <section className="sheet" role="dialog" aria-label={title} onClick={(e) => e.stopPropagation()} ref={swipeRef}>
         <div className="grabber" />
         {title && (
           <header>
@@ -204,6 +206,60 @@ export function FlagSheet(p: { n: number; edition: Edition; reciter: Reciter | n
   )
 }
 
+type Forms = { one: string; two: string; few: string; many: string; base: string }
+export const VERSES: Forms = { one: 'بيت واحد', two: 'بيتان', few: 'أبيات', many: 'بيتًا', base: 'بيت' }
+const TIMES: Forms = { one: 'مرة واحدة', two: 'مرتان', few: 'مرات', many: 'مرة', base: 'مرة' }
+const ROUNDS: Forms = { one: 'جولة واحدة', two: 'جولتان', few: 'جولات', many: 'جولة', base: 'جولة' }
+const MINUTES: Forms = { one: 'دقيقة', two: 'دقيقتان', few: 'دقائق', many: 'دقيقة', base: 'دقيقة' }
+const HOURS: Forms = { one: 'ساعة', two: 'ساعتان', few: 'ساعات', many: 'ساعة', base: 'ساعة' }
+
+/** Arabic counted noun: «بيت واحد», «بيتان», «٥ أبيات», «١٥ بيتًا», «١٠٠ بيت». */
+export function plural(n: number, f: Forms) {
+  const d = toArabicDigits(n)
+  const tail = n % 100
+  if (n === 1) return f.one
+  if (n === 2) return f.two
+  if (tail >= 3 && tail <= 10) return `${d} ${f.few}`
+  if (tail >= 11) return `${d} ${f.many}`
+  return `${d} ${f.base}`
+}
+
+function duration(sec: number) {
+  if (sec < 50) return `${toArabicDigits(Math.max(5, Math.round(sec / 5) * 5))} ثانية`
+  const min = Math.max(1, Math.round(sec / 60))
+  if (min < 60) return min <= 2 ? MINUTES[min === 1 ? 'one' : 'two'] : plural(min, MINUTES)
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  const hs = h <= 2 ? HOURS[h === 1 ? 'one' : 'two'] : plural(h, HOURS)
+  return m ? `${hs} و${m <= 2 ? MINUTES[m === 1 ? 'one' : 'two'] : plural(m, MINUTES)}` : hs
+}
+
+/** «٥ أبيات × ٣ = ١٥ مرة · نحو ٤ دقائق», mirroring how the player walks the queue. */
+function repeatSummary(verses: number[], r: RepeatSettings, single: boolean, timings?: Map<number, VerseTiming>) {
+  const queue = timings ? verses.filter((n) => timings.has(n)) : verses
+  if (!queue.length) return 'لا توجد تلاوة لهذه الأبيات.'
+  const v = r.verseTimes
+  const rounds = single ? 1 : r.rangeTimes
+  const endless = v === 0 || rounds === 0
+  let text: string
+  if (single) text = endless ? 'البيت' : `البيت ${plural(v, TIMES)}`
+  else {
+    const parts = [plural(queue.length, VERSES)]
+    if (v !== 1) parts.push(v === 0 ? '∞' : toArabicDigits(v))
+    if (rounds !== 1) parts.push(rounds === 0 ? '∞ جولات' : plural(rounds, ROUNDS))
+    text = parts.join(' × ')
+    if (!endless && parts.length > 1) text += ` = ${plural(queue.length * v * rounds, TIMES)}`
+  }
+  if (endless) return `${text} · يتكرر حتى تُوقفه`
+  const plays = queue.length * v * rounds
+  if (timings) {
+    const once = queue.reduce((s, n) => s + (timings.get(n)!.end - timings.get(n)!.start), 0)
+    const sec = (once * v * rounds) / (r.speed || 1) + (plays - 1) * r.pause
+    text += ` · نحو ${duration(sec)}`
+  }
+  return text
+}
+
 function Count({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   const endless = value === 0
   return (
@@ -228,6 +284,8 @@ export function RepeatSheet(p: {
   selected: number | null
   onStart: (r: RepeatSettings) => void
   onClose: () => void
+  /** Verse timings of the current reciter; without them the summary shows counts only. */
+  timings?: Map<number, VerseTiming>
 }) {
   const all = verseRange(p.edition)
   const anchor = p.selected ?? all.from
@@ -241,6 +299,17 @@ export function RepeatSheet(p: {
   }))
   const set = (patch: Partial<RepeatSettings>) => setR((x) => ({ ...x, ...patch }))
   const clamp = (n: number) => Math.min(all.to, Math.max(all.from, n || all.from))
+
+  // Same range App's startRepeat plays.
+  let [from, to] = [all.from, all.to]
+  if (r.scope === 'verse') from = to = anchor
+  if (r.scope === 'range') [from, to] = [Math.min(clamp(r.from), clamp(r.to)), Math.max(clamp(r.from), clamp(r.to))]
+  if (r.scope === 'section') {
+    const sec = p.edition.sections.find((x) => x.id === r.sectionId) ?? sectionOf(p.edition, anchor)
+    if (sec) [from, to] = [sec.start, sec.end]
+  }
+  const verses = p.edition.verses.filter((v) => v.n >= from && v.n <= to).map((v) => v.n)
+  const summary = repeatSummary(verses, r, r.scope === 'verse', p.timings)
 
   return (
     <Sheet title="التكرار" onClose={p.onClose}>
@@ -290,6 +359,10 @@ export function RepeatSheet(p: {
           </span>
         </label>
       </div>
+      <p className="repeat-summary" aria-live="polite">
+        <Repeat size={15} />
+        {summary}
+      </p>
       <button
         className="btn wide"
         onClick={() => {
