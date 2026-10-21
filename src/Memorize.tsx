@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Check, ChevronDown, Eye, EyeOff, Hourglass, Loader2, Pause, Play, Repeat, RotateCcw, SkipBack, SkipForward, Square, X } from 'lucide-react'
 import { toArabicDigits } from './arabic'
+import { useSwipe } from './gestures'
 import { sectionOf } from './data'
 import type { PlayState } from './player'
 import type { HideMode, Mastered, RepeatSettings } from './store'
@@ -42,6 +43,17 @@ export default function Memorize(p: Props) {
   const [revealed, setRevealed] = useState(false)
   useEffect(() => setRevealed(false), [p.verse, p.hide])
 
+  // Pull down to close; swipe sideways to change verse (RTL: finger moving right = next, like turning a page).
+  const [slide, setSlide] = useState<'' | 'slide-next' | 'slide-prev'>('')
+  const swipeRef = useSwipe<HTMLDivElement>({
+    onDismiss: p.onClose,
+    onSwipe: (dir) => {
+      const d = dir === 'right' ? 1 : -1
+      setSlide(d === 1 ? 'slide-next' : 'slide-prev')
+      p.onStep(d)
+    },
+  })
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && p.onClose()
     window.addEventListener('keydown', onKey)
@@ -54,7 +66,7 @@ export default function Memorize(p: Props) {
   const nextSpeed = SPEEDS[(SPEEDS.indexOf(p.repeat.speed) + 1) % SPEEDS.length] ?? 1
 
   return (
-    <div className="memorize" role="dialog" aria-label="وضع الحفظ">
+    <div className="memorize" role="dialog" aria-label="وضع الحفظ" ref={swipeRef}>
       <header className="mem-top">
         <button className="icon-btn" onClick={p.onClose} aria-label="إغلاق">
           <ChevronDown size={26} />
@@ -83,7 +95,12 @@ export default function Memorize(p: Props) {
         {section?.title} · البيت {toArabicDigits(p.verse)}
       </p>
 
-      <div className="mem-verse verse-text" onClick={() => testing && setRevealed(true)}>
+      <div
+        key={p.verse}
+        className={`mem-verse verse-text ${slide}`}
+        onAnimationEnd={() => setSlide('')}
+        onClick={() => testing && setRevealed(true)}
+      >
         {hideA ? <HiddenHalf label="اضغط لإظهار الصدر" /> : <p>{v?.a}</p>}
         {hideB ? <HiddenHalf label={hideA ? 'والعجز' : 'اضغط لإظهار العجز'} /> : <p>{v?.b}</p>}
       </div>

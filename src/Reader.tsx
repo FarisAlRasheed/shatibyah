@@ -21,11 +21,12 @@ export default function Reader(p: Props) {
 
   useEffect(() => {
     if (!scrollTarget) return
-    document.getElementById(`v-${scrollTarget.n}`)?.scrollIntoView({
-      block: 'center',
-      behavior: scrollTarget.key === 0 ? 'auto' : 'smooth',
-    })
-  }, [scrollTarget])
+    const behavior = scrollTarget.key === 0 ? 'auto' : 'smooth'
+    // A chapter's first verse: bring its banner to the top, so the title bar and the page agree.
+    const opening = edition.sections.filter((s) => s.start === scrollTarget.n).sort((a, b) => b.end - a.end)[0]
+    if (opening) document.getElementById(`s-${opening.id}`)?.scrollIntoView({ block: 'start', behavior })
+    else document.getElementById(`v-${scrollTarget.n}`)?.scrollIntoView({ block: 'center', behavior })
+  }, [scrollTarget]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Report the section at the top of the screen, for the title bar.
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { BookOpen, GraduationCap, List, Repeat, Search, Settings as SettingsIcon, Type } from 'lucide-react'
+import { BookOpen, GraduationCap, List, LocateFixed, Repeat, Search, Settings as SettingsIcon, Type } from 'lucide-react'
 import { audioUrl, loadEdition, loadManifest, loadReciter, sectionOf, verseRange } from './data'
 import { DEFAULT_EDITION } from './config'
 import { toArabicDigits } from './arabic'
@@ -9,6 +9,7 @@ import type { Edition, Manifest, Reciter, Section, VerseTiming } from './types'
 import Reader from './Reader'
 import MiniPlayer from './MiniPlayer'
 import Memorize from './Memorize'
+import './flow.css'
 import { DisplaySheet, FlagSheet, NoteSheet, RepeatSheet, VerseSheet } from './sheets'
 import { IndexScreen, SearchScreen, SettingsScreen } from './screens'
 import PlanScreen from './PlanScreen'
@@ -16,7 +17,7 @@ import PlanScreen from './PlanScreen'
 type Tab = 'read' | 'index' | 'plan' | 'search' | 'settings'
 export type Panel =
   | null
-  | 'repeat'
+  | { type: 'repeat'; n: number }
   | 'display'
   | { type: 'verse'; n: number }
   | { type: 'note'; n: number }
@@ -101,6 +102,8 @@ export default function App() {
     settings.lastVerse ? { n: settings.lastVerse, key: 0 } : null,
   )
   const readScroll = useRef(0)
+  // Follow the recited verse until the user scrolls or jumps away; a pill brings them back.
+  const [following, setFollowing] = useState(true)
 
   useTheme(settings.theme)
 
@@ -135,6 +138,11 @@ export default function App() {
     player.stop()
   }, [reciter])
 
+  // Lock-screen details: reciter and chapter of the verse playing.
+  useEffect(() => {
+    if (reciter && edition) player.setMeta((n) => ({ artist: reciter.name, album: sectionOf(edition, n)?.title ?? '' }))
+  }, [reciter, edition])
+
   const timings = useMemo(() => new Map<number, VerseTiming>(reciter?.verses.map((v) => [v.n, v]) ?? []), [reciter])
 
   const startQueue = useCallback(
@@ -145,17 +153,19 @@ export default function App() {
         if (t) queue.push(t)
       }
       const startIndex = Math.max(0, queue.findIndex((t) => t.n >= startAt))
+      setFollowing(true)
       player.start(queue, { ...opts, pause: repeat.pause, speed: repeat.speed }, startIndex)
     },
     [timings, repeat.pause, repeat.speed],
   )
 
   /** Start the configured repeat. */
+  /** Start the configured repeat; `at` is the verse a single-verse repeat uses. */
   const startRepeat = useCallback(
-    (r: RepeatSettings = repeat) => {
+    (r: RepeatSettings = repeat, at?: number) => {
       if (!edition) return
       const all = verseRange(edition)
-      const anchor = selected ?? all.from
+      const anchor = at ?? selected ?? all.from
       let from = all.from
       let to = all.to
       if (r.scope === 'verse') from = to = anchor
@@ -204,6 +214,7 @@ export default function App() {
 
   const jumpTo = useCallback((n: number) => {
     pendingRestore.current = false
+    setFollowing(false)
     setSelected(n)
     setTab('read')
     setScrollTarget({ n, key: Date.now() })
@@ -212,8 +223,27 @@ export default function App() {
 
   // Follow the verse being recited.
   useEffect(() => {
-    if (play.verse && settings.autoScroll && tab === 'read') setScrollTarget({ n: play.verse, key: Date.now() })
-  }, [play.verse, settings.autoScroll]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (play.verse && settings.autoScroll && following && tab === 'read') setScrollTarget({ n: play.verse, key: Date.now() })
+  }, [play.verse, settings.autoScroll, following]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A new playback follows again; stopping clears the pill.
+  const playing = play.status !== 'idle'
+  useEffect(() => setFollowing(true), [playing])
+
+  // Manual scrolling (touch, wheel, keys) pauses following. Programmatic scrolls don't fire these.
+  useEffect(() => {
+    if (!playing || !following || tab !== 'read') return
+    const stop = () => setFollowing(false)
+    const onKey = (e: KeyboardEvent) => ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key) && stop()
+    window.addEventListener('touchmove', stop, { passive: true })
+    window.addEventListener('wheel', stop, { passive: true })
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('touchmove', stop)
+      window.removeEventListener('wheel', stop)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [playing, following, tab])
 
   const onTap = useCallback((n: number) => {
     setSelected(n)
@@ -250,20 +280,30 @@ export default function App() {
     setMemorize(true)
     if (hasAudio) startRepeat(r)
   }
-  const summary = `${SCOPE_LABEL[repeat.scope]} ×${repeat.verseTimes === 0 ? '∞' : toArabicDigits(repeat.verseTimes)}`
+  const times = (n: number) => (n === 0 ? '∞' : toArabicDigits(n))
+  // What the mini-player says: the running playback if any, else what ▶ would start.
+  const summary = !active
+    ? `${SCOPE_LABEL[repeat.scope]} ×${times(repeat.verseTimes)}`
+    : play.total === 1
+      ? `تكرار البيت ×${times(play.verseTimes)}`
+      : play.verseTimes === 1 && play.rangeTimes === 1
+        ? 'تلاوة متصلة'
+        : `${toArabicDigits(play.total)} أبيات · كل بيت ×${times(play.verseTimes)}${play.rangeTimes !== 1 ? ` · الدورة ×${times(play.rangeTimes)}` : ''}`
 
   const panelEl = (() => {
     const close = () => setPanel(null)
     if (panel === 'display') return <DisplaySheet settings={settings} setSettings={setSettings} onClose={close} />
-    if (panel === 'repeat')
+    if (panel?.type === 'repeat')
       return (
         <RepeatSheet
           edition={edition}
           repeat={repeat}
           setRepeat={setRepeat}
-          selected={focusVerse}
+          selected={panel.n}
+          timings={timings}
           onStart={(r) => {
-            startRepeat(r)
+            setSelected(panel.n)
+            startRepeat(r, panel.n)
             close()
           }}
           onClose={close}
@@ -286,7 +326,7 @@ export default function App() {
           }}
           onRepeatSettings={() => {
             setRepeat((r) => ({ ...r, scope: 'verse' }))
-            setPanel('repeat')
+            setPanel({ type: 'repeat', n: panel.n })
           }}
           onToggleBookmark={() =>
             setBookmarks((b) => {
@@ -320,7 +360,7 @@ export default function App() {
     >
       {tab === 'read' && (
         <header className="topbar">
-          <button className="icon-btn" onClick={() => setPanel('repeat')} aria-label="التكرار" disabled={!hasAudio}>
+          <button className="icon-btn" onClick={() => setPanel({ type: 'repeat', n: focusVerse })} aria-label="التكرار" disabled={!hasAudio}>
             <Repeat size={21} />
           </button>
           <button className="topbar-title" onClick={() => goTab('index')}>
@@ -384,6 +424,18 @@ export default function App() {
         />
       )}
 
+      {tab === 'read' && active && !following && settings.autoScroll && play.verse != null && (
+        <button
+          className="follow-pill"
+          onClick={() => {
+            setFollowing(true)
+            setScrollTarget({ n: play.verse!, key: Date.now() })
+          }}
+        >
+          <LocateFixed size={16} /> العودة إلى البيت المقروء
+        </button>
+      )}
+
       <div className="bottom-dock">
         {reciters.length > 0 ? (
           <MiniPlayer
@@ -424,7 +476,7 @@ export default function App() {
           onStep={step}
           onStop={() => (active ? player.stop() : setMemorize(false))}
           onReplay={() => (active ? player.replay() : hasAudio && startQueue(focusVerse, focusVerse, focusVerse, { verseTimes: 1, rangeTimes: 1 }))}
-          onOpenRepeat={() => setPanel('repeat')}
+          onOpenRepeat={() => setPanel({ type: 'repeat', n: focusVerse })}
           onSpeed={(speed) => setRepeat((r) => ({ ...r, speed }))}
           onMastered={(n, yes) => {
             setMastered((m) => {
