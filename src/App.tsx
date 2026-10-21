@@ -285,7 +285,9 @@ export default function App() {
   const summary = !active
     ? `${SCOPE_LABEL[repeat.scope]} ×${times(repeat.verseTimes)}`
     : play.total === 1
-      ? `تكرار البيت ×${times(play.verseTimes)}`
+      ? play.verseTimes === 1 && play.rangeTimes === 1
+        ? 'تلاوة البيت'
+        : `تكرار البيت ×${times(play.verseTimes)}`
       : play.verseTimes === 1 && play.rangeTimes === 1
         ? 'تلاوة متصلة'
         : `${toArabicDigits(play.total)} أبيات · كل بيت ×${times(play.verseTimes)}${play.rangeTimes !== 1 ? ` · الدورة ×${times(play.rangeTimes)}` : ''}`
