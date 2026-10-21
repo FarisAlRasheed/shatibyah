@@ -12,8 +12,10 @@ export const loadManifest = () => getJson<Manifest>('manifest.json')
 export const loadEdition = (id: string) => getJson<Edition>(`editions/${id}/edition.json`)
 export const loadReciter = (id: string) => getJson<Reciter>(`reciters/${id}/reciter.json`)
 
+// `?v=` changes whenever a file is re-cut, so an offline copy of an older cut is never
+// served with the new timings (the service worker and offline.ts key on the full URL).
 export const audioUrl = (reciter: Reciter, file: AudioFile) =>
-  new URL(`${BASE}data/reciters/${reciter.id}/${file.path}`, location.href).href
+  new URL(`${BASE}data/reciters/${reciter.id}/${file.path}?v=${file.bytes}`, location.href).href
 
 /** Innermost section containing verse n. */
 export function sectionOf(edition: Edition, n: number): Section | undefined {

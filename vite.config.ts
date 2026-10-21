@@ -17,8 +17,9 @@ export default defineConfig({
         lang: 'ar',
         dir: 'rtl',
         display: 'standalone',
-        background_color: '#faf7f0',
-        theme_color: '#1f4d3a',
+        // The light theme's --bg, so the launch screen flows into the app without a color jump.
+        background_color: '#ffffff',
+        theme_color: '#ffffff',
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -37,6 +38,9 @@ export default defineConfig({
               cacheName: 'audio',
               rangeRequests: true,
               cacheableResponse: { statuses: [200] },
+              // The cache key is the full URL with its `?v=` version (see audioUrl), so a copy of
+              // an older cut never answers for a newer one.
+              matchOptions: { ignoreSearch: false },
             },
           },
         ],

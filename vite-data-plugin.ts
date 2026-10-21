@@ -48,10 +48,16 @@ export default function dataPlugin(): Plugin {
         const size = fs.statSync(file).size
         res.setHeader('Content-Type', MIME[path.extname(file)] ?? 'application/octet-stream')
         res.setHeader('Accept-Ranges', 'bytes')
-        const m = /bytes=(\d*)-(\d*)/.exec(req.headers.range ?? '')
-        if (m) {
-          const start = m[1] ? +m[1] : 0
-          const end = m[2] ? +m[2] : size - 1
+        const m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '')
+        if (m && (m[1] || m[2])) {
+          // "a-b", "a-" (to the end) or "-n" (the last n bytes)
+          const start = m[1] ? +m[1] : Math.max(0, size - +m[2])
+          const end = m[1] && m[2] ? Math.min(+m[2], size - 1) : size - 1
+          if (start >= size || start > end || (!m[1] && +m[2] === 0)) {
+            res.statusCode = 416
+            res.setHeader('Content-Range', `bytes */${size}`)
+            return res.end()
+          }
           res.statusCode = 206
           res.setHeader('Content-Range', `bytes ${start}-${end}/${size}`)
           res.setHeader('Content-Length', end - start + 1)
