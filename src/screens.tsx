@@ -26,29 +26,65 @@ function PilotNote({ edition }: { edition: Edition }) {
   )
 }
 
-export function IndexScreen({ edition, current, onJump }: { edition: Edition; current: number | null; onJump: (n: number) => void }) {
+type IndexView = 'sections' | 'bookmarks' | 'notes' | 'mastered'
+
+/** الفهرس: chapters plus the user's bookmarks, notes and mastered verses. */
+export function IndexScreen(p: {
+  edition: Edition
+  current: number | null
+  notes: Notes
+  bookmarks: Bookmarks
+  mastered: Mastered
+  setBookmarks: SetState<Bookmarks>
+  onJump: (n: number) => void
+}) {
+  const [view, setView] = useState<IndexView>('sections')
+  const counts = {
+    bookmarks: Object.keys(p.bookmarks).length,
+    notes: Object.values(p.notes).filter((t) => t.trim()).length,
+    mastered: Object.keys(p.mastered).length,
+  }
+  const views: [IndexView, string][] = [
+    ['sections', 'الأبواب'],
+    ['bookmarks', `العلامات ${toArabicDigits(counts.bookmarks)}`],
+    ['notes', `الملاحظات ${toArabicDigits(counts.notes)}`],
+    ['mastered', `المتقَن ${toArabicDigits(counts.mastered)}`],
+  ]
   return (
     <Screen title="الفهرس">
-      <PilotNote edition={edition} />
-      <ul className="group list">
-        {edition.sections.map((s) => {
-          const here = current != null && s.start <= current && current <= s.end
-          return (
-            <li key={s.id} className={s.parent != null ? 'child' : ''}>
-              <button onClick={() => onJump(s.start)}>
-                <span className="list-title">
-                  {s.title}
-                  {here && <span className="here">أنت هنا</span>}
-                </span>
-                <small>
-                  {toArabicDigits(s.start)}–{toArabicDigits(s.end)}
-                </small>
-                <ChevronLeft size={18} className="chev" />
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+      <div className="seg">
+        {views.map(([k, label]) => (
+          <button key={k} className={view === k ? 'on' : ''} onClick={() => setView(k)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {view === 'sections' ? (
+        <>
+          <PilotNote edition={p.edition} />
+          <ul className="group list">
+            {p.edition.sections.map((s) => {
+              const here = p.current != null && s.start <= p.current && p.current <= s.end
+              return (
+                <li key={s.id} className={s.parent != null ? 'child' : ''}>
+                  <button onClick={() => p.onJump(s.start)}>
+                    <span className="list-title">
+                      {s.title}
+                      {here && <span className="here">أنت هنا</span>}
+                    </span>
+                    <small>
+                      {toArabicDigits(s.start)}–{toArabicDigits(s.end)}
+                    </small>
+                    <ChevronLeft size={18} className="chev" />
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </>
+      ) : (
+        <SavedLists {...p} view={view} />
+      )}
     </Screen>
   )
 }
@@ -100,7 +136,8 @@ export function SearchScreen({ edition, onJump }: { edition: Edition; onJump: (n
   )
 }
 
-export function SavedScreen(p: {
+function SavedLists(p: {
+  view: Exclude<IndexView, 'sections'>
   edition: Edition
   notes: Notes
   bookmarks: Bookmarks
@@ -108,7 +145,7 @@ export function SavedScreen(p: {
   setBookmarks: SetState<Bookmarks>
   onJump: (n: number) => void
 }) {
-  const [tab, setTab] = useState<'bookmarks' | 'notes' | 'mastered'>('bookmarks')
+  const tab = p.view
   const marks = Object.entries(p.bookmarks).sort((a, b) => +a[0] - +b[0])
   const notes = Object.entries(p.notes).filter(([, t]) => t.trim()).sort((a, b) => +a[0] - +b[0])
   const done = Object.keys(p.mastered).map(Number).sort((a, b) => a - b)
@@ -116,19 +153,8 @@ export function SavedScreen(p: {
   const total = to - from + 1
   const doneHere = done.filter((n) => n >= from && n <= to).length
   return (
-    <Screen title="العلامات">
-      <div className="seg">
-        <button className={tab === 'bookmarks' ? 'on' : ''} onClick={() => setTab('bookmarks')}>
-          العلامات {toArabicDigits(marks.length)}
-        </button>
-        <button className={tab === 'notes' ? 'on' : ''} onClick={() => setTab('notes')}>
-          الملاحظات {toArabicDigits(notes.length)}
-        </button>
-        <button className={tab === 'mastered' ? 'on' : ''} onClick={() => setTab('mastered')}>
-          المتقَن {toArabicDigits(done.length)}
-        </button>
-      </div>
-      {tab === 'bookmarks' &&
+    <>
+  {tab === 'bookmarks' &&
         (marks.length ? (
           marks.map(([n, b]) => (
             <div key={n} className="saved-item">
@@ -174,7 +200,7 @@ export function SavedScreen(p: {
           ))}
         </>
       )}
-    </Screen>
+    </>
   )
 }
 

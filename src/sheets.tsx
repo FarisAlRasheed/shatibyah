@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Bookmark, BookmarkCheck, Flag, Pencil, Play, Repeat, X } from 'lucide-react'
+import { Bookmark, BookmarkCheck, Flag, GraduationCap, Pencil, Play, Repeat, X } from 'lucide-react'
 import { toArabicDigits } from './arabic'
 import { APP_VERSION, OWNER_EMAIL, OWNER_WHATSAPP } from './config'
 import { sectionOf, verseRange } from './data'
@@ -60,6 +60,7 @@ export function VerseSheet(p: {
   onRepeatSettings: () => void
   onToggleBookmark: () => void
   onNote: () => void
+  onMemorize: () => void
   onFlag: () => void
   onClose: () => void
 }) {
@@ -92,6 +93,9 @@ export function VerseSheet(p: {
         </button>
         <button className="action" onClick={p.onNote}>
           <span><Pencil size={22} /></span>ملاحظة
+        </button>
+        <button className="action" onClick={p.onMemorize}>
+          <span><GraduationCap size={22} /></span>وضع الحفظ
         </button>
       </div>
       {p.canPlay && (

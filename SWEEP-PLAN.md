@@ -34,7 +34,13 @@ How the list was made: I read all the app code and ran the main flows in the bro
 
 The project folder isn't a git repository yet. **Step 0 (me):** `git init` and a first commit, so every change can be reviewed and undone.
 
-Then three tracks run at the same time in this folder. Each one owns only its own files, so they can't overwrite each other.
+**Also done in step 0 (me):** memorization is easier to find (owner request 2).
+- A centre tab **الحفظ** in the tab bar: القراءة · الفهرس · الحفظ · البحث · الإعدادات.
+- Bookmarks, notes and mastered verses moved into الفهرس as segments.
+- A «وضع الحفظ» action in the verse sheet.
+- `src/PlanScreen.tsx` is a stub that Track D fills in.
+
+Then four tracks run at the same time in this folder. Each one owns only its own files, so they can't overwrite each other.
 
 ### Track A: audio and offline (agent session)
 Files: `src/player.ts`, `src/offline.ts`, `src/data.ts` (`audioUrl` only), `vite-data-plugin.ts`, the audio part of `vite.config.ts`.
@@ -48,8 +54,28 @@ Files: `src/App.tsx`, `src/Reader.tsx`, `src/MiniPlayer.tsx`, `src/Memorize.tsx`
 - B1, B2 + U1 (smart follow and the return pill), B4, B7 (error screen), U3 (swipe gestures).
 
 ### Track C: screens, polish and branding (agent session)
-Files: `src/screens.tsx`, `src/sheets.tsx`, `src/styles.css`, `index.html`, `public/` icons, the manifest part of `vite.config.ts`.
-- U4, U5, U6, U7, U8, B6.
+Files: `src/screens.tsx` (`IndexScreen` now also holds bookmarks, notes and mastered verses), `src/sheets.tsx`, `src/styles.css`, `index.html`, `public/` icons, the manifest part of `vite.config.ts`.
+- U4, U5, U6, U7, U8, B6. U5's "continue where you left off" card goes in الفهرس, not الحفظ (Track D owns الحفظ).
+
+### Track D: memorization plan (agent session), owner request 1
+Files: `src/PlanScreen.tsx` (stub exists, already wired as the الحفظ tab), new `src/plan.ts`, new `src/plan.css`.
+- **Plan builder.** Inputs:
+  - what to memorize: the whole poem, chosen chapters, or verse X to Y
+  - pace: either verses per day, or a target end date (the app works out the daily wird)
+  - start date
+  - days off each week (e.g. Friday)
+  - review: how many past days of verses to revise with each day's wird
+- **Today card:**
+  - today's wird (verse range) and today's review
+  - «ابدأ ورد اليوم» opens memorization mode on that range
+  - «أنهيت ورد اليوم» marks the day done
+- **Overview:**
+  - progress (verses done of total)
+  - expected finish date
+  - streak
+  - a calendar of done and missed days
+  - "behind by N days", with a button to reschedule
+- Edit and delete the plan. Stored on the device (`useStored('plan', …)`).
 
 ### Rules for every track
 - Edit only your own files. If you need a change in another track's file, say so in your report instead of making it.

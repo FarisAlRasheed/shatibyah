@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { BookOpen, Bookmark, List, Repeat, Search, Settings as SettingsIcon, Type } from 'lucide-react'
+import { BookOpen, GraduationCap, List, Repeat, Search, Settings as SettingsIcon, Type } from 'lucide-react'
 import { audioUrl, loadEdition, loadManifest, loadReciter, sectionOf, verseRange } from './data'
 import { DEFAULT_EDITION } from './config'
 import { toArabicDigits } from './arabic'
@@ -10,9 +10,10 @@ import Reader from './Reader'
 import MiniPlayer from './MiniPlayer'
 import Memorize from './Memorize'
 import { DisplaySheet, FlagSheet, NoteSheet, RepeatSheet, VerseSheet } from './sheets'
-import { IndexScreen, SavedScreen, SearchScreen, SettingsScreen } from './screens'
+import { IndexScreen, SearchScreen, SettingsScreen } from './screens'
+import PlanScreen from './PlanScreen'
 
-type Tab = 'read' | 'index' | 'search' | 'saved' | 'settings'
+type Tab = 'read' | 'index' | 'plan' | 'search' | 'settings'
 export type Panel =
   | null
   | 'repeat'
@@ -24,8 +25,8 @@ export type Panel =
 const TABS: [Tab, string, typeof BookOpen][] = [
   ['read', 'القراءة', BookOpen],
   ['index', 'الفهرس', List],
+  ['plan', 'الحفظ', GraduationCap],
   ['search', 'البحث', Search],
-  ['saved', 'العلامات', Bookmark],
   ['settings', 'الإعدادات', SettingsIcon],
 ]
 
@@ -241,6 +242,14 @@ export default function App() {
     setSelected(n)
     startQueue(n, n, n, { ...r, rangeTimes: 1 })
   }
+  /** Memorization session on a range (e.g. today's wird): repeat that range and open memorization mode. */
+  const startSession = (from: number, to: number) => {
+    const r = { ...repeat, scope: 'range' as const, from, to }
+    setRepeat(r)
+    setSelected(from)
+    setMemorize(true)
+    if (hasAudio) startRepeat(r)
+  }
   const summary = `${SCOPE_LABEL[repeat.scope]} ×${repeat.verseTimes === 0 ? '∞' : toArabicDigits(repeat.verseTimes)}`
 
   const panelEl = (() => {
@@ -288,6 +297,10 @@ export default function App() {
             })
           }
           onNote={() => setPanel({ type: 'note', n: panel.n })}
+          onMemorize={() => {
+            close()
+            setMemorize(true)
+          }}
           onFlag={() => setPanel({ type: 'flag', n: panel.n })}
           onClose={close}
         />
@@ -337,11 +350,27 @@ export default function App() {
           onSectionChange={setTopSection}
         />
       </div>
-      {tab === 'index' && <IndexScreen edition={edition} current={focusVerse} onJump={jumpTo} />}
-      {tab === 'search' && <SearchScreen edition={edition} onJump={jumpTo} />}
-      {tab === 'saved' && (
-        <SavedScreen edition={edition} notes={notes} bookmarks={bookmarks} mastered={mastered} setBookmarks={setBookmarks} onJump={jumpTo} />
+      {tab === 'index' && (
+        <IndexScreen
+          edition={edition}
+          current={focusVerse}
+          notes={notes}
+          bookmarks={bookmarks}
+          mastered={mastered}
+          setBookmarks={setBookmarks}
+          onJump={jumpTo}
+        />
       )}
+      {tab === 'plan' && (
+        <PlanScreen
+          edition={edition}
+          mastered={mastered}
+          onStartSession={startSession}
+          onFreeSession={() => setMemorize(true)}
+          onJump={jumpTo}
+        />
+      )}
+      {tab === 'search' && <SearchScreen edition={edition} onJump={jumpTo} />}
       {tab === 'settings' && (
         <SettingsScreen
           settings={settings}
