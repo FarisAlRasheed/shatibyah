@@ -1,96 +1,105 @@
-# Prompt: Shatibiyyah timing agent (reciter audio)
+# Prompt: Shatibiyyah timing agent, run 2 (فرش الحروف to the end of the book)
 
-Recommended model: **Sonnet**. Run this only **after** the text agent has finished and `data/editions/qasim/edition.json` exists. Copy everything below the line into the other agent.
+Read `EXTRACTION-PLAN.md` first, then `data/reciters/mahmud-haleem/timing-report.md` (the pilot's report, including "Problems met"). Project folder: `/Users/faris/Documents/WebProjects/shatibiahReader`.
 
----
+You prepare the recitation audio and verse timings for a memorization app.
+- Reciter: **د. محمود بن حليم**, id `mahmud-haleem`.
+- Source page: https://a-alqasim.com/sounds-explain/081401asshaatibiyyah_mahmudhaleem/
 
-You are preparing the recitation audio and the verse timings for a Shatibiyyah memorization app.
+The owner has confirmed permission to use this recording.
 
-- **Reciter:** د. محمود بن حليم (reciter id: `mahmud-haleem`)
-- **Source page (official site of الشيخ عبد المحسن القاسم):** https://a-alqasim.com/sounds-explain/081401asshaatibiyyah_mahmudhaleem/
+## Scope
+باب فرش الحروف from **سورة البقرة** to the **end of the book**: every surah heading, plus بَابُ التَّكْبِيرِ, بَابُ مَخَارِجِ الحُرُوفِ وَصِفَاتِهَا and the closing verses. That is about verses 446–1173.
+- **Replace** the pilot output. The pilot's `audio/farsh-1.mp3` and `audio/farsh-2.mp3` get deleted, and its `reciter.json` and `timing-report.md` get overwritten.
+- `reciter.json` gets `"partial": {"from": <first فرش verse>, "to": 1173}`.
 
-The site already splits the recitation into **30 MP3 files, one per باب**, all under:
-`https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/`
+## Token budget (important: best result for the fewest tokens)
+- All analysis runs in **local scripts** (ffmpeg, whisper.cpp, Python). Write results to files in the scratchpad and print only short summaries: counts, cut times, flagged verses. Never print transcripts, pause lists or JSON in full.
+- Run whisper **once** on each source file, with timestamps. Save it as JSON and reuse it.
+- **No Turath:** get verse numbers, verse text, headings and the table of contents from the **PDF text layer** with `pypdf` (`sources/qasim.pdf`, a local file). The verse numbers are printed at the start of each verse line. The word order on a line may be scrambled, but you only need each verse's words and letter count, which order doesn't affect.
+- Inspect only what fails a check: the flagged verses and the cuts that didn't match. Don't listen to or re-check verses that pass.
 
-| # | File name | Section |
-|---|---|---|
-| 01 | `0814AsShaatibiyyah_01_Intro_MahmudHaleem.mp3` | مقدمة الناظم |
-| 02 | `…_02_Istiadhah_…` | باب الاستعاذة |
-| 03 | `…_03_Basmalah_…` | باب البسملة |
-| 04 | `…_04_SurahUmmAlQuraan_…` | سورة أم القرآن |
-| 05–29 | (the remaining أصول chapters, in the page's order) | |
-| 30 | `0814AsShaatibiyyah_30_FarshAlHuruf_MahmudHaleem.mp3` | باب فرش الحروف (all surahs in **one** file, ~44 MB, ~1 h 45 min) |
-
-Read the exact file names and section titles from the page itself. Its HTML lists each `<audio>` source next to its title. There is also one file with the whole poem (`…/0814AsShaatibiyyah_MahmudHaleem.mp3`); don't use it.
-
-Facts already checked:
-- The files are MP3, **mono, 56 kbps CBR, 44.1 kHz**. They are already small, so **don't re-encode**. Cut with `ffmpeg -c copy` only.
-- The server supports Range requests, but its CORS header allows only `https://a-alqasim.com`. So the app can't stream from it, and must host its own copies of the files.
-
-## Scope for this run: PILOT (two chapters only)
-This is a test run. Work **only** on **سورة الأنعام** and **سورة الأعراف**. `data/editions/qasim/edition.json` contains only those verses (see its `partial` field).
-- Download **only file 30** (فرش الحروف). Both surahs are inside it.
-- `reciter.json` covers only the pilot verses, with the same `partial` field as the edition. "Every verse has exactly one entry" applies within that range.
-- At the end of the report, add **"Problems met"**: anything that went wrong or needed guessing (cutting the surahs out of file 30, intros, pauses, tools), so the prompt can be improved before the full run.
-
-(For the full run, this section will be removed.)
-
-Project folder: `/Users/faris/Documents/WebProjects/shatibiahReader`. First read:
-- `PLAN.md`, especially section 9, "Data format"
-- `data/editions/qasim/edition.json`, the verified Al-Qasim text (verses and sections). The recitation follows **this** edition. Ignore `data/editions/zubi/`.
+## Facts already known
+- File 30 (`0814AsShaatibiyyah_30_FarshAlHuruf_MahmudHaleem.mp3`, 44 MB, ~1 h 45 min, MP3 mono 56 kbps CBR 44.1 kHz) is already in `data/reciters/mahmud-haleem/_source/`. **Don't re-download it.**
+- **Check on the source page whether التكبير and مخارج الحروف are at the end of file 30 or in separate files.** Download only what's needed, with curl, into `_source/`.
+- **Don't re-encode.** Cut with `ffmpeg -ss <a> -to <b> -c copy`.
+- The site's CORS allows only its own origin, so the app hosts its own copies.
+- **Owner-given cut times in file 30:**
+  - الأنعام 1610.5 → 2020.63 s
+  - الأعراف 2020.63 → 2304.76 s
+  These are already snapped to silence; keep them.
+- The MP3 noise floor is about −37 dB. Use silence thresholds **relative to the measured floor** (floor + 9…12 dB), not a fixed −38 dB.
+- Half-verse pauses (~0.45–0.65 s) and verse pauses (~0.6–0.8 s) are close in length.
+- Each surah starts with a few seconds of the reciter saying its title. That isn't a verse.
 
 ## Tools
-You need `curl`, `ffmpeg` and Python. `ffmpeg` is **not** installed on this Mac yet. Ask the owner before installing anything (for example `brew install ffmpeg`, or pip packages such as a Whisper model). Run long jobs in the background.
+- `ffmpeg`/`ffprobe` and Python with numpy are installed.
+- **Install whisper.cpp:** `brew install whisper-cpp`. Get the official ggml model `ggml-large-v3-turbo.bin` from the whisper.cpp Hugging Face repo (`ggerganov/whisper.cpp`), and put it in your scratchpad or `~/.cache/whisper/`, **not** in the project.
+  - The owner approved these installs for this run.
+  - If `large-v3-turbo` is too slow on this Mac, use `medium`, and say so.
+- Run long jobs in the background, and save intermediate results (pauses, transcripts) to the scratchpad so a restart doesn't redo them.
 
-## Step 1: Download and cut the audio
-1. Download the needed source files with `curl` into `data/reciters/mahmud-haleem/_source/`, keeping the original file names. Don't re-download a file that is already there with the right size.
-2. **Match source files to the edition's `sections`.**
-   - Files 01–29 map one-to-one to the أصول sections, by order and by title. If a title or the order doesn't line up with `edition.json`, stop and show the owner the mismatch table.
-   - **File 30 (فرش الحروف) holds every surah.** Split it into **one file per surah section**, so the offline download stays per chapter. The owner has given the surah times inside file 30 for the pilot:
+## Verse numbering and text (don't wait for the text agent)
+- The text agent is rebuilding `data/editions/*/edition.json` in parallel right now, so don't read those files as final.
+- Get the verse numbers, section boundaries and each verse's words from the **PDF text layer** (`sources/qasim.pdf`, PDF pages 77–175). It is the Al-Qasim edition, the one the recitation follows.
+- Use the words for expected lengths (letters without marks and kashida) and for matching against whisper output.
 
-     | Section | Starts | Ends |
-     |---|---|---|
-     | سورة الأنعام | 0:26:50 (1610 s) | 0:33:40 (2020 s) |
-     | سورة الأعراف | 0:33:40 (2020 s) | 0:38:25 (2305 s) |
+## Section ids (the text agent applies the same rule)
+- Make the list of **every heading in the whole book** in printed order (المقدمة = 1, every باب, and every surah heading under فرش), from the **PDF's table of contents (PDF pages 177–180, text layer)**.
+- A section's `id` is its 1-based position in that list.
+- Combined headings (e.g. «سورة سبأ وفاطر») count as one heading.
+- Put the full list with ids in your report.
 
-     1. Use these times. Snap each one to the middle of the nearest silence within ±3 s, so no cut lands mid-word. If there's no silence within ±3 s, stop and tell the owner.
-     2. Cut with `ffmpeg -ss <start> -to <end> -c copy`.
-     3. If the reciter says the surah's name at the start, it stays at the start of that file. It isn't a verse (see Step 2).
-     4. Record the given times and the snapped times in the report.
-3. Save the app's files to `data/reciters/mahmud-haleem/audio/`:
-   - files 01–29: copied as they are, named `bNN.mp3` (NN = the source number)
-   - file 30 cuts: `farsh-<sectionId>.mp3`
-4. For each file, record `sourceUrl`, `sourceStart` and `sourceEnd` (seconds within the source file; `null` for a whole file) and `bytes`.
+## Step 1: Find the section cuts
+1. Run whisper on the whole file 30 (and any extra files) with timestamps. Save the transcript.
+2. Find each surah or باب title spoken by the reciter («سورة البقرة», «سورة آل عمران», … «باب التكبير», …), in order.
+3. Each cut goes in the silence just before the title. Snap to the middle of the nearest silence within ±3 s.
+4. Check each cut: the verse texts of the section that follows should match the transcript after the cut.
+5. If a title isn't spoken, place the cut between the last verse of one section and the first verse of the next, using the transcript match.
+6. Keep the owner-given الأنعام/الأعراف cuts exactly.
+7. Cut one app file per section into `data/reciters/mahmud-haleem/audio/s<id>.mp3`. Record:
+   - `sourceUrl`
+   - `sourceStart`/`sourceEnd` in seconds within the source file
+   - `bytes`
+   - `sectionIds: [<id>]`
+8. Delete `audio/farsh-1.mp3` and `audio/farsh-2.mp3`.
+9. If a section is too short to stand alone, it may share a file with the next one; say so in the report.
 
-## Step 2: Find where each verse starts and ends
-For each app file, you know exactly which verses it contains, from its sections in `edition.json`.
+## Step 2: Verse boundaries in each app file
+1. Find pause candidates (relative threshold) and an energy curve.
+2. Fit N−1 verse boundaries with dynamic programming. Score each candidate on:
+   - pause depth and length
+   - closeness to the expected position (verse length ∝ letter count)
+   - the presence of a half-verse pause near the verse's middle
+3. Skip the spoken title at the start of each file.
+4. **Check with whisper:** for each verse, the transcript words just after its start should fuzzy-match the verse's first words, ignoring marks and normalizing أ/إ/آ/ٱ→ا, ى→ي, ة→ه.
+   - On a mismatch, try the neighboring candidates.
+   - Lower the confidence if it's still unresolved.
+5. Score each verse `confidence` 0–1 from pause clarity, position fit and the whisper match.
+6. Record unusual recitation in `notes` instead of guessing: a repeated verse, a skipped verse, or extra speech.
 
-1. **Find pauses.** Detect pauses (silence or low energy) with their positions and lengths. ffmpeg `silencedetect` at a few thresholds, or an energy curve in Python.
-2. **Watch out for two traps:**
-   - The reciter also pauses **between the two halves** of each verse, so not every pause is a verse boundary.
-   - There may be speech **before the first verse** of a file (the chapter title, استعاذة or بسملة). It must not be counted as a verse.
-3. **Pick the boundaries.** You need exactly N−1 boundaries for N verses, plus the start of the first verse and the end of the last. Choose them by combining two signals:
-   - pause length: verse pauses are usually longer than half-verse pauses
-   - expected position: verse duration is roughly proportional to the verse's text length with diacritics removed
-   Use dynamic programming to find the best assignment, rather than simply taking the N−1 longest pauses.
-4. **Verify with speech recognition if possible.** If an Arabic speech-recognition model can run locally (e.g. Whisper), transcribe the start of each detected verse and fuzzy-match it against that verse's first words, ignoring diacritics. Use the match to fix boundaries and to set the confidence.
-5. **Score each verse** with a `confidence` from 0 to 1, based on how clear the pause is, how close it is to the expected position, and the speech-recognition match if one was done.
-6. **Don't guess about unusual recitation.** If the reciter repeats a verse, skips one, or adds speech in the middle, record it in a `notes` array in `reciter.json`.
-
-## Step 3: Write the output (format from PLAN.md section 9)
+## Step 3: Output
 1. `data/reciters/mahmud-haleem/reciter.json`
-   - fields: `id`, `name`, `editionId: "qasim"`, `source` (the page URL above), `files`, `verses`, `notes`
-   - every verse 1..verseCount has exactly one entry
-   - times are in seconds from the start of that app file, with 2 decimal places, and `start < end`
-2. `data/reciters/mahmud-haleem/timing-report.md`, with:
-   - a summary
-   - the file-to-section matching table, including the given and snapped cut times for each surah in file 30
-   - the 40 verses with the lowest confidence, with file and time
-   - all `notes`
-3. `tools/timing-check.html`: a single standalone page for spot checks. It loads `reciter.json` and `edition.json`, and lists the verses with their text and a play button that plays exactly that verse's range. It sorts by lowest confidence first, and lets the owner nudge a start or end time by ±0.1 s and export the corrected `reciter.json`.
+   - fields: `id`, `name: "د. محمود بن حليم"`, `editionId: "qasim"`, `source` (the page URL), `partial`, `files`, `verses`, `notes`
+   - every verse in the range has exactly one entry `{n, file, start, end, confidence}`
+   - times are seconds within that app file, with 2 decimals, and `start < end`
+2. `data/reciters/mahmud-haleem/timing-report.md`:
+   - a summary: files, total size, how many verses are below 0.6 and below 0.8
+   - the section table: id, title, source file, cut times, how each cut was found, verse range
+   - the 40 lowest-confidence verses
+   - the notes
+   - the heading list with ids
+   - Problems met
+3. Make sure `tools/timing-check.html` still works with the new files. Update it only if it needs it.
 
 ## Limits
-- Do not change any `edition.json`, and do not build the app itself.
-- Keep `_source/` out of the app: only `audio/` gets shipped.
-- The owner has confirmed permission to use this recording in the app.
-- When finished, report: the number of app audio files, total audio size, how many verses are below 0.6 confidence, and the paths of the files you created.
+- Write only `data/reciters/mahmud-haleem/*` and `tools/timing-check.html`, plus scratch files.
+- Don't touch `data/editions/`. Another session is writing them right now.
+- Don't touch app code.
+- No git commits, no deploy.
+- When finished, report:
+  - the number of app files
+  - the total audio size
+  - the verses below 0.6
+  - the section list with ids and verse ranges
+  - the paths you wrote

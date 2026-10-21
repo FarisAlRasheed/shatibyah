@@ -1,94 +1,101 @@
-# Prompt: Shatibiyyah text agent (Al-Qasim + Zu'bi editions)
+# Prompt: Shatibiyyah text agent, run 2 (فرش الحروف to the end of the book)
 
-Recommended model: **Sonnet**. Copy everything below the line into the other agent, and attach the Al-Qasim PDF.
+Read `EXTRACTION-PLAN.md` first. It explains why this method differs from the pilot. Project folder: `/Users/faris/Documents/WebProjects/shatibiahReader`.
 
----
+You are building the exact text of **متن الشاطبية** in two editions, for a memorization app:
+- **`qasim`**: الشيخ عبد المحسن القاسم's edition, the one being memorized. The reference is `sources/qasim.pdf`, and **the PDF always wins**.
+- **`zubi`**: محمد تميم الزعبي's edition, exactly as Turath book **7754** has it.
 
-You are preparing the exact text of **متن الشاطبية (حرز الأماني ووجه التهاني)** for a memorization app, which ships two text editions:
-- **`qasim`**: the edition of **الشيخ عبد المحسن القاسم**. This is the main edition, the one that is memorized. The attached PDF is its reference: wherever any other source differs from the PDF, **the PDF wins**.
-- **`zubi`**: the edition edited by **محمد تميم الزعبي** (دار الهدى / دار الغوثاني, ط4 1426هـ), exactly as Turath has it.
+Every letter and every mark matters.
 
-Every letter and every diacritic matters.
+## Scope
+باب فرش الحروف from **سورة البقرة** to the **end of the book**. That includes بَابُ التَّكْبِيرِ, بَابُ مَخَارِجِ الحُرُوفِ وَصِفَاتِهَا and the closing verses. It is about verses 446–1173, on PDF pages **77–175**. Verse 446 is a guess: find the real first verse of فرش on PDF page 77.
 
-## Scope for this run: PILOT (two chapters only)
-This is a test run. Do the full Step 1 library search, but in Steps 2–4 work **only** on these two chapters under باب فرش الحروف:
-- **سورة الأنعام**
-- **سورة الأعراف**
+- Both `edition.json` files hold only this range, with `"partial": {"from": <first>, "to": 1173}` and `verseCount: 1173`.
+- **Overwrite** the pilot files. Verses 632–713 are redone under the new rules.
+- Keep the old pilot `qasim/edition.json` as `data/editions/qasim/_pilot-edition.json`, for comparison only.
 
-They are on Turath book 7754 pages 56–61; stop at the heading سورة الأنفال (page 62). Find the same two chapters in the PDF.
-- Both `edition.json` files contain only these verses and their two sections. Add `"partial": { "from": <first verse>, "to": <last verse> }` to each file. Keep `verseCount` as the full count of the whole poem (1173 unless the PDF says otherwise).
-- Validation checks continuity only within `partial.from`..`partial.to`.
-- At the end of the report, add **"Problems met"**: anything confusing, slow or error-prone in this prompt or in the sources, so the prompt can be improved before the full run.
+## Token budget (important: best result for the fewest tokens)
+- **Scripts do the bulk work.** Write one Python script that does all of the following and writes results to files:
+  - parse Zu'bi
+  - extract the text-layer tokens for every page
+  - match words to tokens
+  - build `qasim`
+  - flag doubtful verses
 
-(For the full run, this section will be removed.)
+  Print only short summaries (counts, flagged verse numbers), never whole pages or JSON dumps.
+- **Look at images only where needed:**
+  - flagged verses: no clean token match, a real (non-style) difference from Zu'bi, an unclear order or split, or a heading
+  - plus a random **10% sample** of the unflagged verses as a quality check
+  - crop **single verse lines** (about 2000×130 px, 300 DPI); never view whole pages except to find a heading's position
+  - if the sample shows any error the script missed, widen the check to that page and say so in the report
+- **Turath:** fetch only the pages in this range, once. Parse each result inside the script run, and don't repeat it back.
+- **Never re-read** a file or image you've already processed. Keep notes in `_progress.json`.
 
-Project folder: `/Users/faris/Documents/WebProjects/shatibiahReader`. Read `PLAN.md` there first, especially section 2 and section 9, "Data format".
+## Fixed conventions (don't change them; report anything that doesn't fit)
+1. **Exactly as printed, with the PDF's own character codes.** Keep the Uthmani forms (U+06E1 sukun, U+065E, U+0657, ٱ, ٰ, ۥ, ٓ, etc.) as they appear. Don't merge them into the plain marks.
+2. **Keep punctuation as printed:** «،» «:» «« »» ( ) and the rest.
+3. **Kashida U+0640:** remove the justification stretching (`فَــتْــحُ` → `فَتْحُ`). Keep it only where a word is split across the two halves: `الـ` at the end of half a, `ـخَفِيفُ` at the start of half b.
+4. **Never "correct" the poem.** Word splits across halves and unusual spellings are intentional.
+5. Store the text as NFC.
 
-## Step 1: Look for a ready digital Al-Qasim text
-Search the official online libraries:
-- **المكتبة الشاملة** (shamela.ws), through web search or by fetching its pages.
-- **Turath** (turath.io), with the Turath tools (search_turath / get_book / get_page).
+## Tools (no installs needed)
+- **Render a page:** `swift tools/render-pdf.swift sources/qasim.pdf <outDir> <first> <last> 300`, with outDir in your scratchpad. 300 DPI is sharp enough for every mark.
+- **Zoom in:** crop with `sips -c <h> <w> --cropOffset <y> <x> in.png --out crop.png`, then look at the crop with the Read tool.
+- **Exact character codes:** the PDF text layer, via Python `pypdf` (installed): `PdfReader('sources/qasim.pdf').pages[i].extract_text()`. Its **line order is scrambled** (halves swapped, words broken by justification), but each **word token keeps its exact code points**. Use the tokens for the codes and the image for the order.
+- **Turath:** the MCP tools `get_book` (with `include_indexes: true`) and `get_page`. Turath `page_id` is not the printed page number, so use the index to find the pages.
 
-Try queries such as:
-- `الشاطبية عبد المحسن القاسم`
-- `متن الشاطبية القاسم`
-- `حرز الأماني القاسم`
+## Step 1: Zu'bi from Turath
+- Parse every verse in the range from Turath book 7754 into `{n, a, b}`, with halves separated by ` ... `. Convert Arabic-Indic digits to integers.
+- Keep the Zu'bi text exactly as Turath has it.
+- If a verse lacks the separator, split it where the PDF splits, but only if the words are the same. List these verses in the report.
+- Write the chapter list using the **section id rule** below.
+- Save to `data/editions/zubi/edition.json`. Write the file directly from your script's parsed output, never by retyping. If a tool's output can't be saved directly, parse it from the tool result inside the same script run.
 
-A text only counts as a match if its title page or description names Al-Qasim's edition. (A Turath search on 2026-10-21 found none, so it's likely you won't find one.)
+## Step 2: Al-Qasim, page by page (hybrid method)
+For each PDF page:
+1. Render it at 300 DPI, and extract its text-layer tokens.
+2. For each verse on the page, build the Al-Qasim halves:
+   1. Start from the Zu'bi words for that verse as the skeleton (order and word boundaries).
+   2. For each word, find the matching text-layer token (compare after removing marks and kashida). Take the **token's exact code points**, then drop the justification kashida.
+   3. Where no token matches cleanly (merged or broken tokens), rebuild the word from the token fragments and the image.
+   4. Read the order of the halves and the split point from the image, never from the text layer.
+3. **Visual check of flagged verses (plus the 10% sample):** crop the verse's line(s), compare letter by letter and mark by mark, and zoom further on any word that differs from Zu'bi. If image and text layer disagree, the image is right; record it. The text layer carries the exact typeset glyph codes, so an unflagged verse whose tokens all match cleanly is trusted.
+4. **Unclear marks:** don't guess. Use the most likely reading and list the verse under «Uncertain».
+5. **Headings:** take them from the page as printed (e.g. «سُورَةُ سَبَأَ وَفَاطِرٍ» stays one section).
+6. **Save progress** to `data/editions/qasim/_progress.json` after every page: the last page done, plus the verses so far. If interrupted, resume from there.
 
-- **If you find it:** use it as the starting text for `qasim`, then do Step 3 against the PDF anyway.
-- **If not:** the starting text for `qasim` is the Zu'bi text from Step 2.
+Save to `data/editions/qasim/edition.json`, with `"id": "qasim"` and the same `name` and `source` style as the pilot file. Put the PDF page range in `source`.
 
-Write down in the report which libraries and queries you tried, and what you found.
+## Section id rule (the timing agent applies the same rule)
+- Make the list of **every heading in the whole book**, in printed order: المقدمة = 1, then every باب, and under فرش الحروف every surah heading. Take it from the **PDF's table of contents (PDF pages 177–180, via the text layer)**. If something there is unclear, check it against the headings in the pages themselves.
+- A section's `id` is its 1-based position in that list.
+- `kind` is `"surah"` for headings under فرش, `"bab"` otherwise.
+- `parent` is the فرش id for its surahs, and `null` otherwise.
+- Each section's `start`/`end` is its verse range. فرش itself spans البقرة's first verse up to the verse before بَابُ التَّكْبِيرِ.
+- Write the full heading list with ids into the report, including the أصول headings outside this run, so later runs reuse the same ids.
 
-## Step 2: Get the Zu'bi text from Turath (needed in every case)
-Turath **book 7754** (متن الشاطبية, ت. محمد تميم الزعبي) has the verses on Turath pages 7–100.
-- Verses look like `١ - صدر ... عجز`. Chapter titles are inside `<span data-type="title">` tags.
-- Call `get_book` with `include_indexes: true` to get the chapter list and page numbers.
-
-Parse every verse into its number `n`, first half `a` and second half `b`. The halves are separated by ` ... `.
-- Convert Arabic-Indic digits to normal numbers for `n`.
-- Keep the chapter structure. Under باب فرش الحروف, the surah headings are sub-sections.
-- Keep the Zu'bi text **exactly** as Turath has it. Don't change any letter or mark.
-- A few Zu'bi verses lack the ` ... ` separator (for example verse 107). For those, split where the Al-Qasim PDF splits, but **only if the words are the same**. List every such verse under "Zu'bi split points supplied" in the report.
-
-Save this as `data/editions/zubi/edition.json`, with `"id": "zubi"`.
-
-## Step 3: Build the Al-Qasim text by checking every verse against the PDF
-Start from the starting text chosen in Step 1. Go through the PDF page by page and compare each verse, letter by letter and mark by mark. Check:
-- every letter
-- every vowel mark: fatha, damma, kasra, sukun, shadda, tanween, superscript alef, hamza forms, madda, wasla
-- where the line splits into its two halves
-- the verse number
-- chapter titles, and the verse each chapter starts on
-
-Rules:
-- **Never "correct" the poem.** A word split across the two halves (e.g. ending `الـ` and the next half starting `ـخفيف`) is intentional. Copy exactly what the PDF prints.
-- **Avoid false differences.** Before comparing, normalize both sides to Unicode NFC and treat a different order of stacked marks (e.g. shadda+fatha vs fatha+shadda) as equal. The output must still follow the PDF.
-- Where the PDF differs from the starting text, write the PDF's version into `qasim` and record the difference.
-- If a mark in the PDF is unclear (blurry, cut off), do **not** guess. Use the most likely reading, but list the verse under "Uncertain" in the report.
-- Work in batches of pages. After each batch, save your progress to `data/editions/qasim/_progress.json` (the last verse checked plus the work so far), so the job can resume if interrupted.
-
-Save the result as `data/editions/qasim/edition.json`, with `"id": "qasim"`. In `source`, put the PDF file name and the printing details from its title page.
-
-## Step 4: Write the differences report
-Write `data/editions/qasim/diff-report.md`. It must contain:
-1. **Summary:**
-   - libraries searched and what was found
-   - the starting source used
-   - total verses
-   - number of verses where Zu'bi and Al-Qasim differ
-   - number of uncertain verses
-2. **Differences table**, with columns verse · half (a/b) · Zu'bi text · Al-Qasim text · what changed (e.g. "فتحة ← ضمة on ..."). This compares the final `zubi` and `qasim` files, whatever the starting source was.
-3. **Uncertain:** verse, PDF page, and what is unclear.
-4. **Zu'bi split points supplied:** the verses from Step 2 that were missing a separator.
-5. **Chapter differences:** any differences in chapter titles or boundaries between the two editions.
-6. **Validation result** for **both** files:
-   - verse numbers are continuous with no gaps or duplicates
-   - every verse has a non-empty `a` and `b`
-   - sections cover every verse with no overlaps
+## Step 3: Report (`data/editions/qasim/diff-report.md`)
+1. **Summary:** pages, verses, the number of real differences, the number of style-only differences, and the number of uncertain verses.
+2. **Real differences table** (Zu'bi → Al-Qasim): letters, vowels, shadda, tanween, hamza forms. **Don't** list style-only differences one by one (mark order, `لاَ`/`لَا` alef-fatha placement, ى/ا at the end of a rhyme word). Give their count by kind instead.
+3. **Uncertain:** verse, PDF page, what is unclear, and your reading.
+4. **Image vs text layer:** where the two disagreed, and what you chose.
+5. **The heading list with ids.**
+6. **Validation, for both files:**
+   - verse numbers are continuous from partial.from to 1173
+   - `a` and `b` are non-empty
+   - sections cover every verse, with nesting only فرش → surah
    - the text is NFC
+   - no U+0640 remains except at word splits
+   - no characters outside Arabic letters, marks, and the allowed punctuation `، : « » ( ) . ؟ !`
+7. **Problems met:** anything to fix in this prompt for the أصول run.
 
 ## Limits
-- Do not create or change any other files in the project, and do not start building the app.
-- When finished, report: the libraries checked, the starting source, the number of differing verses, the number uncertain, and the paths of the three files.
+- Write only `data/editions/qasim/*` and `data/editions/zubi/*`, plus scratch files in your scratchpad. Don't touch app code, `data/reciters/`, or other files. Another session is doing the audio at the same time.
+- No git commits, no deploy.
+- When finished, report:
+  - the verse range
+  - the number of real differences
+  - the number of uncertain verses
+  - the section list with ids and ranges
+  - the paths of the files you wrote

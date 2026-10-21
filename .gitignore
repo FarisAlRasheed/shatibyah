@@ -2,3 +2,5 @@ node_modules
 dist
 data/reciters/*/_source
 .DS_Store
+
+sources/
