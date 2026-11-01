@@ -459,11 +459,11 @@ function Downloads({ edition, reciter }: { edition: Edition; reciter: Reciter })
   )
 }
 
-/** [«نسخة القاسم», «مع التلاوة»]: the editor's family name, and whether a recitation exists. */
+/** [«نسخة القاسم», «مع القراءة»]: the editor's family name, and whether a recitation exists. */
 function editionLabel(e: { id: string; name: string }, m: Manifest) {
   const who = e.name.replace(/^متن الشاطبية\s*—\s*/, '').trim().split(/\s+/).pop()
   const audio = m.reciters.some((r) => r.editionId === e.id)
-  return [`نسخة ${who}`, audio ? 'مع التلاوة' : 'نص فقط'] as const
+  return [`نسخة ${who}`, audio ? 'مع القراءة' : 'نص فقط'] as const
 }
 
 /** The printed colours: red reader codes and green Quranic words, tap to explain. */
@@ -550,7 +550,7 @@ export function SettingsScreen(p: FieldProps & {
         <p>{p.edition.source}</p>
         {p.reciter && (
           <p>
-            التلاوة: {p.reciter.name} —{' '}
+            القارئ: {p.reciter.name} —{' '}
             <a href={p.reciter.source} target="_blank" rel="noreferrer">
               المصدر
             </a>

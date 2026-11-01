@@ -139,7 +139,7 @@ export function NoteSheet(p: { n: number; edition: Edition; notes: Notes; setNot
   )
 }
 
-const FLAG_TYPES = { timing: 'توقيت التلاوة غير صحيح', text: 'النص يختلف عن المطبوع', other: 'مشكلة أخرى' }
+const FLAG_TYPES = { timing: 'توقيت القراءة غير صحيح', text: 'النص يختلف عن المطبوع', other: 'مشكلة أخرى' }
 
 export function FlagSheet(p: { n: number; edition: Edition; reciter: Reciter | null; playState: PlayState; onClose: () => void }) {
   const [type, setType] = useState<keyof typeof FLAG_TYPES>(p.reciter ? 'timing' : 'text')
@@ -237,7 +237,7 @@ function duration(sec: number) {
 /** «٥ أبيات × ٣ = ١٥ مرة · نحو ٤ دقائق», mirroring how the player walks the queue. */
 function repeatSummary(verses: number[], r: RepeatSettings, single: boolean, timings?: Map<number, VerseTiming>) {
   const queue = timings ? verses.filter((n) => timings.has(n)) : verses
-  if (!queue.length) return 'لا توجد تلاوة لهذه الأبيات.'
+  if (!queue.length) return 'لا توجد قراءة لهذه الأبيات.'
   const v = r.verseTimes
   const rounds = single ? 1 : r.rangeTimes
   const endless = v === 0 || rounds === 0

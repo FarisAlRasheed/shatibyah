@@ -41,6 +41,9 @@ export const idleState: PlayState = {
 // working while the phone is locked (requestAnimationFrame would stop there).
 // During the pause between repeats a second element loops silence, so iOS keeps the
 // audio session (and the page's timers) alive while the screen is locked.
+// Consecutive verses play straight through the file. Wherever playback must jump (a repeat,
+// a pause, a skipped verse), it starts a little before the verse and stops a little after it,
+// inside the silence between verses, so the jump never clips the reciter.
 export class RepeatPlayer {
   readonly audio = new Audio()
   private keepAlive = new Audio(silentWav())
@@ -51,6 +54,7 @@ export class RepeatPlayer {
   private endTimer = 0
   private gapTimer = 0
   private token = 0 // invalidates stale async steps after stop/jump
+  private bounds = new Map<string, { from: number; to: number }>() // padded play range per verse
 
   constructor(
     private urlFor: (fileId: string) => string,
@@ -72,6 +76,24 @@ export class RepeatPlayer {
   setMeta(fn: (verse: number) => VerseMeta) {
     this.meta = fn
     this.updateMediaMetadata()
+  }
+
+  /** All of the reciter's timings, so each verse can be padded into the silence around it. */
+  setTimings(verses: VerseTiming[]) {
+    this.bounds.clear()
+    const sorted = verses.slice().sort((a, b) => a.n - b.n)
+    sorted.forEach((t, i) => {
+      const prev = sorted[i - 1]?.file === t.file ? sorted[i - 1] : null
+      const next = sorted[i + 1]?.file === t.file ? sorted[i + 1] : null
+      // The lead takes the larger share of the gap: a soft opening (a و) can begin before t.start.
+      const lead = prev ? Math.min(MAX_PAD, Math.max(0, t.start - prev.end) * 0.6) : Math.min(FIRST_LEAD, t.start)
+      const tail = next ? Math.min(MAX_PAD, Math.max(0, next.start - t.end) * 0.4) : MAX_PAD
+      this.bounds.set(key(t), { from: t.start - lead, to: t.end + tail })
+    })
+  }
+
+  private range(t: VerseTiming) {
+    return this.bounds.get(key(t)) ?? { from: t.start, to: t.end }
   }
 
   start(queue: VerseTiming[], opts: PlayOptions, startIndex = 0) {
@@ -122,7 +144,7 @@ export class RepeatPlayer {
     if (this.state.status !== 'paused') return
     this.primeKeepAlive()
     const t = this.current()
-    if (t && this.audio.currentTime >= t.start && this.audio.currentTime < t.end - 0.05) {
+    if (t && this.audio.currentTime >= this.range(t).from && this.audio.currentTime < this.stopAt() - 0.05) {
       this.set({ status: 'playing' })
       void this.audio.play().catch((e) => this.fail(e))
       this.scheduleEnd()
@@ -190,7 +212,7 @@ export class RepeatPlayer {
         seek = true
       }
       if (token !== this.token) return
-      if (seek) this.audio.currentTime = t.start
+      if (seek) this.audio.currentTime = this.range(t).from
       this.audio.playbackRate = this.opts.speed
       await this.audio.play()
       if (token !== this.token) return
@@ -207,23 +229,21 @@ export class RepeatPlayer {
     window.clearTimeout(this.endTimer)
     const t = this.current()
     if (!t || this.state.status !== 'playing') return
-    const ms = ((t.end - this.audio.currentTime) / (this.audio.playbackRate || 1)) * 1000
+    const ms = ((this.stopAt() - this.audio.currentTime) / (this.audio.playbackRate || 1)) * 1000
     this.endTimer = window.setTimeout(() => this.checkEnd(), Math.max(0, ms - 30))
   }
 
   private checkEnd() {
     const t = this.current()
     if (!t || this.state.status !== 'playing') return
-    if (this.audio.currentTime >= t.end - 0.04) this.verseEnded()
+    if (this.audio.currentTime >= this.stopAt() - 0.04) this.verseEnded()
     else this.scheduleEnd()
   }
 
-  private verseEnded() {
-    if (this.state.status !== 'playing') return
-    const cur = this.current()
-    const { verseTimes, rangeTimes, pause } = this.opts
+  /** What comes after the current verse: the next queue position and counts, or null at the end. */
+  private advance() {
+    const { verseTimes, rangeTimes } = this.opts
     let { index, verseRound, rangeRound } = this.state
-
     if (verseTimes === 0 || verseRound < verseTimes) {
       verseRound++
     } else {
@@ -234,17 +254,39 @@ export class RepeatPlayer {
           index = 0
           rangeRound++
         } else {
-          this.audio.pause()
-          this.clearTimers()
-          this.set({ ...idleState })
-          return
+          return null
         }
       }
     }
+    return { index, verseRound, rangeRound }
+  }
 
+  /** The next verse follows this one in the same file with no pause, so the audio just runs on. */
+  private flowsInto(next: VerseTiming | undefined) {
+    const cur = this.current()
+    return !!next && this.opts.pause === 0 && next.file === cur.file && next.n === cur.n + 1
+  }
+
+  /** Where the current verse hands over: its own end when the audio runs on, else its padded end. */
+  private stopAt() {
+    const t = this.current()
+    const step = this.advance()
+    return this.flowsInto(step ? this.queue[step.index] : undefined) ? t.end : this.range(t).to
+  }
+
+  private verseEnded() {
+    if (this.state.status !== 'playing') return
+    const step = this.advance()
+    if (!step) {
+      this.audio.pause()
+      this.clearTimers()
+      this.set({ ...idleState })
+      return
+    }
+    const { index, verseRound, rangeRound } = step
     const next = this.queue[index]
-    // Consecutive verses in one file with no pause: let the audio run on, no seek click.
-    const flows = pause === 0 && next !== cur && next.file === cur.file && Math.abs(next.start - cur.end) < 0.35
+    const flows = this.flowsInto(next)
+    const { pause } = this.opts
     this.set({ index, verse: next.n, verseRound, rangeRound })
     if (flows) {
       this.updateMediaMetadata()
@@ -370,6 +412,10 @@ export class RepeatPlayer {
     }
   }
 }
+
+const MAX_PAD = 0.3 // seconds of padding at most on each side of a verse
+const FIRST_LEAD = 0.15 // before a file's first verse the spoken title sits close, so stay short
+const key = (t: VerseTiming) => `${t.file}:${t.n}`
 
 // One second of 8 kHz 8-bit mono silence as a WAV data URL (built here, nothing to download).
 function silentWav() {

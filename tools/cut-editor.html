@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>محرر القص</title>
+<!-- Dev tool: open http://localhost:5173/tools/cut-editor.html with the dev server running.
+     The owner sets the true start/end of uncertain verses by ear; Export gives cuts-feedback.json. -->
+<link rel="stylesheet" href="/node_modules/@fontsource/scheherazade-new/400.css">
+<style>
+  body{font-family:system-ui,sans-serif;margin:0;padding:16px 20px 80px;background:#faf8f3;color:#222}
+  h1{font-size:18px;margin:0 0 4px}
+  .help{font-size:13px;color:#555;margin:0 0 12px;line-height:1.7}
+  .bar{position:sticky;top:0;z-index:2;background:#faf8f3;display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:8px 0;border-bottom:1px solid #e5e0d4;margin-bottom:12px}
+  .card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px;margin-bottom:12px}
+  .card.edited{border-color:#2f7d4f}
+  .card.ok{border-color:#3a6fb0}
+  .head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .num{font-weight:700;font-size:15px}
+  .tag{font-size:12px;padding:1px 7px;border-radius:9px;background:#eee;color:#444}
+  .tag.low{background:#fbe6d4;color:#8a4a12}
+  .tag.baq{background:#e2efe6;color:#245a37}
+  .txt{font-family:"Scheherazade New","Amiri",serif;font-size:24px;line-height:1.9;margin:4px 0 8px}
+  canvas{width:100%;height:150px;display:block;border-radius:6px;background:#fcfbf8;border:1px solid #eee;cursor:crosshair;touch-action:none}
+  .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;direction:ltr;font-size:13px}
+  .row .grp{display:flex;gap:4px;align-items:center;padding:3px 6px;border:1px solid #eee;border-radius:7px}
+  button{padding:4px 9px;font-size:13px;cursor:pointer;border:1px solid #ccc;background:#fff;border-radius:6px}
+  button:hover{background:#f3f0e8}
+  button.on{background:#2b2b2b;color:#fff;border-color:#2b2b2b}
+  .t{min-width:62px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+  .delta{font-variant-numeric:tabular-nums;color:#777;min-width:52px}
+  input.note{flex:1;min-width:180px;padding:4px 6px;font-size:13px;border:1px solid #ddd;border-radius:6px;direction:rtl}
+  .legend{display:flex;gap:14px;font-size:12px;color:#555;flex-wrap:wrap}
+  .legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-left:4px}
+  #msg{font-size:13px;color:#a33}
+</style>
+</head>
+<body>
+<h1>محرر قصّ الأبيات</h1>
+<p class="help">
+  اسحب الخط <b style="color:#1f8a4c">الأخضر</b> إلى بداية البيت والخط <b style="color:#c0392b">الأحمر</b> إلى نهايته. اضغط في أي مكان على الموجة لتسمع من تلك النقطة.
+  «تكبير البداية/النهاية» يعرض ثانيتين فقط للضبط الدقيق. إن كان القص صحيحاً اضغط «القص صحيح». التعديلات تُحفظ تلقائياً في المتصفح، وفي النهاية اضغط «تصدير».
+  مقياس الموجة بالديسيبل من مستوى الصمت، حتى تظهر الأصوات الخافتة مثل الواو.
+</p>
+<div class="bar">
+  <button id="exp">⤓ تصدير cuts-feedback.json</button>
+  <button id="stop">■ إيقاف (Space)</button>
+  <span id="count"></span>
+  <span id="msg"></span>
+  <div class="legend">
+    <span><i style="background:#1f8a4c"></i>بدايتك</span>
+    <span><i style="background:#c0392b"></i>نهايتك</span>
+    <span><i style="background:#7a9cc6"></i>القص الحالي</span>
+    <span><i style="background:#bbb"></i>حدود البيت المجاور</span>
+  </div>
+</div>
+<div id="list"></div>
+<script>
+const RECITER = 'mahmud-haleem'
+const BASE = '/data/reciters/' + RECITER + '/'
+const LOWEST = 30      // the lowest-confidence verses
+const BAQARAH = 5      // plus a few البقرة verses that open with و
+const PAD = 1.5        // seconds shown before the start and after the end
+const KEY = 'cut-editor:' + RECITER
+
+const ctx = new AudioContext()
+const $ = (s) => document.querySelector(s)
+let saved = {}
+try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') } catch {}
+const cards = []
+let playing = null // { card, sources, t0, offset, until, raf }
+
+async function init() {
+  let rec, ed
+  try {
+    rec = await (await fetch(BASE + 'reciter.json')).json()
+    ed = await (await fetch('/data/editions/' + rec.editionId + '/edition.json')).json()
+  } catch {
+    $('#msg').textContent = 'تعذّر تحميل البيانات. شغّل خادم التطوير وافتح الصفحة من localhost:5173'
+    return
+  }
+  const text = Object.fromEntries(ed.verses.map((v) => [v.n, v]))
+  const byN = Object.fromEntries(rec.verses.map((v) => [v.n, v]))
+
+  const low = rec.verses.slice().sort((a, b) => a.confidence - b.confidence || a.n - b.n).slice(0, LOWEST)
+  const taken = new Set(low.map((v) => v.n))
+  const waw = rec.verses.filter((v) => v.file === 's35' && !taken.has(v.n) && /^و/.test(text[v.n]?.a || ''))
+  const baq = Array.from({ length: BAQARAH }, (_, i) => waw[Math.floor(((i + 0.5) * waw.length) / BAQARAH)])
+  const samples = [...low.map((v) => ({ v, kind: 'low' })), ...baq.map((v) => ({ v, kind: 'baq' }))]
+  samples.sort((a, b) => a.v.n - b.v.n)
+
+  for (const s of samples) {
+    const v = s.v
+    const prev = byN[v.n - 1]?.file === v.file ? byN[v.n - 1] : null
+    const next = byN[v.n + 1]?.file === v.file ? byN[v.n + 1] : null
+    const st = saved[v.n] || {}
+    cards.push(makeCard({
+      v, kind: s.kind, prev, next, t: text[v.n] || { a: '', b: '' },
+      start: st.start ?? v.start, end: st.end ?? v.end, status: st.status || '', note: st.note || '',
+      view: 'all', w0: Math.max(0, v.start - PAD), w1: v.end + PAD, buf: null,
+    }))
+  }
+  updateCount()
+
+  // Decode one file at a time and keep only each verse's window, so memory stays small.
+  const files = [...new Set(cards.map((c) => c.v.file))]
+  for (const id of files) {
+    const f = rec.files.find((f) => f.id === id)
+    try {
+      const audio = await ctx.decodeAudioData(await (await fetch(BASE + f.path)).arrayBuffer())
+      for (const c of cards.filter((c) => c.v.file === id)) {
+        c.w1 = Math.min(c.w1, audio.duration)
+        const sr = audio.sampleRate, a = Math.floor(c.w0 * sr), b = Math.floor(c.w1 * sr)
+        const buf = ctx.createBuffer(1, b - a, sr)
+        const out = buf.getChannelData(0)
+        for (let ch = 0; ch < audio.numberOfChannels; ch++) {
+          const src = audio.getChannelData(ch)
+          for (let i = 0; i < out.length; i++) out[i] += src[a + i] / audio.numberOfChannels
+        }
+        c.buf = buf
+        levels(c)
+        draw(c)
+      }
+    } catch (e) {
+      $('#msg').textContent = 'تعذّر فك الملف ' + id
+    }
+  }
+}
+
+// Noise floor (5th percentile) and peak of 20 ms frames, so the envelope spans silence → loudest.
+function levels(c) {
+  const d = c.buf.getChannelData(0), n = Math.floor(c.buf.sampleRate * 0.02), dbs = []
+  for (let i = 0; i + n <= d.length; i += n) {
+    let s = 0
+    for (let j = i; j < i + n; j++) s += d[j] * d[j]
+    dbs.push(10 * Math.log10(s / n + 1e-12))
+  }
+  dbs.sort((a, b) => a - b)
+  c.floor = dbs[Math.floor(dbs.length * 0.05)] - 2
+  c.peak = dbs[dbs.length - 1]
+}
+
+function makeCard(c) {
+  const el = document.createElement('div')
+  el.className = 'card'
+  el.innerHTML = `
+    <div class="head"><span class="num"></span><span class="tag kind"></span><span class="tag">ثقة <b class="conf"></b></span><span class="tag file"></span></div>
+    <div class="txt"></div>
+    <canvas></canvas>
+    <div class="row">
+      <span class="grp">start <button data-n="s,-0.05">−.05</button><button data-n="s,-0.01">−.01</button><span class="t ts"></span><button data-n="s,0.01">+.01</button><button data-n="s,0.05">+.05</button><span class="delta ds"></span></span>
+      <span class="grp">end <button data-n="e,-0.05">−.05</button><button data-n="e,-0.01">−.01</button><span class="t te"></span><button data-n="e,0.01">+.01</button><button data-n="e,0.05">+.05</button><span class="delta de"></span></span>
+      <span class="grp"><button data-v="all">كامل</button><button data-v="start">تكبير البداية</button><button data-v="end">تكبير النهاية</button></span>
+    </div>
+    <div class="row">
+      <button data-p="cut">▶ القص</button>
+      <button data-p="pre">▶ من قبل البداية بثانية</button>
+      <button data-p="tail">▶ آخر ثانيتين</button>
+      <button data-p="rep">↻ تكرار ×3</button>
+      <button data-p="ok">✓ القص صحيح</button>
+      <button data-p="reset">↺ إرجاع</button>
+      <input class="note" placeholder="ملاحظة (اختياري)">
+    </div>`
+  el.querySelector('.num').textContent = 'البيت ' + c.v.n
+  el.querySelector('.kind').textContent = c.kind === 'low' ? 'ثقة منخفضة' : 'البقرة · واو'
+  el.querySelector('.kind').classList.add(c.kind)
+  el.querySelector('.conf').textContent = c.v.confidence
+  el.querySelector('.file').textContent = c.v.file
+  el.querySelector('.txt').textContent = c.t.a + '  …  ' + c.t.b
+  const note = el.querySelector('.note')
+  note.value = c.note
+  note.oninput = () => { c.note = note.value; persist(c) }
+  c.el = el
+  c.canvas = el.querySelector('canvas')
+
+  el.querySelectorAll('[data-n]').forEach((b) => b.onclick = () => {
+    const [k, d] = b.dataset.n.split(',')
+    setEdge(c, k === 's' ? 'start' : 'end', (k === 's' ? c.start : c.end) + +d)
+  })
+  el.querySelectorAll('[data-v]').forEach((b) => b.onclick = () => { c.view = b.dataset.v; draw(c) })
+  el.querySelectorAll('[data-p]').forEach((b) => b.onclick = () => {
+    const p = b.dataset.p
+    if (p === 'cut') play(c, c.start, c.end)
+    else if (p === 'pre') play(c, c.start - 1, c.end)
+    else if (p === 'tail') play(c, c.end - 2, c.end)
+    else if (p === 'rep') play(c, c.start, c.end, 3)
+    else if (p === 'ok') { c.status = c.status === 'ok' ? '' : 'ok'; persist(c) }
+    else if (p === 'reset') { c.start = c.v.start; c.end = c.v.end; c.status = ''; persist(c) }
+  })
+  attachDrag(c)
+  $('#list').append(el)
+  refresh(c)
+  return c
+}
+
+function setEdge(c, k, t) {
+  t = Math.round(t * 100) / 100
+  t = Math.min(Math.max(t, c.w0), c.w1)
+  if (k === 'start') c.start = Math.min(t, c.end - 0.2)
+  else c.end = Math.max(t, c.start + 0.2)
+  if (c.status === 'ok') c.status = ''
+  persist(c)
+}
+
+function persist(c) {
+  const edited = Math.abs(c.start - c.v.start) > 0.001 || Math.abs(c.end - c.v.end) > 0.001
+  // 'ok' = the owner confirmed the current cut (edited or not); moving an edge clears it.
+  if (c.status !== 'ok') c.status = edited ? 'edited' : ''
+  if (c.status || c.note) saved[c.v.n] = { start: c.start, end: c.end, status: c.status, note: c.note }
+  else delete saved[c.v.n]
+  try { localStorage.setItem(KEY, JSON.stringify(saved)) } catch {}
+  refresh(c)
+  updateCount()
+}
+
+function refresh(c) {
+  const el = c.el
+  el.classList.toggle('edited', c.status === 'edited')
+  el.classList.toggle('ok', c.status === 'ok')
+  el.querySelector('.ts').textContent = c.start.toFixed(2)
+  el.querySelector('.te').textContent = c.end.toFixed(2)
+  const fmt = (d) => (Math.abs(d) < 0.005 ? '' : (d > 0 ? '+' : '') + d.toFixed(2) + 's')
+  el.querySelector('.ds').textContent = fmt(c.start - c.v.start)
+  el.querySelector('.de').textContent = fmt(c.end - c.v.end)
+  el.querySelector('[data-p="ok"]').classList.toggle('on', c.status === 'ok')
+  el.querySelectorAll('[data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === c.view))
+  draw(c)
+}
+
+function updateCount() {
+  const done = cards.filter((c) => c.status).length
+  $('#count').textContent = `تمّ ${done} من ${cards.length}`
+}
+
+function range(c) {
+  if (c.view === 'start') return [Math.max(c.w0, c.start - 1.2), Math.min(c.w1, c.start + 0.8)]
+  if (c.view === 'end') return [Math.max(c.w0, c.end - 0.8), Math.min(c.w1, c.end + 1.2)]
+  return [c.w0, c.w1]
+}
+
+function draw(c, head) {
+  const cv = c.canvas, dpr = devicePixelRatio || 1
+  const W = cv.clientWidth, H = cv.clientHeight
+  if (cv.width !== W * dpr) { cv.width = W * dpr; cv.height = H * dpr }
+  const g = cv.getContext('2d')
+  g.setTransform(dpr, 0, 0, dpr, 0, 0)
+  g.clearRect(0, 0, W, H)
+  const [r0, r1] = range(c)
+  const X = (t) => ((t - r0) / (r1 - r0)) * W // time runs left to right
+  const AXIS = 16, top = 6, bot = H - AXIS
+
+  // selected region
+  g.fillStyle = 'rgba(31,138,76,0.07)'
+  g.fillRect(X(c.start), 0, X(c.end) - X(c.start), bot)
+
+  // envelope in dB, so a soft و shows up
+  if (c.buf) {
+    const d = c.buf.getChannelData(0), sr = c.buf.sampleRate
+    g.fillStyle = '#4a4a4a'
+    for (let x = 0; x < W; x++) {
+      const a = Math.floor((r0 + (x / W) * (r1 - r0) - c.w0) * sr)
+      const b = Math.floor((r0 + ((x + 1) / W) * (r1 - r0) - c.w0) * sr)
+      let s = 0, n = 0
+      for (let i = Math.max(0, a); i < Math.min(d.length, Math.max(b, a + 1)); i++) { s += d[i] * d[i]; n++ }
+      if (!n) continue
+      const db = 10 * Math.log10(s / n + 1e-12)
+      const h = Math.max(0, Math.min(1, (db - c.floor) / (c.peak - c.floor))) * (bot - top)
+      const mid = top + (bot - top) / 2
+      g.fillRect(x, mid - h / 2, 1, Math.max(1, h))
+    }
+  } else {
+    g.fillStyle = '#999'; g.font = '13px system-ui'; g.fillText('… loading audio', 10, H / 2)
+  }
+
+  // time axis
+  g.fillStyle = '#888'; g.font = '10px system-ui'; g.strokeStyle = '#ddd'
+  const step = r1 - r0 <= 3 ? 0.1 : 0.5
+  for (let t = Math.ceil(r0 / step) * step; t <= r1; t += step) {
+    const x = X(t), major = Math.abs(t / (step * 5) - Math.round(t / (step * 5))) < 1e-6
+    g.fillRect(x, bot, 1, major ? 6 : 3)
+    if (major || step === 0.5) g.fillText(t.toFixed(step < 0.5 ? 1 : 1), x + 2, H - 2)
+  }
+
+  const line = (t, color, w, dash) => {
+    if (t < r0 || t > r1) return
+    g.save(); g.strokeStyle = color; g.lineWidth = w; g.setLineDash(dash || [])
+    g.beginPath(); g.moveTo(X(t), 0); g.lineTo(X(t), bot); g.stroke(); g.restore()
+  }
+  if (c.prev) line(c.prev.end, '#bbb', 1, [3, 3])
+  if (c.next) line(c.next.start, '#bbb', 1, [3, 3])
+  line(c.v.start, '#7a9cc6', 1.5, [2, 2])
+  line(c.v.end, '#7a9cc6', 1.5, [2, 2])
+  for (const [t, color] of [[c.start, '#1f8a4c'], [c.end, '#c0392b']]) {
+    line(t, color, 2.5)
+    if (t >= r0 && t <= r1) { g.fillStyle = color; g.fillRect(X(t) - 6, 0, 12, 10) }
+  }
+  if (head != null) line(head, '#e67e22', 1.5)
+}
+
+function timeAt(c, ev) {
+  const r = c.canvas.getBoundingClientRect(), [r0, r1] = range(c)
+  return r0 + ((ev.clientX - r.left) / r.width) * (r1 - r0)
+}
+
+function attachDrag(c) {
+  let drag = null
+  c.canvas.addEventListener('pointerdown', (ev) => {
+    const t = timeAt(c, ev), [r0, r1] = range(c)
+    const px = (dt) => Math.abs(dt) / (r1 - r0) * c.canvas.clientWidth
+    const ds = px(t - c.start), de = px(t - c.end)
+    if (Math.min(ds, de) <= 8) {
+      drag = ds <= de ? 'start' : 'end'
+      c.canvas.setPointerCapture(ev.pointerId)
+    } else {
+      play(c, t, c.w1)
+    }
+  })
+  c.canvas.addEventListener('pointermove', (ev) => {
+    if (drag) {
+      const t = Math.round(timeAt(c, ev) * 100) / 100
+      if (drag === 'start') c.start = Math.min(Math.max(t, c.w0), c.end - 0.2)
+      else c.end = Math.max(Math.min(t, c.w1), c.start + 0.2)
+      draw(c)
+      c.el.querySelector(drag === 'start' ? '.ts' : '.te').textContent = (drag === 'start' ? c.start : c.end).toFixed(2)
+    } else {
+      const t = timeAt(c, ev), [r0, r1] = range(c)
+      const near = Math.min(Math.abs(t - c.start), Math.abs(t - c.end)) / (r1 - r0) * c.canvas.clientWidth <= 8
+      c.canvas.style.cursor = near ? 'ew-resize' : 'crosshair'
+    }
+  })
+  const up = () => { if (drag) { setEdge(c, drag, drag === 'start' ? c.start : c.end); drag = null } }
+  c.canvas.addEventListener('pointerup', up)
+  c.canvas.addEventListener('pointercancel', up)
+}
+
+// Web Audio plays the exact sample range, unlike <audio> whose stop time drifts by ~0.25 s.
+function play(c, from, to, times = 1) {
+  stop()
+  if (!c.buf) return
+  ctx.resume()
+  from = Math.max(c.w0, from); to = Math.min(c.w1, to)
+  const dur = to - from, gap = 0.7, t0 = ctx.currentTime + 0.05
+  const sources = []
+  for (let i = 0; i < times; i++) {
+    const s = ctx.createBufferSource()
+    s.buffer = c.buf
+    s.connect(ctx.destination)
+    s.start(t0 + i * (dur + gap), from - c.w0, dur)
+    sources.push(s)
+  }
+  playing = { c, sources, t0, from, dur, gap, times }
+  const tick = () => {
+    if (!playing || playing.c !== c) return
+    const el = ctx.currentTime - t0, cycle = dur + gap, k = Math.floor(el / cycle)
+    if (el < 0) { playing.raf = requestAnimationFrame(tick); return }
+    if (k >= times) { stop(); return }
+    const inCycle = el - k * cycle
+    draw(c, inCycle <= dur ? from + inCycle : null)
+    playing.raf = requestAnimationFrame(tick)
+  }
+  playing.raf = requestAnimationFrame(tick)
+}
+
+function stop() {
+  if (!playing) return
+  const p = playing
+  playing = null
+  cancelAnimationFrame(p.raf)
+  p.sources.forEach((s) => { try { s.stop() } catch {} })
+  draw(p.c)
+}
+
+$('#stop').onclick = stop
+addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && e.target.tagName !== 'INPUT') { e.preventDefault(); stop() }
+})
+addEventListener('resize', () => cards.forEach((c) => draw(c)))
+
+$('#exp').onclick = () => {
+  const out = {
+    reciter: RECITER,
+    exportedAt: new Date().toISOString(),
+    samples: cards.map((c) => ({
+      n: c.v.n, file: c.v.file, kind: c.kind, confidence: c.v.confidence,
+      orig: { start: c.v.start, end: c.v.end },
+      cut: { start: c.start, end: c.end },
+      delta: { start: +(c.start - c.v.start).toFixed(2), end: +(c.end - c.v.end).toFixed(2) },
+      status: c.status || 'untouched', note: c.note || undefined,
+    })),
+  }
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' }))
+  a.download = 'cuts-feedback.json'
+  a.click()
+}
+
+init()
+</script>
+</body>
+</html>

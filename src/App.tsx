@@ -151,6 +151,7 @@ export default function App() {
   }, [reciter, edition])
 
   const timings = useMemo(() => new Map<number, VerseTiming>(reciter?.verses.map((v) => [v.n, v]) ?? []), [reciter])
+  useEffect(() => player.setTimings(reciter?.verses ?? []), [reciter])
 
   const startQueue = useCallback(
     (from: number, to: number, startAt: number, opts: Pick<RepeatSettings, 'verseTimes' | 'rangeTimes'>) => {
@@ -293,10 +294,10 @@ export default function App() {
     ? `${SCOPE_LABEL[repeat.scope]} ×${times(repeat.verseTimes)}`
     : play.total === 1
       ? play.verseTimes === 1 && play.rangeTimes === 1
-        ? 'تلاوة البيت'
+        ? 'قراءة البيت'
         : `تكرار البيت ×${times(play.verseTimes)}`
       : play.verseTimes === 1 && play.rangeTimes === 1
-        ? 'تلاوة متصلة'
+        ? 'قراءة متصلة'
         : `${toArabicDigits(play.total)} أبيات · كل بيت ×${times(play.verseTimes)}${play.rangeTimes !== 1 ? ` · الدورة ×${times(play.rangeTimes)}` : ''}`
 
   const panelEl = (() => {
@@ -461,7 +462,7 @@ export default function App() {
             onNext={() => player.step(1)}
           />
         ) : (
-          <div className="no-audio">لا توجد تلاوة مسجّلة لهذه النسخة بعد.</div>
+          <div className="no-audio">لا توجد قراءة مسجّلة لهذه النسخة بعد.</div>
         )}
         <nav className="tabbar">
           {TABS.map(([id, label, Icon]) => (
