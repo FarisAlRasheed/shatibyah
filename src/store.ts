@@ -55,6 +55,8 @@ export interface Settings {
   theme: Theme
   font: VerseFont
   hide: HideMode
+  colors: boolean // show the printed colours (red codes, green Quranic words) in the reader
+  memorizeColors: boolean // …and in memorization mode
 }
 
 export interface RepeatSettings {

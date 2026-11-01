@@ -1,8 +1,11 @@
 import { Fragment, memo, useEffect } from 'react'
 import { Bookmark, Check, Pencil } from 'lucide-react'
 import { toArabicDigits } from './arabic'
+import { ColoredHalf, type OpenMark } from './colors'
 import type { Bookmarks, Mastered, Notes } from './store'
-import type { Edition, Section } from './types'
+import type { ColorMark, Edition, EditionColors, Section } from './types'
+
+const NO_MARKS: ColorMark[] = []
 
 interface Props {
   edition: Edition
@@ -12,7 +15,9 @@ interface Props {
   bookmarks: Bookmarks
   mastered: Mastered
   scrollTarget: { n: number; key: number } | null
+  colors: EditionColors | null // null hides the colours
   onTap: (n: number) => void
+  onMark: (m: OpenMark) => void
   onSectionChange: (s: Section | null) => void
 }
 
@@ -77,7 +82,9 @@ export default function Reader(p: Props) {
             hasNote={!!p.notes[v.n]}
             hasBookmark={!!p.bookmarks[v.n]}
             isMastered={!!p.mastered[v.n]}
+            marks={p.colors?.verses[v.n] ?? NO_MARKS}
             onTap={p.onTap}
+            onMark={p.onMark}
           />
         </Fragment>
       ))}
@@ -94,7 +101,9 @@ interface RowProps {
   hasNote: boolean
   hasBookmark: boolean
   isMastered: boolean
+  marks: ColorMark[]
   onTap: (n: number) => void
+  onMark: (m: OpenMark) => void
 }
 
 const VerseRow = memo(function VerseRow(p: RowProps) {
@@ -112,8 +121,12 @@ const VerseRow = memo(function VerseRow(p: RowProps) {
           )}
         </span>
         <span className="halves verse-text">
-          <span className="half a">{p.a}</span>
-          <span className="half b">{p.b}</span>
+          <span className="half a">
+            <ColoredHalf text={p.a} marks={p.marks.filter((m) => m.h === 'a')} onMark={p.onMark} />
+          </span>
+          <span className="half b">
+            <ColoredHalf text={p.b} marks={p.marks.filter((m) => m.h === 'b')} onMark={p.onMark} />
+          </span>
         </span>
       </button>
     </article>

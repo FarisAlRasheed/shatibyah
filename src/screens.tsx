@@ -466,7 +466,27 @@ function editionLabel(e: { id: string; name: string }, m: Manifest) {
   return [`نسخة ${who}`, audio ? 'مع التلاوة' : 'نص فقط'] as const
 }
 
+/** The printed colours: red reader codes and green Quranic words, tap to explain. */
+export function ColorsField({ settings, setSettings }: FieldProps) {
+  return (
+    <>
+      <label className="field-row">
+        <span className="list-title">
+          ألوان الرموز والكلمات القرآنية
+          <small>اضغط على الكلمة الملوّنة لمعرفة القارئ أو موضعها من القرآن</small>
+        </span>
+        <input type="checkbox" className="switch" checked={settings.colors} onChange={(e) => setSettings((x) => ({ ...x, colors: e.target.checked }))} />
+      </label>
+      <label className="field-row">
+        <span>الألوان في وضع الحفظ</span>
+        <input type="checkbox" className="switch" checked={settings.memorizeColors} onChange={(e) => setSettings((x) => ({ ...x, memorizeColors: e.target.checked }))} />
+      </label>
+    </>
+  )
+}
+
 export function SettingsScreen(p: FieldProps & {
+  hasColors: boolean
   manifest: Manifest
   editionId?: string
   reciterId?: string
@@ -511,6 +531,7 @@ export function SettingsScreen(p: FieldProps & {
         <ThemeField {...p} />
         <FontField {...p} />
         <FontSizeField {...p} />
+        {p.hasColors && <ColorsField {...p} />}
         <label className="field-row">
           <span>متابعة البيت المقروء</span>
           <input type="checkbox" className="switch" checked={s.autoScroll} onChange={(e) => setSettings((x) => ({ ...x, autoScroll: e.target.checked }))} />

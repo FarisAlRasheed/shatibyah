@@ -62,3 +62,27 @@ export interface Manifest {
   editions: { id: string; name: string }[]
   reciters: { id: string; name: string; editionId: string }[]
 }
+
+/** A coloured piece of a verse half, as printed: red = a reader code, green = Quranic words. */
+export interface ColorMark {
+  h: 'a' | 'b'
+  s: number // start offset in the half's text
+  e: number // end offset (exclusive)
+  k: 'r' | 'g'
+  c?: string // red: key into EditionColors.codes
+  q?: [number, number][] // green: [surah, ayah] places
+  x?: string // green: a few words of the ayah
+  note?: string
+}
+
+export interface ColorCode {
+  kind: 'letter' | 'group' | 'word' | 'name'
+  label: string
+  note?: string
+}
+
+export interface EditionColors {
+  edition: string
+  codes: Record<string, ColorCode>
+  verses: Record<string, ColorMark[]>
+}

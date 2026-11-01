@@ -7,7 +7,7 @@ import { sectionOf, verseRange } from './data'
 import type { PlayState } from './player'
 import type { Notes, RepeatSettings, Settings } from './store'
 import type { Edition, Reciter, VerseTiming } from './types'
-import { FontSizeField, FontField, ThemeField } from './screens'
+import { ColorsField, FontSizeField, FontField, ThemeField } from './screens'
 
 export type SetState<T> = (next: T | ((prev: T) => T)) => void
 
@@ -378,13 +378,14 @@ export function RepeatSheet(p: {
 }
 
 /** Quick display options from the reader's Aa button. */
-export function DisplaySheet(p: { settings: Settings; setSettings: SetState<Settings>; onClose: () => void }) {
+export function DisplaySheet(p: { settings: Settings; setSettings: SetState<Settings>; hasColors: boolean; onClose: () => void }) {
   return (
     <Sheet title="العرض" onClose={p.onClose}>
       <div className="group">
         <ThemeField {...p} />
         <FontField {...p} />
         <FontSizeField {...p} />
+        {p.hasColors && <ColorsField {...p} />}
       </div>
     </Sheet>
   )

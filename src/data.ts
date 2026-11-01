@@ -1,4 +1,4 @@
-import type { AudioFile, Edition, Manifest, Reciter, Section } from './types'
+import type { AudioFile, Edition, EditionColors, Manifest, Reciter, Section } from './types'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -11,6 +11,8 @@ async function getJson<T>(path: string): Promise<T> {
 export const loadManifest = () => getJson<Manifest>('manifest.json')
 export const loadEdition = (id: string) => getJson<Edition>(`editions/${id}/edition.json`)
 export const loadReciter = (id: string) => getJson<Reciter>(`reciters/${id}/reciter.json`)
+/** The edition's coloured codes and Quranic words, or null when it has none. */
+export const loadColors = (id: string) => getJson<EditionColors>(`editions/${id}/colors.json`).catch(() => null)
 
 // `?v=` changes whenever a file is re-cut, so an offline copy of an older cut is never
 // served with the new timings (the service worker and offline.ts key on the full URL).

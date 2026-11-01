@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BookOpen, GraduationCap, List, LocateFixed, Repeat, Search, Settings as SettingsIcon, Type } from 'lucide-react'
-import { audioUrl, loadEdition, loadManifest, loadReciter, sectionOf, verseRange } from './data'
+import { audioUrl, loadColors, loadEdition, loadManifest, loadReciter, sectionOf, verseRange } from './data'
+import { ColorCard, type OpenMark } from './colors'
 import { DEFAULT_EDITION } from './config'
 import { toArabicDigits } from './arabic'
 import { idleState, RepeatPlayer, type PlayState } from './player'
 import { useStored, type Bookmarks, type Mastered, type Notes, type RepeatSettings, type Settings } from './store'
-import type { Edition, Manifest, Reciter, Section, VerseTiming } from './types'
+import type { Edition, EditionColors, Manifest, Reciter, Section, VerseTiming } from './types'
 import Reader from './Reader'
 import MiniPlayer from './MiniPlayer'
 import Memorize from './Memorize'
@@ -46,6 +47,8 @@ const defaultSettings: Settings = {
   theme: 'auto',
   font: 'amiri',
   hide: 'none',
+  colors: true,
+  memorizeColors: false,
 }
 const defaultRepeat: RepeatSettings = {
   scope: 'verse',
@@ -85,6 +88,8 @@ function useTheme(theme: Settings['theme']) {
 export default function App() {
   const [manifest, setManifest] = useState<Manifest | null>(null)
   const [edition, setEdition] = useState<Edition | null>(null)
+  const [colors, setColors] = useState<EditionColors | null>(null)
+  const [openMark, setOpenMark] = useState<OpenMark | null>(null)
   const [reciter, setReciter] = useState<Reciter | null>(null)
   const [error, setError] = useState('')
   const [settings, setSettings] = useStored<Settings>('settings', defaultSettings)
@@ -123,7 +128,9 @@ export default function App() {
   useEffect(() => {
     if (!editionId) return
     setEdition(null)
+    setColors(null)
     loadEdition(editionId).then(setEdition, (e) => setError(String(e)))
+    loadColors(editionId).then(setColors)
   }, [editionId])
 
   useEffect(() => {
@@ -294,7 +301,7 @@ export default function App() {
 
   const panelEl = (() => {
     const close = () => setPanel(null)
-    if (panel === 'display') return <DisplaySheet settings={settings} setSettings={setSettings} onClose={close} />
+    if (panel === 'display') return <DisplaySheet settings={settings} setSettings={setSettings} hasColors={!!colors} onClose={close} />
     if (panel?.type === 'repeat')
       return (
         <RepeatSheet
@@ -388,7 +395,9 @@ export default function App() {
           bookmarks={bookmarks}
           mastered={mastered}
           scrollTarget={scrollTarget}
+          colors={settings.colors ? colors : null}
           onTap={onTap}
+          onMark={setOpenMark}
           onSectionChange={setTopSection}
         />
       </div>
@@ -415,6 +424,7 @@ export default function App() {
       {tab === 'search' && <SearchScreen edition={edition} onJump={jumpTo} />}
       {tab === 'settings' && (
         <SettingsScreen
+          hasColors={!!colors}
           settings={settings}
           setSettings={setSettings}
           manifest={manifest}
@@ -471,6 +481,8 @@ export default function App() {
           repeat={repeat}
           hide={settings.hide}
           mastered={mastered}
+          colors={settings.memorizeColors ? colors : null}
+          onMark={setOpenMark}
           canPlay={hasAudio}
           onHide={(hide) => setSettings((s) => ({ ...s, hide }))}
           onClose={() => setMemorize(false)}
@@ -493,6 +505,7 @@ export default function App() {
       )}
 
       {panelEl}
+      {openMark && colors && <ColorCard open={openMark} colors={colors} onClose={() => setOpenMark(null)} />}
     </div>
   )
 }

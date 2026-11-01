@@ -5,7 +5,8 @@ import { useSwipe } from './gestures'
 import { sectionOf } from './data'
 import type { PlayState } from './player'
 import type { HideMode, Mastered, RepeatSettings } from './store'
-import type { Edition } from './types'
+import { ColoredHalf, type OpenMark } from './colors'
+import type { Edition, EditionColors } from './types'
 
 const SPEEDS = [0.75, 0.9, 1, 1.1, 1.25, 1.5]
 const HIDE: [HideMode, string][] = [
@@ -22,6 +23,8 @@ interface Props {
   repeat: RepeatSettings
   hide: HideMode
   mastered: Mastered
+  colors: EditionColors | null // null hides the colours
+  onMark: (m: OpenMark) => void
   canPlay: boolean
   onHide: (h: HideMode) => void
   onClose: () => void
@@ -63,6 +66,8 @@ export default function Memorize(p: Props) {
   const hideA = p.hide === 'all' && !revealed
   const hideB = p.hide !== 'none' && !revealed
   const testing = p.hide !== 'none'
+  const marks = p.colors?.verses[p.verse] ?? []
+  const half = (h: 'a' | 'b') => <ColoredHalf text={v?.[h] ?? ''} marks={marks.filter((m) => m.h === h)} onMark={p.onMark} />
   const nextSpeed = SPEEDS[(SPEEDS.indexOf(p.repeat.speed) + 1) % SPEEDS.length] ?? 1
 
   return (
@@ -101,8 +106,8 @@ export default function Memorize(p: Props) {
         onAnimationEnd={() => setSlide('')}
         onClick={() => testing && setRevealed(true)}
       >
-        {hideA ? <HiddenHalf label="اضغط لإظهار الصدر" /> : <p>{v?.a}</p>}
-        {hideB ? <HiddenHalf label={hideA ? 'والعجز' : 'اضغط لإظهار العجز'} /> : <p>{v?.b}</p>}
+        {hideA ? <HiddenHalf label="اضغط لإظهار الصدر" /> : <p>{half('a')}</p>}
+        {hideB ? <HiddenHalf label={hideA ? 'والعجز' : 'اضغط لإظهار العجز'} /> : <p>{half('b')}</p>}
       </div>
 
       {testing ? (

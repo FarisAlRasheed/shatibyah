@@ -4,3 +4,4 @@ data/reciters/*/_source
 .DS_Store
 
 sources/
+tools/colors/_spans.json
