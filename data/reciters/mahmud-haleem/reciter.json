@@ -1643,13 +1643,13 @@
       "n": 113,
       "file": "s8",
       "start": 46.01,
-      "end": 52.55,
+      "end": 54.08,
       "confidence": 0.85
     },
     {
       "n": 114,
       "file": "s8",
-      "start": 52.85,
+      "start": 54.64,
       "end": 62.58,
       "confidence": 0.92
     },
@@ -2002,9 +2002,10 @@
     {
       "n": 164,
       "file": "s11",
-      "start": 56.18,
-      "end": 64.37,
-      "confidence": 0.72
+      "start": 56.12,
+      "end": 64.78,
+      "confidence": 0.72,
+      "checked": true
     },
     {
       "n": 165,
@@ -2016,9 +2017,10 @@
     {
       "n": 166,
       "file": "s11",
-      "start": 74.04,
-      "end": 82.08,
-      "confidence": 0.72
+      "start": 73.96,
+      "end": 82.42,
+      "confidence": 0.72,
+      "checked": true
     },
     {
       "n": 167,
@@ -2627,13 +2629,13 @@
       "n": 253,
       "file": "s17",
       "start": 160.19,
-      "end": 166.8,
+      "end": 168.64,
       "confidence": 0.87
     },
     {
       "n": 254,
       "file": "s17",
-      "start": 167.1,
+      "start": 169.24,
       "end": 178.64,
       "confidence": 0.76
     },
@@ -2676,9 +2678,10 @@
     {
       "n": 260,
       "file": "s19",
-      "start": 12.62,
-      "end": 20.68,
-      "confidence": 0.72
+      "start": 12.51,
+      "end": 21.15,
+      "confidence": 0.72,
+      "checked": true
     },
     {
       "n": 261,
@@ -2690,16 +2693,18 @@
     {
       "n": 262,
       "file": "s20",
-      "start": 3.31,
-      "end": 11.74,
-      "confidence": 0.62
+      "start": 3.26,
+      "end": 12.27,
+      "confidence": 0.62,
+      "checked": true
     },
     {
       "n": 263,
       "file": "s20",
-      "start": 12.34,
-      "end": 19.91,
-      "confidence": 0.66
+      "start": 12.28,
+      "end": 20.12,
+      "confidence": 0.66,
+      "checked": true
     },
     {
       "n": 264,
@@ -2732,9 +2737,10 @@
     {
       "n": 268,
       "file": "s21",
-      "start": 21.93,
-      "end": 30.36,
-      "confidence": 0.67
+      "start": 21.86,
+      "end": 30.79,
+      "confidence": 0.67,
+      "checked": true
     },
     {
       "n": 269,
@@ -2844,9 +2850,10 @@
     {
       "n": 284,
       "file": "s24",
-      "start": 65.78,
-      "end": 74.28,
-      "confidence": 0.6
+      "start": 65.71,
+      "end": 74.96,
+      "confidence": 0.6,
+      "checked": true
     },
     {
       "n": 285,
@@ -2858,7 +2865,7 @@
     {
       "n": 286,
       "file": "s25",
-      "start": 9.16,
+      "start": 6.32,
       "end": 14.61,
       "confidence": 0.68
     },
@@ -2935,9 +2942,10 @@
     {
       "n": 297,
       "file": "s26",
-      "start": 58.26,
-      "end": 66.16,
-      "confidence": 0.71
+      "start": 58.2,
+      "end": 66.63,
+      "confidence": 0.71,
+      "checked": true
     },
     {
       "n": 298,
@@ -3789,9 +3797,10 @@
     {
       "n": 419,
       "file": "s32",
-      "start": 281.5,
-      "end": 289.83,
-      "confidence": 0.72
+      "start": 281.37,
+      "end": 290.89,
+      "confidence": 0.72,
+      "checked": true
     },
     {
       "n": 420,
@@ -3824,14 +3833,14 @@
     {
       "n": 424,
       "file": "s33",
-      "start": 37.69,
-      "end": 47.8,
+      "start": 37.67,
+      "end": 45.79,
       "confidence": 0.59
     },
     {
       "n": 425,
       "file": "s33",
-      "start": 48.1,
+      "start": 46.45,
       "end": 54.83,
       "confidence": 0.66
     },
@@ -6666,36 +6675,36 @@
     {
       "n": 830,
       "file": "s51",
-      "start": 4,
-      "end": 11.37,
+      "start": 0.35,
+      "end": 7.22,
       "confidence": 0.73
     },
     {
       "n": 831,
       "file": "s51",
-      "start": 11.75,
-      "end": 19.81,
+      "start": 7.76,
+      "end": 15.32,
       "confidence": 0.78
     },
     {
       "n": 832,
       "file": "s51",
-      "start": 20.01,
-      "end": 27.59,
+      "start": 15.97,
+      "end": 23.42,
       "confidence": 0.82
     },
     {
       "n": 833,
       "file": "s51",
-      "start": 27.66,
-      "end": 33.47,
+      "start": 24.18,
+      "end": 31.42,
       "confidence": 0.65
     },
     {
       "n": 834,
       "file": "s51",
-      "start": 33.53,
-      "end": 39.93,
+      "start": 32.04,
+      "end": 39.83,
       "confidence": 0.75
     },
     {
@@ -8907,8 +8916,9 @@
       "n": 1150,
       "file": "s82",
       "start": 141.05,
-      "end": 149.86,
-      "confidence": 0.67
+      "end": 150.29,
+      "confidence": 0.67,
+      "checked": true
     },
     {
       "n": 1151,

@@ -5,3 +5,5 @@ data/reciters/*/_source
 
 sources/
 tools/colors/_spans.json
+
+tools/text-review/pages/

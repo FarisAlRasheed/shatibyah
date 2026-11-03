@@ -3,9 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>محرر القص</title>
+<title>محرر المراجعة</title>
 <!-- Dev tool: open http://localhost:5173/tools/cut-editor.html with the dev server running.
-     The owner sets the true start/end of uncertain verses by ear; Export gives cuts-feedback.json. -->
+     الصوت: the owner sets the true start/end of uncertain verses by ear; «اعتماد» writes reciter.json.
+     النص: the owner checks uncertain readings against the PDF page; «اعتماد» writes edition.json.
+     The text items are tools/text-review/items.json; their pages are rendered into tools/text-review/pages/. -->
 <link rel="stylesheet" href="/node_modules/@fontsource/scheherazade-new/400.css">
 <style>
   body{font-family:system-ui,sans-serif;margin:0;padding:16px 20px 80px;background:#faf8f3;color:#222}
@@ -31,18 +33,33 @@
   input.note{flex:1;min-width:180px;padding:4px 6px;font-size:13px;border:1px solid #ddd;border-radius:6px;direction:rtl}
   .legend{display:flex;gap:14px;font-size:12px;color:#555;flex-wrap:wrap}
   .legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-left:4px}
-  #msg{font-size:13px;color:#a33}
+  #msg,#tmsg{font-size:13px;color:#a33}
+  .tabs{display:flex;gap:4px;margin:0 0 10px}
+  .tabs button{font-size:15px;padding:6px 16px}
+  .issue{font-size:14px;line-height:1.8;margin:6px 0}
+  .used{font-size:13px;color:#555}
+  .page{height:240px;overflow:auto;border:1px solid #eee;border-radius:6px;background:#fff;margin:8px 0;direction:ltr}
+  .page img{display:block;width:100%}
+  .page.zoom img{width:200%}
+  mark{background:#fde9a8;border-radius:4px;padding:0 2px}
+  .cmp{font-size:13px;color:#666;margin:2px 0}
+  .cmp .verse{font-family:"Scheherazade New","Amiri",serif;font-size:19px;color:#333}
+  input.edit{width:100%;box-sizing:border-box;font-family:"Scheherazade New","Amiri",serif;font-size:24px;padding:4px 8px;border:1px solid #ccc;border-radius:6px;direction:rtl}
+  .card.changed{border-color:#c98a1a}
 </style>
 </head>
 <body>
+<div class="tabs"><button data-tab="audio">الصوت</button><button data-tab="text">النص</button></div>
+<section id="tab-audio">
 <h1>محرر قصّ الأبيات</h1>
 <p class="help">
   اسحب الخط <b style="color:#1f8a4c">الأخضر</b> إلى بداية البيت والخط <b style="color:#c0392b">الأحمر</b> إلى نهايته. اضغط في أي مكان على الموجة لتسمع من تلك النقطة.
-  «تكبير البداية/النهاية» يعرض ثانيتين فقط للضبط الدقيق. بعد الضبط (أو إن كان القص صحيحاً) اضغط «اعتماد»، فيُحفظ القص في بيانات التطبيق ولا يظهر البيت هنا مرة أخرى.
+  «تكبير البداية/النهاية» يعرض ثانيتين فقط للضبط الدقيق. بعد الضبط (أو إن كان القص صحيحاً) اضغط «اعتماد»، فيُحفظ القص في بيانات التطبيق ولا يظهر البيت في القائمة مرة أخرى. لفتح أي بيت (ولو كان معتمداً) اكتب رقمه واضغط «فتح البيت».
   مقياس الموجة بالديسيبل من مستوى الصمت، حتى تظهر الأصوات الخافتة مثل الواو.
 </p>
 <div class="bar">
   <button id="stop">■ إيقاف (Space)</button>
+  <span class="grp"><input id="goto" type="number" min="1" placeholder="رقم البيت" style="width:90px;padding:4px"><button id="open">فتح البيت</button></span>
   <span id="count"></span>
   <span id="msg"></span>
   <div class="legend">
@@ -53,11 +70,21 @@
   </div>
 </div>
 <div id="list"></div>
+</section>
+<section id="tab-text" hidden>
+<h1>مراجعة النص غير المؤكد</h1>
+<p class="help">
+  لكل موضع: صورة صفحة الـPDF (اضغط عليها للتكبير)، والقراءة التي اعتمدها الاستخراج والكلمة المشكوك فيها <mark>مظلّلة</mark>.
+  إن كانت القراءة صحيحة اضغط «اعتماد». وإن كانت خطأ فعدّل النص في الحقل ثم اضغط «اعتماد التعديل»، فيُكتب في بيانات نسخة القاسم.
+</p>
+<div class="bar"><span id="tcount"></span><span id="tmsg"></span></div>
+<div id="tlist"></div>
+</section>
 <script>
 const RECITER = 'mahmud-haleem'
 const BASE = '/data/reciters/' + RECITER + '/'
 const LOWEST = 30      // the lowest-confidence verses not yet approved
-const PAD = 1.5        // seconds shown before the start and after the end
+const PAD = 4          // seconds shown before the start and after the end
 const KEY = 'cut-editor:' + RECITER
 
 const ctx = new AudioContext()
@@ -76,49 +103,72 @@ async function init() {
     $('#msg').textContent = 'تعذّر تحميل البيانات. شغّل خادم التطوير وافتح الصفحة من localhost:5173'
     return
   }
-  const text = Object.fromEntries(ed.verses.map((v) => [v.n, v]))
-  const byN = Object.fromEntries(rec.verses.map((v) => [v.n, v]))
+  text = Object.fromEntries(ed.verses.map((v) => [v.n, v]))
+  byN = Object.fromEntries(rec.verses.map((v) => [v.n, v]))
+  recFiles = rec.files
 
   const low = rec.verses.filter((v) => !v.checked)
     .sort((a, b) => a.confidence - b.confidence || a.n - b.n).slice(0, LOWEST)
     .sort((a, b) => a.n - b.n)
   if (!low.length) $('#msg').textContent = 'اعتُمدت كل الأبيات.'
 
-  for (const v of low) {
-    const prev = byN[v.n - 1]?.file === v.file ? byN[v.n - 1] : null
-    const next = byN[v.n + 1]?.file === v.file ? byN[v.n + 1] : null
-    const st = saved[v.n] || {}
-    cards.push(makeCard({
-      v, prev, next, t: text[v.n],
-      start: st.start ?? v.start, end: st.end ?? v.end, status: '', note: st.note || '',
-      view: 'all', w0: Math.max(0, v.start - PAD), w1: v.end + PAD, buf: null,
-    }))
-  }
+  for (const v of low) addCard(v)
   updateCount()
 
   // Decode one file at a time and keep only each verse's window, so memory stays small.
-  const files = [...new Set(cards.map((c) => c.v.file))]
-  for (const id of files) {
-    const f = rec.files.find((f) => f.id === id)
-    try {
-      const audio = await ctx.decodeAudioData(await (await fetch(BASE + f.path)).arrayBuffer())
-      for (const c of cards.filter((c) => c.v.file === id)) {
-        c.w1 = Math.min(c.w1, audio.duration)
-        const sr = audio.sampleRate, a = Math.floor(c.w0 * sr), b = Math.floor(c.w1 * sr)
-        const buf = ctx.createBuffer(1, b - a, sr)
-        const out = buf.getChannelData(0)
-        for (let ch = 0; ch < audio.numberOfChannels; ch++) {
-          const src = audio.getChannelData(ch)
-          for (let i = 0; i < out.length; i++) out[i] += src[a + i] / audio.numberOfChannels
-        }
-        c.buf = buf
-        levels(c)
-        draw(c)
+  for (const id of [...new Set(cards.map((c) => c.v.file))]) await loadAudio(cards.filter((c) => c.v.file === id))
+}
+
+let text = {}, byN = {}, recFiles = []
+
+function addCard(v, first) {
+  const prev = byN[v.n - 1]?.file === v.file ? byN[v.n - 1] : null
+  const next = byN[v.n + 1]?.file === v.file ? byN[v.n + 1] : null
+  const st = saved[v.n] || {}
+  const c = makeCard({
+    v, prev, next, t: text[v.n],
+    start: st.start ?? v.start, end: st.end ?? v.end, status: v.checked ? 'ok' : '', note: st.note || '',
+    view: 'all', w0: Math.max(0, v.start - PAD), w1: v.end + PAD, buf: null,
+  }, first)
+  cards.push(c)
+  return c
+}
+
+async function loadAudio(list) {
+  const f = recFiles.find((f) => f.id === list[0].v.file)
+  try {
+    const audio = await ctx.decodeAudioData(await (await fetch(BASE + f.path)).arrayBuffer())
+    for (const c of list) {
+      c.w1 = Math.min(c.w1, audio.duration)
+      const sr = audio.sampleRate, a = Math.floor(c.w0 * sr), b = Math.floor(c.w1 * sr)
+      const buf = ctx.createBuffer(1, b - a, sr)
+      const out = buf.getChannelData(0)
+      for (let ch = 0; ch < audio.numberOfChannels; ch++) {
+        const src = audio.getChannelData(ch)
+        for (let i = 0; i < out.length; i++) out[i] += src[a + i] / audio.numberOfChannels
       }
-    } catch (e) {
-      $('#msg').textContent = 'تعذّر فك الملف ' + id
+      c.buf = buf
+      levels(c)
+      draw(c)
     }
+  } catch (e) {
+    $('#msg').textContent = 'تعذّر فك الملف ' + f.id
   }
+}
+
+// Open any verse by number, approved or not; it goes to the top of the list.
+async function openVerse() {
+  const n = +$('#goto').value, v = byN[n]
+  $('#msg').textContent = ''
+  if (!v) return void ($('#msg').textContent = 'لا يوجد بيت بهذا الرقم')
+  let c = cards.find((c) => c.v.n === n)
+  if (c) $('#list').prepend(c.el)
+  else {
+    c = addCard(v, true)
+    updateCount()
+    await loadAudio([c])
+  }
+  c.el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
 // Noise floor (5th percentile) and peak of 20 ms frames, so the envelope spans silence → loudest.
@@ -134,7 +184,7 @@ function levels(c) {
   c.peak = dbs[dbs.length - 1]
 }
 
-function makeCard(c) {
+function makeCard(c, first) {
   const el = document.createElement('div')
   el.className = 'card'
   el.innerHTML = `
@@ -180,7 +230,8 @@ function makeCard(c) {
     else if (p === 'reset') { c.start = c.v.start; c.end = c.v.end; c.status = ''; persist(c) }
   })
   attachDrag(c)
-  $('#list').append(el)
+  if (first) $('#list').prepend(el)
+  else $('#list').append(el)
   refresh(c)
   return c
 }
@@ -384,12 +435,154 @@ function stop() {
 }
 
 $('#stop').onclick = stop
+$('#open').onclick = openVerse
+$('#goto').onkeydown = (e) => { if (e.key === 'Enter') openVerse() }
 addEventListener('keydown', (e) => {
   if (e.code === 'Space' && e.target.tagName !== 'INPUT') { e.preventDefault(); stop() }
 })
 addEventListener('resize', () => cards.forEach((c) => draw(c)))
 
 init()
+
+// ——— النص: uncertain readings of the Qasim edition ———
+const PAGE_H = 680.315 // PDF page height in points; items.json y = baseline of the verse line
+const HALF = { a: 'الشطر الأول', b: 'الشطر الثاني' }
+
+async function initText() {
+  let items, ed, zubi, done
+  try {
+    ;[items, ed, zubi, done] = await Promise.all([
+      fetch('/tools/text-review/items.json').then((r) => r.json()),
+      fetch('/data/editions/qasim/edition.json').then((r) => r.json()),
+      fetch('/data/editions/zubi/edition.json').then((r) => r.json()),
+      fetch('/api/approve-text').then((r) => r.json()),
+    ])
+  } catch {
+    $('#tmsg').textContent = 'تعذّر تحميل البيانات. شغّل خادم التطوير وافتح الصفحة من localhost:5173'
+    return
+  }
+  const verse = (e, n) => e.verses.find((v) => v.n === n)
+  const tcards = items.map((it) => {
+    const cur = it.kind === 'heading' ? ed.sections.find((s) => s.id === it.section).title
+      : it.kind === 'half' ? verse(ed, it.n)[it.half] : null
+    const other = it.kind === 'heading' ? zubi.sections.find((s) => s.id === it.section)?.title
+      : it.kind === 'half' ? verse(zubi, it.n)?.[it.half] : null
+    return makeTextCard({ it, cur, other, full: verse(ed, it.n), approved: !!done[it.id] })
+  })
+  const count = () => {
+    $('#tcount').textContent = `اُعتمد ${tcards.filter((c) => c.approved).length} من ${tcards.length}`
+  }
+  count()
+  tcards.forEach((c) => (c.onChange = count))
+}
+
+function highlight(el, text, word) {
+  const i = word ? text.indexOf(word) : -1
+  if (i < 0) return void (el.textContent = text)
+  el.append(text.slice(0, i))
+  const m = document.createElement('mark')
+  m.textContent = word
+  el.append(m, text.slice(i + word.length))
+}
+
+function makeTextCard(c) {
+  const { it } = c
+  const el = document.createElement('div')
+  el.className = 'card'
+  el.innerHTML = `
+    <div class="head"><span class="num"></span><span class="tag page-n"></span></div>
+    <p class="issue"></p>
+    <div class="page" title="اضغط للتكبير"><img loading="lazy" alt=""></div>
+    <div class="txt"></div>
+    <p class="cmp">نسخة الزعبي: <span class="verse zubi"></span></p>
+    <p class="used"></p>
+    <input class="edit">
+    <div class="row" style="direction:rtl"><button class="approve">✓ اعتماد</button><button class="reset">↺ إرجاع</button></div>`
+  el.querySelector('.num').textContent =
+    it.kind === 'heading' ? `العنوان ${it.section}` : it.kind === 'rule' ? 'قاعدة' : `البيت ${it.n} · ${HALF[it.half]}`
+  el.querySelector('.page-n').textContent = 'صفحة PDF ' + it.page
+  el.querySelector('.issue').textContent = it.issue
+  el.querySelector('.used').textContent = 'القراءة المستخدمة: ' + it.used
+
+  const box = el.querySelector('.page'), img = box.querySelector('img')
+  img.src = `/tools/text-review/pages/p${String(it.page).padStart(3, '0')}.png`
+  // Scroll the verse line into the middle of the box once the page has its size.
+  const centre = () => {
+    if (it.y == null) return
+    const top = ((PAGE_H - it.y - 20) / PAGE_H) * img.clientHeight
+    box.scrollTop = top - box.clientHeight / 2 + 20
+    box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2
+  }
+  img.onload = centre
+  box.onclick = () => { box.classList.toggle('zoom'); centre() }
+
+  const txt = el.querySelector('.txt'), input = el.querySelector('.edit'), btn = el.querySelector('.approve')
+  if (it.kind === 'rule') {
+    highlight(txt, `${c.full.a}  …  ${c.full.b}`, it.word.split(' / ')[0])
+    input.remove()
+    el.querySelector('.reset').remove()
+    el.querySelector('.cmp').remove()
+  } else {
+    highlight(txt, c.cur, it.word)
+    el.querySelector('.zubi').textContent = c.other ?? '—'
+    input.value = c.cur
+    input.oninput = () => { c.approved = false; refreshText(c) }
+    el.querySelector('.reset').onclick = () => { input.value = c.cur; refreshText(c) }
+  }
+  btn.onclick = () => approveText(c)
+  c.el = el
+  c.input = input
+  $('#tlist').append(el)
+  refreshText(c)
+  return c
+}
+
+function refreshText(c) {
+  const changed = c.it.kind !== 'rule' && c.input.value.normalize('NFC').trim() !== c.cur
+  c.el.classList.toggle('ok', c.approved)
+  c.el.classList.toggle('changed', changed && !c.approved)
+  const btn = c.el.querySelector('.approve')
+  btn.classList.toggle('on', c.approved)
+  btn.textContent = c.approved ? '✓ اُعتمد' : changed ? '✓ اعتماد التعديل' : c.it.kind === 'rule' ? '✓ اعتماد القاعدة' : '✓ اعتماد'
+  c.onChange?.()
+}
+
+// Writes the reading (changed or not) through the dev server: edition.json + _text-review.json.
+async function approveText(c) {
+  $('#tmsg').textContent = ''
+  const { it } = c
+  try {
+    const r = await fetch('/api/approve-text', {
+      method: 'POST',
+      body: JSON.stringify({ id: it.id, kind: it.kind, n: it.n, half: it.half, section: it.section, text: c.input?.value }),
+    })
+    const out = await r.json()
+    if (!r.ok) throw new Error(out.error)
+    if (out.text != null && out.text !== c.cur) {
+      c.cur = out.text
+      const txt = c.el.querySelector('.txt')
+      txt.textContent = ''
+      highlight(txt, c.cur, it.word)
+    }
+    c.approved = true
+    refreshText(c)
+  } catch (e) {
+    $('#tmsg').textContent = `${it.id}: لم يُعتمد (${e.message})`
+  }
+}
+
+// Tabs; the choice is kept in the URL hash (#text).
+function showTab(name) {
+  document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === name))
+  $('#tab-audio').hidden = name !== 'audio'
+  $('#tab-text').hidden = name !== 'text'
+  if (name !== 'audio') stop()
+  if (name === 'audio') cards.forEach((c) => draw(c))
+  history.replaceState(null, '', name === 'text' ? '#text' : location.pathname)
+}
+document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => showTab(b.dataset.tab)))
+showTab(location.hash === '#text' ? 'text' : 'audio')
+initText()
 </script>
 </body>
 </html>

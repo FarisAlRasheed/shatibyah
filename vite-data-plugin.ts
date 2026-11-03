@@ -55,6 +55,42 @@ function approveCut(body: string) {
   return v
 }
 
+const REVIEW = path.join(DATA, 'editions', 'qasim', '_text-review.json')
+const readReview = (): Record<string, { text?: string; at: string }> =>
+  fs.existsSync(REVIEW) ? JSON.parse(fs.readFileSync(REVIEW, 'utf8')) : {}
+
+/**
+ * Approve one uncertain text item of the Qasim edition (dev only; the النص tab of tools/cut-editor.html).
+ * A changed reading is written into edition.json; every approval is logged in _text-review.json.
+ */
+function approveText(body: string) {
+  const { id, kind, n, half, section, text } = JSON.parse(body)
+  if (typeof id !== 'string' || !/^[\w-]+$/.test(id)) throw new Error('bad id')
+  const entry: { text?: string; at: string } = { at: new Date().toISOString() }
+  if (kind !== 'rule') {
+    const t = typeof text === 'string' ? text.normalize('NFC').trim() : ''
+    if (!t) throw new Error('النص فارغ')
+    const file = path.join(DATA, 'editions', 'qasim', 'edition.json')
+    const doc = JSON.parse(fs.readFileSync(file, 'utf8'))
+    if (kind === 'heading') {
+      const s = doc.sections.find((s: { id: number }) => s.id === section)
+      if (!s) throw new Error('bad section')
+      s.title = t
+    } else {
+      const v = doc.verses.find((v: { n: number }) => v.n === n)
+      if (!v || (half !== 'a' && half !== 'b')) throw new Error('bad verse')
+      v[half] = t
+    }
+    fs.writeFileSync(file + '.tmp', JSON.stringify(doc, null, 2))
+    fs.renameSync(file + '.tmp', file)
+    entry.text = t
+  }
+  const log = readReview()
+  log[id] = entry
+  fs.writeFileSync(REVIEW, JSON.stringify(log, null, 2) + '\n')
+  return entry
+}
+
 export default function dataPlugin(): Plugin {
   return {
     name: 'shatibiyyah-data',
@@ -67,6 +103,21 @@ export default function dataPlugin(): Plugin {
           res.setHeader('Content-Type', 'application/json')
           try {
             res.end(JSON.stringify(approveCut(body)))
+          } catch (err) {
+            res.statusCode = 400
+            res.end(JSON.stringify({ error: (err as Error).message }))
+          }
+        })
+      })
+      server.middlewares.use('/api/approve-text', (req, res) => {
+        res.setHeader('Content-Type', 'application/json')
+        if (req.method === 'GET') return res.end(JSON.stringify(readReview()))
+        if (req.method !== 'POST') return void (res.statusCode = 405, res.end())
+        let body = ''
+        req.on('data', (d) => (body += d))
+        req.on('end', () => {
+          try {
+            res.end(JSON.stringify(approveText(body)))
           } catch (err) {
             res.statusCode = 400
             res.end(JSON.stringify({ error: (err as Error).message }))
