@@ -1,5 +1,6 @@
 // Serves the agents' `data/` folder at /data in dev and copies it into dist on build.
 // Skips working files (_source, _progress.json, reports) and writes data/manifest.json.
+import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import type { Plugin } from 'vite'
@@ -91,6 +92,23 @@ function approveText(body: string) {
   return entry
 }
 
+const JOINS = path.resolve('tools/colors/joins.json')
+
+/**
+ * The owner's decision on a doubtful join (the الألوان tab of tools/cut-editor.html): one Quran phrase
+ * («approved») or two separate words («rejected»). Rebuilds colors.json with tools/colors/annotate.py.
+ */
+function decideJoin(body: string) {
+  const { id, status } = JSON.parse(body)
+  if (status !== 'approved' && status !== 'rejected') throw new Error('bad status')
+  const joins = JSON.parse(fs.readFileSync(JOINS, 'utf8'))
+  if (!joins[id]) throw new Error('bad id')
+  joins[id].status = status
+  fs.writeFileSync(JOINS, JSON.stringify(joins, null, 1) + '\n')
+  execFileSync('python3', ['tools/colors/annotate.py'])
+  return joins[id]
+}
+
 export default function dataPlugin(): Plugin {
   return {
     name: 'shatibiyyah-data',
@@ -118,6 +136,21 @@ export default function dataPlugin(): Plugin {
         req.on('end', () => {
           try {
             res.end(JSON.stringify(approveText(body)))
+          } catch (err) {
+            res.statusCode = 400
+            res.end(JSON.stringify({ error: (err as Error).message }))
+          }
+        })
+      })
+      server.middlewares.use('/api/join', (req, res) => {
+        res.setHeader('Content-Type', 'application/json')
+        if (req.method === 'GET') return res.end(fs.readFileSync(JOINS))
+        if (req.method !== 'POST') return void (res.statusCode = 405, res.end())
+        let body = ''
+        req.on('data', (d) => (body += d))
+        req.on('end', () => {
+          try {
+            res.end(JSON.stringify(decideJoin(body)))
           } catch (err) {
             res.statusCode = 400
             res.end(JSON.stringify({ error: (err as Error).message }))

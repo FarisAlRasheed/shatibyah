@@ -153,6 +153,11 @@ def main():
     ed_path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'data/editions/qasim/edition.json'
     edition = json.loads(ed_path.read_text())
     verses = {v['n']: v for v in edition['verses']}
+    joins = {}
+    jpath = ROOT / 'tools/colors/joins.json'
+    for j in (json.loads(jpath.read_text()).values() if jpath.exists() else []):
+        if j['status'] in ('sure', 'approved'):
+            joins.setdefault(j['n'], []).append(j)
     out, problems = {}, []
     for key, items in spans.items():
         n = int(key)
@@ -209,6 +214,18 @@ def main():
                 m['note'] = entry['note']
             marks.append(m)
         marks.sort(key=lambda x: (x['h'], x['s']))
+        # One Quran word or phrase split into two green pieces (tools/colors/joins.json, kept
+        # by joins.py): both pieces take the phrase's place and show it whole (w) when tapped.
+        for j in joins.get(n, []):
+            pair = [next((m for m in marks if m['k'] == 'g' and [m['h'], m['s']] == hs), None) for hs in j['marks']]
+            if None in pair:
+                problems.append(f'{n}: join «{j["w"]}» no longer matches the green marks')
+                continue
+            for m in pair:
+                m.update(q=j['q'], x=j['x'], w=j['w'])
+                m.pop('note', None)
+                if j.get('note'):
+                    m['note'] = j['note']
         if marks:
             out[n] = marks
 

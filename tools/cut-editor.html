@@ -49,7 +49,7 @@
 </style>
 </head>
 <body>
-<div class="tabs"><button data-tab="audio">الصوت</button><button data-tab="text">النص</button></div>
+<div class="tabs"><button data-tab="audio">الصوت</button><button data-tab="text">النص</button><button data-tab="join">الألوان</button></div>
 <section id="tab-audio">
 <h1>محرر قصّ الأبيات</h1>
 <p class="help">
@@ -79,6 +79,15 @@
 </p>
 <div class="bar"><span id="tcount"></span><span id="tmsg"></span></div>
 <div id="tlist"></div>
+</section>
+<section id="tab-join" hidden>
+<h1>كلمات قرآنية مقسومة</h1>
+<p class="help">
+  قطعتان خضراوان متجاورتان قد تكونان كلمة أو آية واحدة قسمها اللون (أو قسمها الشطر). جُمعت المؤكدة تلقائياً،
+  وهذه التي يُشك فيها. إن كانتا موضعاً قرآنياً واحداً اضغط «كلمة واحدة»، فيظهر النص كاملاً حين يضغطه القارئ. وإن كانتا مثالين منفصلين اضغط «منفصلتان».
+</p>
+<div class="bar"><span id="jcount"></span><span id="jmsg"></span></div>
+<div id="jlist"></div>
 </section>
 <script>
 const RECITER = 'mahmud-haleem'
@@ -571,18 +580,92 @@ async function approveText(c) {
   }
 }
 
-// Tabs; the choice is kept in the URL hash (#text).
+// ——— الألوان: doubtful joins of split green pieces (tools/colors/joins.json) ———
+async function initJoins() {
+  let joins, ed
+  try {
+    ;[joins, ed] = await Promise.all([
+      fetch('/api/join').then((r) => r.json()),
+      fetch('/data/editions/qasim/edition.json').then((r) => r.json()),
+    ])
+  } catch {
+    $('#jmsg').textContent = 'تعذّر تحميل البيانات.'
+    return
+  }
+  const items = Object.entries(joins).filter(([, j]) => j.status !== 'sure')
+  const count = () => {
+    $('#jcount').textContent = `قُرّر ${items.filter(([, j]) => j.status !== 'doubt').length} من ${items.length}`
+  }
+  for (const [id, j] of items) {
+    const v = ed.verses.find((v) => v.n === j.n)
+    const el = document.createElement('div')
+    el.className = 'card'
+    el.innerHTML = `
+      <div class="head"><span class="num"></span><span class="tag place"></span></div>
+      <div class="txt"></div>
+      <p class="issue">مقترح كلمة واحدة: <span class="verse w" style="font-family:'Scheherazade New',serif;font-size:22px"></span></p>
+      <p class="used"></p>
+      <div class="row" style="direction:rtl"><button class="yes">✓ كلمة واحدة</button><button class="no">✗ منفصلتان</button></div>`
+    el.querySelector('.num').textContent = 'البيت ' + j.n
+    el.querySelector('.place').textContent = `سورة ${j.q[0][0]} · آية ${j.q[0][1]}`
+    // both pieces highlighted in the verse
+    const txt = el.querySelector('.txt')
+    for (const h of ['a', 'b']) {
+      const span = document.createElement('span')
+      const marks = j.marks.map(([mh, s], i) => [mh, s, s + j.was[i].length]).filter(([mh]) => mh === h)
+      let last = 0
+      for (const [, s, e] of marks) {
+        span.append(v[h].slice(last, s))
+        const m = document.createElement('mark')
+        m.textContent = v[h].slice(s, e)
+        span.append(m)
+        last = e
+      }
+      span.append(v[h].slice(last))
+      txt.append(span, h === 'a' ? '  …  ' : '')
+    }
+    el.querySelector('.w').textContent = j.w
+    el.querySelector('.used').textContent = `في الآية: ﴿${j.x}﴾ — وجدها البحث في ${j.places} موضع.`
+    const show = () => {
+      el.classList.toggle('ok', j.status === 'approved')
+      el.classList.toggle('changed', j.status === 'rejected')
+      el.querySelector('.yes').classList.toggle('on', j.status === 'approved')
+      el.querySelector('.no').classList.toggle('on', j.status === 'rejected')
+      count()
+    }
+    const decide = async (status) => {
+      $('#jmsg').textContent = ''
+      try {
+        const r = await fetch('/api/join', { method: 'POST', body: JSON.stringify({ id, status }) })
+        const out = await r.json()
+        if (!r.ok) throw new Error(out.error)
+        j.status = status
+        show()
+      } catch (e) {
+        $('#jmsg').textContent = `البيت ${j.n}: لم يُحفظ (${e.message})`
+      }
+    }
+    el.querySelector('.yes').onclick = () => decide('approved')
+    el.querySelector('.no').onclick = () => decide('rejected')
+    $('#jlist').append(el)
+    show()
+  }
+}
+
+// Tabs; the choice is kept in the URL hash (#text, #join).
 function showTab(name) {
   document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === name))
   $('#tab-audio').hidden = name !== 'audio'
   $('#tab-text').hidden = name !== 'text'
+  $('#tab-join').hidden = name !== 'join'
   if (name !== 'audio') stop()
   if (name === 'audio') cards.forEach((c) => draw(c))
-  history.replaceState(null, '', name === 'text' ? '#text' : location.pathname)
+  history.replaceState(null, '', name === 'audio' ? location.pathname : '#' + name)
 }
 document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => showTab(b.dataset.tab)))
-showTab(location.hash === '#text' ? 'text' : 'audio')
+showTab(['#text', '#join'].includes(location.hash) ? location.hash.slice(1) : 'audio')
 initText()
+initJoins()
 </script>
 </body>
 </html>

@@ -73,6 +73,7 @@ export interface ColorMark {
   c?: string // red: key into EditionColors.codes
   q?: [number, number][] // green: [surah, ayah] places
   x?: string // green: a few words of the ayah
+  w?: string // green: the whole Quran word or phrase when the colour splits it («ٱلۡـ / ـقِتَالُ»)
   note?: string
 }
 

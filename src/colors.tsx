@@ -49,7 +49,7 @@ export function ColoredHalf(p: { text: string; marks: ColorMark[]; onMark: (m: O
         className="cw"
         onClick={(e) => {
           e.stopPropagation()
-          p.onMark({ mark: target, text: text.slice(target.s, target.e), rect: e.currentTarget.getBoundingClientRect() })
+          p.onMark({ mark: target, text: target.w ?? text.slice(target.s, target.e), rect: e.currentTarget.getBoundingClientRect() })
         }}
       >
         {cuts.slice(0, -1).map((a, i) => {
