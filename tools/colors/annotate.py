@@ -3,8 +3,9 @@
 Usage: python3 -I tools/colors/annotate.py   (after extract.py)
 
 Red spans are resolved from the رموز of the الشاطبية (CODES, WORDS, NAMES below).
-Green spans take their Quran places from GREEN, written by hand from أبو شامة's
-«إبراز المعاني» (Turath book 5486) and checked against the Kufan ayah count.
+Green spans take their Quran places from green.json (see green.py): found by script in
+a Quran text where one place fits, otherwise decided by hand (the pilot from أبو شامة's
+«إبراز المعاني», Turath book 5486). Usage: python3 tools/colors/annotate.py [edition.json]
 """
 import json
 import re
@@ -48,18 +49,67 @@ NAMES = {
     'عثمان': ('ورش', 'عثمان بن سعيد، راوي نافع'),
     'شام': ('ابن عامر', 'الشامي'), 'الشامي': ('ابن عامر', 'الشامي'), 'شامي': ('ابن عامر', 'الشامي'),
     'المكي': ('ابن كثير', 'المكي'), 'لكوفي': ('الكوفيون', 'عاصم وحمزة والكسائي'),
+    # Phase 1 (فرش الحروف): the names the verses spell out in full.
+    'كوف': ('الكوفيون', 'عاصم وحمزة والكسائي'), 'كوفي': ('الكوفيون', 'عاصم وحمزة والكسائي'),
+    'مكي': ('ابن كثير', 'المكي'), 'المكين': ('البزي وقنبل', 'راويا ابن كثير'),
+    'بصري': ('أبو عمرو', 'البصري'), 'بصر': ('أبو عمرو', 'البصري'),
+    'يحصبي': ('ابن عامر', 'اليحصبي'),
+    'ابنذكوان': ('ابن ذكوان', 'راوي ابن عامر'),
+    'ابنالعلا': ('أبو عمرو', 'ابن العلاء'), 'ابنالعل': ('أبو عمرو', 'ابن العلاء'),
+    'ولدالعلا': ('أبو عمرو', 'ابن العلاء'), 'ولدالعل': ('أبو عمرو', 'ابن العلاء'),
+    'عاصم': ('عاصم', None), 'كسائي': ('الكسائي', None),
+    'قالون': ('قالون', 'راوي نافع'), 'ورش': ('ورش', 'راوي نافع'),
+    'بزي': ('البزي', 'راوي ابن كثير'), 'أحمد': ('البزي', 'أحمد بن محمد، راوي ابن كثير'),
+    'قنبل': ('قنبل', 'راوي ابن كثير'), 'دوري': ('الدوري', 'راوي أبي عمرو'),
+    'خلاد': ('خلاد', 'راوي حمزة'), 'ليث': ('أبو الحارث', 'الليث بن خالد، راوي الكسائي'),
+    'شيخه': ('ابن كثير', 'شيخ البزي'),
+    # Phase 2: the names in مقدمة الناظم and الأصول.
+    'عيسى': ('قالون', 'عيسى بن مينا، راوي نافع'), 'محمد': ('قنبل', 'محمد بن عبد الرحمن، راوي ابن كثير'),
+    'ابنكثير': ('ابن كثير', None), 'مازني': ('أبو عمرو', 'المازني'),
+    'أبوعمرو': ('أبو عمرو', None), 'أبيعمرو': ('أبو عمرو', None), 'أبوعمر': ('أبو عمرو', None),
+    'فتىالعلا': ('أبو عمرو', 'ابن العلاء'),
+    'صالح': ('السوسي', 'صالح بن زياد، راوي أبي عمرو'), 'سوسي': ('السوسي', 'راوي أبي عمرو'),
+    'أبوشعيب': ('السوسي', 'أبو شعيب صالح بن زياد، راوي أبي عمرو'),
+    'ذكوان': ('ابن ذكوان', 'راوي ابن عامر'),
+    'أبوبكر': ('شعبة', 'أبو بكر بن عياش، راوي عاصم'), 'ابنعياش': ('شعبة', 'أبو بكر بن عياش، راوي عاصم'),
+    'خلف': ('خلف', 'راوي حمزة'), 'علي': ('الكسائي', 'علي بن حمزة'),
+    'أبوالحارث': ('أبو الحارث', 'الليث بن خالد، راوي الكسائي'),
+    'دمشقي': ('هشام', 'الدمشقي، راوي ابن عامر'),
+    'أبوعمرالدوري': ('الدوري', 'أبو عمر حفص بن عمر، راوي أبي عمرو'),
+    'عبداللهابنكثير': ('ابن كثير', 'عبد الله بن كثير'),
+    'عبداللهابنعامر': ('ابن عامر', 'عبد الله بن عامر'),
+    'عبداللهابنذكوان': ('ابن ذكوان', 'عبد الله بن أحمد بن ذكوان، راوي ابن عامر'),
 }
+# «عبد الله» and «أبو عمر» name different readers in different verses: (verse, letters) -> key.
+VERSE_NAMES = {(27, 'عبدالله'): 'عبداللهابنكثير', (32, 'عبدالله'): 'عبداللهابنعامر',
+               (33, 'عبدالله'): 'عبداللهابنذكوان', (31, 'أبوعمر'): 'أبوعمرالدوري'}
 
 
 def letters(s):
     return ''.join(c for c in s if unicodedata.category(c).startswith('L') and c != 'ـ')
 
 
+def bare(k):
+    """A name without its article or preposition («لِلْمَكِّيِّ», «الشَّامِ»), and ة as ت
+    («صُحْبَتُ»)."""
+    k = k.replace('ة', 'ت').replace('إ', 'أ')
+    for p in ('لل', 'ال', 'ل'):
+        if k.startswith(p) and len(k) - len(p) >= 3:
+            return k[len(p):]
+    return k
+
+
 def word_key(s):
     k = letters(s)
+    if len(k) > 2 and k[-1] == k[-2]:
+        k = k[:-1]  # a shadda written out across the halves: «حَقْـ / ـقٍ»
     # Word codes are declined in the verse: «حَقّاً», «صُحْبَةٍ», «حِصْنٌ», «نَفَرٍ».
     for base in list(WORDS) + list(NAMES):
         if k == base or k == base + 'ا':
+            return base
+    for base in list(WORDS) + list(NAMES):
+        b = bare(base)
+        if bare(k) in (b, b + 'ا') or (len(b) >= 4 and bare(k) == b + 'ين' and base == 'مكي'):
             return base
     return None
 
@@ -79,78 +129,19 @@ def resolve_red(text):
 
 
 # --- Green: Quran places ---------------------------------------------------------
-# verse -> one entry per green span in reading order: (refs, snippet, note).
-# refs: [(surah, ayah), ...]; the first is the place in this surah when there is one.
-S = 'حيث وقع'
-GREEN = {
-    632: [([(6, 16)], 'من يصرف عنه يومئذ', None), ([(6, 23)], 'ثم لم تكن فتنتهم', None)],
-    633: [([(6, 23)], 'ثم لم تكن فتنتهم', None), ([(6, 23)], 'والله ربنا ما كنا مشركين', None)],
-    634: [([(6, 27)], 'ولا نكذب بآيات ربنا', None), ([(6, 27)], 'ونكون من المؤمنين', None)],
-    635: [([(6, 32)], 'وللدار الآخرة خير', None), ([(6, 32)], 'وللدار الآخرة خير', None)],
-    636: [([(6, 32), (7, 169), (12, 109)], 'أفلا تعقلون', 'هنا، وفي الأعراف تحتها، وفي يوسف')],
-    637: [([(6, 33)], 'فإنهم لا يكذبونك', None)],
-    638: [([(6, 40)], 'قل أرأيتكم', 'أرأيت وأرأيتم وأرأيتكم بعد همزة الاستفهام حيث وقعت')],
-    639: [([(21, 96)], 'حتى إذا فتحت يأجوج ومأجوج', None),
-          ([(21, 96)], 'حتى إذا فتحت يأجوج ومأجوج', None),
-          ([(6, 44), (7, 96), (54, 11)], 'فتحنا عليهم أبواب كل شيء', 'هنا، وفي الأعراف «لفتحنا»، وفي القمر «ففتحنا»')],
-    640: [([(6, 52), (18, 28)], 'بالغداة والعشي', 'هنا وفي الكهف')],
-    641: [([(6, 54)], 'أنه من عمل منكم سوءا', 'والذي بعده: «فأنه غفور رحيم»'),
-          ([(6, 55)], 'ولتستبين سبيل المجرمين', None)],
-    642: [([(6, 55)], 'ولتستبين سبيل المجرمين', None), ([(6, 57)], 'يقص الحق', None)],
-    643: [([(6, 61)], 'توفته رسلنا', None), ([(6, 71)], 'كالذي استهوته الشياطين', None)],
-    644: [([(6, 63), (7, 55)], 'تضرعا وخفية', 'هنا وفي الأعراف'),
-          ([(6, 63)], 'لئن أنجانا من هذه', None), ([(6, 63)], 'لئن أنجانا من هذه', None)],
-    645: [([(6, 64)], 'قل الله ينجيكم منها', None), ([(6, 68)], 'وإما ينسينك الشيطان', None)],
-    646: [([(6, 76)], 'رأى كوكبا', S)],
-    649: [([(27, 44)], 'فلما رأته حسبته لجة', 'ونحوها'), ([(25, 41)], 'وإذا رأوك', 'ونحوها'),
-          ([(6, 68)], 'وإذا رأيت الذين يخوضون', 'ونحوها')],
-    650: [([(6, 80)], 'أتحاجوني في الله', None)],
-    651: [([(6, 83), (12, 76)], 'نرفع درجات من نشاء', 'هنا وفي يوسف'),
-          ([(6, 86), (38, 48)], 'واليسع', 'هنا وفي ص')],
-    652: [([(6, 90)], 'فبهداهم اقتده', None)],
-    654: [([(6, 91)], 'تبدونها وتخفون كثيرا', None), ([(6, 91)], 'تبدونها وتخفون كثيرا', None),
-          ([(6, 91)], 'تجعلونه قراطيس', None), ([(6, 92)], 'ولتنذر أم القرى', None)],
-    655: [([(6, 94)], 'لقد تقطع بينكم', None), ([(6, 96)], 'وجاعل الليل سكنا', None),
-          ([(6, 96)], 'وجاعل الليل سكنا', None)],
-    656: [([(6, 96)], 'وجاعل الليل سكنا', None), ([(6, 98)], 'فمستقر ومستودع', None),
-          ([(6, 98)], 'فمستقر ومستودع', None), ([(6, 100)], 'وخرقوا له بنين وبنات', None)],
-    657: [([(6, 99), (36, 35)], 'انظروا إلى ثمره', 'هنا وفي يس'), ([(6, 105)], 'وليقولوا درست', None)],
-    658: [([(6, 109)], 'أنها إذا جاءت لا يؤمنون', None)],
-    659: [([(6, 109)], 'أنها إذا جاءت لا يؤمنون', None)],
-    660: [([(6, 111), (18, 55)], 'كل شيء قبلا', 'هنا وفي الكهف')],
-    661: [([(6, 115), (10, 33), (40, 6)], 'وتمت كلمت ربك', 'هنا، وفي يونس، وفي غافر (الطَّوْل)')],
-    662: [([(6, 114)], 'أنه منزل من ربك بالحق', None), ([(6, 119)], 'ما حرم عليكم', None)],
-    663: [([(6, 119)], 'وقد فصل لكم', None), ([(6, 119)], 'وإن كثيرا ليضلون', None),
-          ([(10, 88)], 'ربنا ليضلوا عن سبيلك', None)],
-    664: [([(6, 124)], 'حيث يجعل رسالته', None), ([(6, 125), (25, 13)], 'ضيقا حرجا', 'هنا وفي الفرقان')],
-    665: [([(6, 125)], 'ضيقا حرجا', None)],
-    666: [([(6, 125)], 'كأنما يصعد في السماء', None)],
-    667: [([(6, 128), (10, 45), (34, 40)], 'ويوم يحشرهم جميعا', 'هنا، والثاني في يونس، وفي سبأ'),
-          ([(34, 40)], 'ثم يقول للملائكة', None)],
-    668: [([(6, 132)], 'وما ربك بغافل عما يعملون', None),
-          ([(6, 135), (28, 37)], 'من تكون له عاقبة الدار', 'هنا وفي القصص'),
-          ([(6, 135), (28, 37)], 'من تكون له عاقبة الدار', 'هنا وفي القصص')],
-    669: [([(6, 135)], 'اعملوا على مكانتكم', S), ([(6, 136), (6, 138)], 'بزعمهم', 'الموضعان')],
-    670: [([(6, 137)], 'وكذلك زين لكثير من المشركين', None)] + [([(6, 137)], 'قتل أولادهم شركاؤهم', None)] * 3,
-    671: [([(6, 137)], 'قتل أولادهم شركاؤهم', None)],
-    675: [([(6, 139)], 'وإن يكن ميتة', None), ([(6, 139)], 'وإن يكن ميتة', None),
-          ([(6, 141)], 'وآتوا حقه يوم حصاده', None)],
-    676: [([(6, 143)], 'ومن المعز اثنين', None), ([(6, 145)], 'إلا أن يكون ميتة', None),
-          ([(6, 145)], 'إلا أن يكون ميتة', None)],
-    677: [([(6, 152)], 'لعلكم تذكرون', S), ([(6, 153)], 'وأن هذا صراطي مستقيما', None)],
-    678: [([(6, 158), (16, 33)], 'إلا أن تأتيهم الملائكة', 'هنا وفي النحل'),
-          ([(6, 159), (30, 32)], 'فرقوا دينهم', 'هنا وفي الروم')],
-    679: [([(6, 161)], 'دينا قيما', None), ([(6, 79)], 'وجهت وجهي', 'ياء إضافة'),
-          ([(6, 162)], 'ومحياي ومماتي', 'ياء إضافة')],
-    680: [([(6, 161)], 'هداني ربي إلى صراط', 'ياء إضافة'), ([(6, 153)], 'وأن هذا صراطي مستقيما', 'ياء إضافة'),
-          ([(6, 14), (6, 15), (6, 74)], 'إني أمرت · إني أخاف · إني أراك', 'ثلاث ياءات إضافة'),
-          ([(6, 162)], 'ومحياي ومماتي', 'ياء إضافة')],
-}
+# tools/colors/green.json (kept by green.py): verse -> one entry per green span in reading
+# order, {q: [[surah, ayah], ...], x: snippet, note?, by}. The first ref is the place in
+# the verse's own surah when there is one.
+
+
+MULTI = {'ابنعامر', 'ابنذكوان', 'ابنالعلا', 'ابنالعل', 'ولدالعلا', 'ولدالعل', 'ابنكثير',
+         'أبوعمرو', 'أبيعمرو', 'أبوعمر', 'فتىالعلا', 'أبوشعيب', 'أبوبكر', 'ابنعياش',
+         'أبوالحارث', 'عبدالله'}
 
 
 def split_red(span, src):
     """A red run can cover two codes («عَمَّ نَـ»): split it at spaces, except for a name."""
-    if letters(span['t']) == 'ابنعامر':
+    if letters(span['t']) in MULTI:
         return [span]
     return [{**span, 's': span['s'] + m.start(), 'e': span['s'] + m.end()}
             for m in re.finditer(r'\S+', src[span['s']:span['e']])]
@@ -158,7 +149,9 @@ def split_red(span, src):
 
 def main():
     spans = json.loads((ROOT / 'tools/colors/_spans.json').read_text())
-    edition = json.loads((ROOT / 'data/editions/qasim/edition.json').read_text())
+    green = json.loads((ROOT / 'tools/colors/green.json').read_text())
+    ed_path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'data/editions/qasim/edition.json'
+    edition = json.loads(ed_path.read_text())
     verses = {v['n']: v for v in edition['verses']}
     out, problems = {}, []
     for key, items in spans.items():
@@ -170,20 +163,50 @@ def main():
                 reds += split_red(sp, src)
             else:
                 greens.append(sp)
-        marks = []
+        # A two-word name in two red runs («ابْنِ» «العَلاَ»): one mark.
+        joined = []
         for sp in reds:
+            prev = joined[-1] if joined else None
+            src = verses[n][sp['h']]
+            if prev and prev['h'] == sp['h'] and not src[prev['e']:sp['s']].strip() \
+                    and letters(src[prev['s']:sp['e']]) in MULTI:
+                prev['e'] = sp['e']
+                continue
+            joined.append(dict(sp))
+        reds = joined
+        marks = []
+        for i, sp in enumerate(reds):
             text = verses[n][sp['h']][sp['s']:sp['e']]
-            kind, code = resolve_red(text)
-            if kind in ('letter', 'group') and len(letters(text)) > 1:
+            # A word broken across the halves («شُعْـ / بَةَ»): read the two pieces as one.
+            a = verses[n]['a'].rstrip()
+            nxt = reds[i + 1] if i + 1 < len(reds) else None
+            prv = reds[i - 1] if i else None
+            b = verses[n]['b']
+            if sp['h'] == 'a' and sp['e'] >= len(a) and nxt and nxt['h'] == 'b' and not b[:nxt['s']].strip('ـ ') \
+                    and (a.endswith('ـ') or letters(text + b[nxt['s']:nxt['e']]) in MULTI):
+                text += b[nxt['s']:nxt['e']]
+            elif sp['h'] == 'b' and not b[:sp['s']].strip('ـ ') and prv and prv['h'] == 'a' and prv['e'] >= len(a) \
+                    and (a.endswith('ـ') or letters(a[prv['s']:prv['e']] + text) in MULTI):
+                text = a[prv['s']:prv['e']] + text
+            vk = VERSE_NAMES.get((n, letters(text)))
+            try:
+                kind, code = ('name', vk) if vk else resolve_red(text)
+            except ValueError:
+                problems.append(f'{n}: unknown red «{text}»')
+                continue
+            if kind in ('letter', 'group') and len(letters(text)) > 1 and letters(text) != 'لا':
                 problems.append(f'{n}: whole word «{text}» is red; read as the letter {code}')
             marks.append({'h': sp['h'], 's': sp['s'], 'e': sp['e'], 'k': 'r', 'c': code})
-        table = GREEN.get(n, [])
+        table = green.get(key, [])
         if len(table) != len(greens):
             problems.append(f'{n}: {len(greens)} green spans, table has {len(table)}')
-        for sp, (refs, snippet, note) in zip(greens, table):
-            m = {'h': sp['h'], 's': sp['s'], 'e': sp['e'], 'k': 'g', 'q': [list(r) for r in refs], 'x': snippet}
-            if note:
-                m['note'] = note
+        for sp, entry in zip(greens, table):
+            if entry is None:
+                problems.append(f'{n}: no place for «{sp["t"]}»')
+                continue
+            m = {'h': sp['h'], 's': sp['s'], 'e': sp['e'], 'k': 'g', 'q': entry['q'], 'x': entry['x']}
+            if entry.get('note'):
+                m['note'] = entry['note']
             marks.append(m)
         marks.sort(key=lambda x: (x['h'], x['s']))
         if marks:

@@ -110,18 +110,20 @@ export function ColorCard(p: { open: OpenMark; colors: EditionColors; onClose: (
   }, [])
 
   const code = mark.c ? p.colors.codes[mark.c] : undefined
+  // Green without a Quran place: letters of the باب (إدغام, مخارج الحروف), not a Quranic word.
+  const greenLabel = mark.q?.length ? 'كلمة قرآنية' : 'حرف'
   return (
     <div
       ref={ref}
       className={`color-card ${mark.k === 'r' ? 'red' : 'green'}`}
       role="dialog"
-      aria-label={mark.k === 'r' ? 'رمز القارئ' : 'كلمة قرآنية'}
+      aria-label={mark.k === 'r' ? 'رمز القارئ' : greenLabel}
       style={pos ?? { visibility: 'hidden', top: 0, left: 0 }}
     >
       <div className="cc-head">
         <span className="cc-word verse-text">{text}</span>
         <span className="cc-kind">
-          {mark.k === 'g' ? 'كلمة قرآنية' : code?.kind === 'letter' || code?.kind === 'group' ? `${KIND_LABEL[code.kind]} «${mark.c}»` : code ? KIND_LABEL[code.kind] : 'رمز'}
+          {mark.k === 'g' ? greenLabel : code?.kind === 'letter' || code?.kind === 'group' ? `${KIND_LABEL[code.kind]} «${mark.c}»` : code ? KIND_LABEL[code.kind] : 'رمز'}
         </span>
       </div>
       {mark.k === 'r' ? (
