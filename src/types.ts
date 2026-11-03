@@ -45,6 +45,7 @@ export interface VerseTiming {
   start: number
   end: number
   confidence: number
+  checked?: boolean // the owner approved this cut by ear (tools/cut-editor.html)
 }
 
 export interface Reciter {

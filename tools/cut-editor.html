@@ -19,7 +19,6 @@
   .num{font-weight:700;font-size:15px}
   .tag{font-size:12px;padding:1px 7px;border-radius:9px;background:#eee;color:#444}
   .tag.low{background:#fbe6d4;color:#8a4a12}
-  .tag.baq{background:#e2efe6;color:#245a37}
   .txt{font-family:"Scheherazade New","Amiri",serif;font-size:24px;line-height:1.9;margin:4px 0 8px}
   canvas{width:100%;height:150px;display:block;border-radius:6px;background:#fcfbf8;border:1px solid #eee;cursor:crosshair;touch-action:none}
   .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;direction:ltr;font-size:13px}
@@ -39,11 +38,10 @@
 <h1>محرر قصّ الأبيات</h1>
 <p class="help">
   اسحب الخط <b style="color:#1f8a4c">الأخضر</b> إلى بداية البيت والخط <b style="color:#c0392b">الأحمر</b> إلى نهايته. اضغط في أي مكان على الموجة لتسمع من تلك النقطة.
-  «تكبير البداية/النهاية» يعرض ثانيتين فقط للضبط الدقيق. إن كان القص صحيحاً اضغط «القص صحيح». التعديلات تُحفظ تلقائياً في المتصفح، وفي النهاية اضغط «تصدير».
+  «تكبير البداية/النهاية» يعرض ثانيتين فقط للضبط الدقيق. بعد الضبط (أو إن كان القص صحيحاً) اضغط «اعتماد»، فيُحفظ القص في بيانات التطبيق ولا يظهر البيت هنا مرة أخرى.
   مقياس الموجة بالديسيبل من مستوى الصمت، حتى تظهر الأصوات الخافتة مثل الواو.
 </p>
 <div class="bar">
-  <button id="exp">⤓ تصدير cuts-feedback.json</button>
   <button id="stop">■ إيقاف (Space)</button>
   <span id="count"></span>
   <span id="msg"></span>
@@ -58,8 +56,7 @@
 <script>
 const RECITER = 'mahmud-haleem'
 const BASE = '/data/reciters/' + RECITER + '/'
-const LOWEST = 30      // the lowest-confidence verses
-const BAQARAH = 5      // plus a few البقرة verses that open with و
+const LOWEST = 30      // the lowest-confidence verses not yet approved
 const PAD = 1.5        // seconds shown before the start and after the end
 const KEY = 'cut-editor:' + RECITER
 
@@ -82,21 +79,18 @@ async function init() {
   const text = Object.fromEntries(ed.verses.map((v) => [v.n, v]))
   const byN = Object.fromEntries(rec.verses.map((v) => [v.n, v]))
 
-  const low = rec.verses.slice().sort((a, b) => a.confidence - b.confidence || a.n - b.n).slice(0, LOWEST)
-  const taken = new Set(low.map((v) => v.n))
-  const waw = rec.verses.filter((v) => v.file === 's35' && !taken.has(v.n) && /^و/.test(text[v.n]?.a || ''))
-  const baq = Array.from({ length: BAQARAH }, (_, i) => waw[Math.floor(((i + 0.5) * waw.length) / BAQARAH)])
-  const samples = [...low.map((v) => ({ v, kind: 'low' })), ...baq.map((v) => ({ v, kind: 'baq' }))]
-  samples.sort((a, b) => a.v.n - b.v.n)
+  const low = rec.verses.filter((v) => !v.checked)
+    .sort((a, b) => a.confidence - b.confidence || a.n - b.n).slice(0, LOWEST)
+    .sort((a, b) => a.n - b.n)
+  if (!low.length) $('#msg').textContent = 'اعتُمدت كل الأبيات.'
 
-  for (const s of samples) {
-    const v = s.v
+  for (const v of low) {
     const prev = byN[v.n - 1]?.file === v.file ? byN[v.n - 1] : null
     const next = byN[v.n + 1]?.file === v.file ? byN[v.n + 1] : null
     const st = saved[v.n] || {}
     cards.push(makeCard({
-      v, kind: s.kind, prev, next, t: text[v.n] || { a: '', b: '' },
-      start: st.start ?? v.start, end: st.end ?? v.end, status: st.status || '', note: st.note || '',
+      v, prev, next, t: text[v.n],
+      start: st.start ?? v.start, end: st.end ?? v.end, status: '', note: st.note || '',
       view: 'all', w0: Math.max(0, v.start - PAD), w1: v.end + PAD, buf: null,
     }))
   }
@@ -144,7 +138,7 @@ function makeCard(c) {
   const el = document.createElement('div')
   el.className = 'card'
   el.innerHTML = `
-    <div class="head"><span class="num"></span><span class="tag kind"></span><span class="tag">ثقة <b class="conf"></b></span><span class="tag file"></span></div>
+    <div class="head"><span class="num"></span><span class="tag low">ثقة <b class="conf"></b></span><span class="tag file"></span></div>
     <div class="txt"></div>
     <canvas></canvas>
     <div class="row">
@@ -157,16 +151,14 @@ function makeCard(c) {
       <button data-p="pre">▶ من قبل البداية بثانية</button>
       <button data-p="tail">▶ آخر ثانيتين</button>
       <button data-p="rep">↻ تكرار ×3</button>
-      <button data-p="ok">✓ القص صحيح</button>
+      <button data-p="ok" class="approve">✓ اعتماد</button>
       <button data-p="reset">↺ إرجاع</button>
       <input class="note" placeholder="ملاحظة (اختياري)">
     </div>`
   el.querySelector('.num').textContent = 'البيت ' + c.v.n
-  el.querySelector('.kind').textContent = c.kind === 'low' ? 'ثقة منخفضة' : 'البقرة · واو'
-  el.querySelector('.kind').classList.add(c.kind)
   el.querySelector('.conf').textContent = c.v.confidence
   el.querySelector('.file').textContent = c.v.file
-  el.querySelector('.txt').textContent = c.t.a + '  …  ' + c.t.b
+  el.querySelector('.txt').textContent = c.t ? c.t.a + '  …  ' + c.t.b : '(نص هذا البيت لم يُستخرج بعد)'
   const note = el.querySelector('.note')
   note.value = c.note
   note.oninput = () => { c.note = note.value; persist(c) }
@@ -184,7 +176,7 @@ function makeCard(c) {
     else if (p === 'pre') play(c, c.start - 1, c.end)
     else if (p === 'tail') play(c, c.end - 2, c.end)
     else if (p === 'rep') play(c, c.start, c.end, 3)
-    else if (p === 'ok') { c.status = c.status === 'ok' ? '' : 'ok'; persist(c) }
+    else if (p === 'ok') approve(c)
     else if (p === 'reset') { c.start = c.v.start; c.end = c.v.end; c.status = ''; persist(c) }
   })
   attachDrag(c)
@@ -202,11 +194,31 @@ function setEdge(c, k, t) {
   persist(c)
 }
 
+// Writes the cut into reciter.json through the dev server, which marks the verse as checked.
+async function approve(c) {
+  $('#msg').textContent = ''
+  try {
+    const r = await fetch('/api/approve-cut', {
+      method: 'POST',
+      body: JSON.stringify({ reciter: RECITER, n: c.v.n, start: c.start, end: c.end }),
+    })
+    const out = await r.json()
+    if (!r.ok) throw new Error(out.error)
+    c.v.start = c.start = out.start
+    c.v.end = c.end = out.end
+    c.status = 'ok'
+    delete saved[c.v.n]
+    persist(c)
+  } catch (e) {
+    $('#msg').textContent = `البيت ${c.v.n}: لم يُعتمد (${e.message})`
+  }
+}
+
 function persist(c) {
   const edited = Math.abs(c.start - c.v.start) > 0.001 || Math.abs(c.end - c.v.end) > 0.001
-  // 'ok' = the owner confirmed the current cut (edited or not); moving an edge clears it.
-  if (c.status !== 'ok') c.status = edited ? 'edited' : ''
-  if (c.status || c.note) saved[c.v.n] = { start: c.start, end: c.end, status: c.status, note: c.note }
+  // 'ok' = approved and saved to reciter.json; moving an edge afterwards makes it 'edited' again.
+  if (c.status !== 'ok' || edited) c.status = edited ? 'edited' : ''
+  if (c.status === 'edited' || c.note) saved[c.v.n] = { start: c.start, end: c.end, note: c.note }
   else delete saved[c.v.n]
   try { localStorage.setItem(KEY, JSON.stringify(saved)) } catch {}
   refresh(c)
@@ -223,13 +235,14 @@ function refresh(c) {
   el.querySelector('.ds').textContent = fmt(c.start - c.v.start)
   el.querySelector('.de').textContent = fmt(c.end - c.v.end)
   el.querySelector('[data-p="ok"]').classList.toggle('on', c.status === 'ok')
+  el.querySelector('[data-p="ok"]').textContent = c.status === 'ok' ? '✓ اُعتمد' : '✓ اعتماد'
   el.querySelectorAll('[data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === c.view))
   draw(c)
 }
 
 function updateCount() {
-  const done = cards.filter((c) => c.status).length
-  $('#count').textContent = `تمّ ${done} من ${cards.length}`
+  const done = cards.filter((c) => c.status === 'ok').length
+  $('#count').textContent = `اُعتمد ${done} من ${cards.length}`
 }
 
 function range(c) {
@@ -375,24 +388,6 @@ addEventListener('keydown', (e) => {
   if (e.code === 'Space' && e.target.tagName !== 'INPUT') { e.preventDefault(); stop() }
 })
 addEventListener('resize', () => cards.forEach((c) => draw(c)))
-
-$('#exp').onclick = () => {
-  const out = {
-    reciter: RECITER,
-    exportedAt: new Date().toISOString(),
-    samples: cards.map((c) => ({
-      n: c.v.n, file: c.v.file, kind: c.kind, confidence: c.v.confidence,
-      orig: { start: c.v.start, end: c.v.end },
-      cut: { start: c.start, end: c.end },
-      delta: { start: +(c.start - c.v.start).toFixed(2), end: +(c.end - c.v.end).toFixed(2) },
-      status: c.status || 'untouched', note: c.note || undefined,
-    })),
-  }
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' }))
-  a.download = 'cuts-feedback.json'
-  a.click()
-}
 
 init()
 </script>

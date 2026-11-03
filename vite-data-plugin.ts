@@ -33,10 +33,46 @@ function manifest() {
 
 const MIME: Record<string, string> = { '.json': 'application/json', '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4' }
 
+type Timing = { n: number; file: string; start: number; end: number; checked?: boolean }
+
+/** Write one verse's approved cut into reciter.json (dev only; used by tools/cut-editor.html). */
+function approveCut(body: string) {
+  const { reciter, n, start, end } = JSON.parse(body)
+  if (!/^[\w-]+$/.test(reciter)) throw new Error('bad reciter')
+  const file = path.join(DATA, 'reciters', reciter, 'reciter.json')
+  const doc = JSON.parse(fs.readFileSync(file, 'utf8'))
+  const verses: Timing[] = doc.verses
+  const i = verses.findIndex((v) => v.n === n)
+  const v = verses[i]
+  const s = Math.round(start * 100) / 100, e = Math.round(end * 100) / 100
+  if (!v || !Number.isFinite(s) || !Number.isFinite(e) || s < 0 || s >= e) throw new Error('bad cut')
+  const prev = verses[i - 1], next = verses[i + 1]
+  if (prev?.file === v.file && s < prev.end) throw new Error(`يتداخل مع البيت ${prev.n}`)
+  if (next?.file === v.file && e > next.start) throw new Error(`يتداخل مع البيت ${next.n}`)
+  Object.assign(v, { start: s, end: e, checked: true })
+  fs.writeFileSync(file + '.tmp', JSON.stringify(doc, null, 2))
+  fs.renameSync(file + '.tmp', file)
+  return v
+}
+
 export default function dataPlugin(): Plugin {
   return {
     name: 'shatibiyyah-data',
     configureServer(server) {
+      server.middlewares.use('/api/approve-cut', (req, res) => {
+        if (req.method !== 'POST') return void (res.statusCode = 405, res.end())
+        let body = ''
+        req.on('data', (d) => (body += d))
+        req.on('end', () => {
+          res.setHeader('Content-Type', 'application/json')
+          try {
+            res.end(JSON.stringify(approveCut(body)))
+          } catch (err) {
+            res.statusCode = 400
+            res.end(JSON.stringify({ error: (err as Error).message }))
+          }
+        })
+      })
       server.middlewares.use('/data', (req, res, next) => {
         const rel = decodeURIComponent((req.url ?? '').split('?')[0]).replace(/^\/+/, '')
         if (rel === 'manifest.json') {
