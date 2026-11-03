@@ -1,0 +1,520 @@
+{
+ "method": "tools/extract: stage1 pypdf pieces -> stage2 merge with PDFKit order and Zu'bi skeleton -> image check of flagged + glyph-class + 10% sample -> stage3 merge",
+ "pages": [
+  17,
+  76
+ ],
+ "verses": [
+  1,
+  444
+ ],
+ "done": true,
+ "checked_halves": 761,
+ "corrected_halves": 122,
+ "sample": [
+  "17a",
+  "41a",
+  "69a",
+  "111a",
+  "145a",
+  "146a",
+  "173a",
+  "251a",
+  "286a",
+  "351a",
+  "352a",
+  "406a",
+  "431a",
+  "442a"
+ ],
+ "corrections": {
+  "68a": {
+   "text": "وَفِي يُسْرِهَا «التَّيْسِيرُ» رُمْتُ اخْتِصَارَهُ",
+   "note": "quotes misplaced in the text layer"
+  },
+  "70a": {
+   "text": "وَسَمَّيْتُهَا «حِرْزَ الأَمَانِي» تَيَمُّناً",
+   "note": "quotes and tanwin of اً misplaced"
+  },
+  "70b": {
+   "text": "«وَوَجْهَ التَّهَانِي» فَاهْنِهِ مُتَقَبِّلَا",
+   "note": "quotes misplaced"
+  },
+  "73a": {
+   "text": "أَمِينَ وَأَمْناً لِلْأَمِينِ بِسِرِّهَا",
+   "note": "lam + hamza-alif ligature garbled (lām lost, marks doubled)"
+  },
+  "74a": {
+   "text": "أَقُولُ لِحُرٍّ - وَالمُرُوءَةُ مَرْؤُهَا",
+   "note": "dash spacing as printed"
+  },
+  "74b": {
+   "text": "لِإِخْوَتِهِ المِرْآةُ ذُو النُّورِ مِكْحَلَا -:",
+   "note": "lam + hamza ligature garbled; alif of the rhyme lost; dash"
+  },
+  "75b": {
+   "text": "يُنَادَى عَلَيْهِۦ كَاسِدَ السُّوقِ - أَجْمِلَا",
+   "note": "dash spacing as printed"
+  },
+  "77a": {
+   "text": "وَسَلِّمْ لِإِحْدَى الحُسْنَيَيْنِ: إِصَابَةٌ",
+   "note": "lam + hamza ligature garbled"
+  },
+  "79a": {
+   "text": "وَقُلْ - صَادِقاً -: لَوْلاَ الوِئَامُ وَرُوحُهُ",
+   "note": "dash spacing as printed"
+  },
+  "88a": {
+   "text": "يَعُدُّ جَمِيعَ النَّاسِ مَوْلىً لِأَنَّهُمْ",
+   "note": "lam + hamza ligature garbled"
+  },
+  "89a": {
+   "text": "يَرَى نَفْسَهُ بِالذَّمِّ أَوْلَى لِأَنَّهَا",
+   "note": "lam + hamza ligature garbled"
+  },
+  "93b": {
+   "text": "وَمَا لِيَ إِلاَّ سِتْرُهُ مُتَجَلِّلَا",
+   "note": "image: «وَمَا لِيَ» printed as two words (Zu'bi وَمَالِيَ)"
+  },
+  "101b": {
+   "text": "وَصِلْ وَاسْكُتَنْ كُلٌّ جَلَايَاهُ حَصَّلَا",
+   "note": "alif of lam-alif lost by both extractors"
+  },
+  "107b": {
+   "text": "فَلَا تَقِفَنَّ الدَّهْرَ فِيهَا فَتَثْقُلَا",
+   "note": "rhyme alif lost; Zu'bi has no separator in 107"
+  },
+  "108b": {
+   "text": "وَعِنْدَ صِۜرَٰطٖ وَٱلصِّۜرَٰطِ لِ قُنْبُلَا",
+   "note": "pieces scrambled; rebuilt from the image with the text-layer codes"
+  },
+  "115a": {
+   "text": "كَمَا: بِهِمُ ٱلۡأَسۡبَابُ ثُمَّ عَلَيۡهِمُ ٱلۡـ",
+   "note": "word split across the halves: kashida kept"
+  },
+  "115b": {
+   "text": "ـقِتَالُ وَقِفْ لِلْكُلِّ بِالكَسْرِ مُكْمِلَا",
+   "note": "word split across the halves: kashida kept"
+  },
+  "123b": {
+   "text": "تَسَمَّى لِأَجْلِ الحَذْفِ فِيهِ: مُعَلَّلَا",
+   "note": "lam + hamza ligature garbled"
+  },
+  "125a": {
+   "text": "وَيَٰقَوۡمِ مَالِي ثُمَّ يَٰقَوۡمِ مَنۡ بِلَا",
+   "note": "alif of lam-alif lost by both extractors"
+  },
+  "126b": {
+   "text": "قَلِيلَ حُرُوفٍ رَدَّهُ مَنْ تَنَبَّلَا",
+   "note": "window overshoot into 127a; rebuilt from the image"
+  },
+  "130b": {
+   "text": "وَلاَ فَرْقَ يُنْجِي مَنْ عَلَى المَدِّ عَوَّلاَ",
+   "note": "stray letters from 131a removed"
+  },
+  "134a": {
+   "text": "كَ: يَرۡزُقكُّمُۥ، وَاثَقكُّمُۥ وَخَلَقكُّمُۥ",
+   "note": "word spaces lost; stray letter removed"
+  },
+  "134b": {
+   "text": "وَمِيثَٰقَكُمۡ أَظْهِرْ وَنَرۡزُقُكَ انْجَلَى",
+   "note": "stray letters from 133b removed"
+  },
+  "154a": {
+   "text": "وَلاَ يَمْنَعُ الإِدْغَامُ - إِذْ هُوَ عَارِضٌ -",
+   "note": "dashes as printed (the first dash belongs to the verse number)"
+  },
+  "158a": {
+   "text": "وَلَمْ يَصِلُوا «هَا» مُضْمَرٍ قَبْلَ سَاكِنٍ",
+   "note": "quotes misplaced"
+  },
+  "162b": {
+   "text": "وَيَأۡتِهۡ لَدَى طَاهَا بِالِاسْكَانِ يُجْتَلَى",
+   "note": "alif of طاها and of lam-alif misplaced by the extractors"
+  },
+  "163b": {
+   "text": "بِخُلْفٍ وَفِي طَاهَا بِوَجْهَيْنِ بُجِّلَا",
+   "note": "alif of طاها misplaced"
+  },
+  "164b": {
+   "text": "بِخُلْفِهِمَا وَالقَصْرَ فَاذْكُرْهُ نَوْفَلَا",
+   "note": "double vowel on فِ removed"
+  },
+  "166b": {
+   "text": "وَفِي الهَاءِ ضَمٌّ لَفَّ دَعْوَاهُ حَرْمَلَا",
+   "note": "stray fatha on the lām of al- removed"
+  },
+  "168b": {
+   "text": "أَوِ الوَاوُ عَنْ ضَمٍّ لَقِي الهَمْزَ طُوِّلَا",
+   "note": "stray marks on the rhyme removed"
+  },
+  "170a": {
+   "text": "كَ: جِاْيٓءَ وَعَن سُوٓءٖ وَشَآءَ اتِّصَالُهُ",
+   "note": "word broken by a space"
+  },
+  "172b": {
+   "text": "ءِ ءَالِهَةً، ءَاتَىٰ، لِلِايمَٰنِ مُثِّلَا",
+   "note": "space after the split word ءِ (end of هَٰؤُلَآءِ)"
+  },
+  "174a": {
+   "text": "وَمَا بَعْدَ هَمْزِ الوَصْلِ إِيتِ وَبَعْضُهُمْ",
+   "note": "word order from the image"
+  },
+  "174b": {
+   "text": "يُؤَاخِذُكُمۡ، ءَآلَـٰنَ مُسْتَفْهِماً تَلَا",
+   "note": "stray words from 174a removed"
+  },
+  "175a": {
+   "text": "وَعَادًا ٱلُاولَىٰ وَابْنُ غَلْبُونَ طَاهِرٌ",
+   "note": "alif of the tanwin misplaced"
+  },
+  "196b": {
+   "text": "بِهَا لُذْ وَقَبْلَ الكَسْرِ خُلْفٌ لَهُ وَلاَ",
+   "note": "marks doubled on قَبْلَ"
+  },
+  "204b": {
+   "text": "وَفِي غَيْرِهِ كَاليَا وَكَالوَاوِ سَهَّلَا",
+   "note": "stray word from 205a removed"
+  },
+  "205a": {
+   "text": "وَبِٱلسُّوِّ إِلَّا أَبْدَلاَ ثُمَّ أَدْغَمَا",
+   "note": "word space lost"
+  },
+  "207a": {
+   "text": "وَفِي هَـٰؤُلَا إِنۡ وَٱلۡبِغَآءِ لِوَرْشِهِمْ",
+   "note": "word broken by a space"
+  },
+  "207b": {
+   "text": "بِيَاءٍ خَفِيفِ الكَسْرِ بَعْضُهُمُۥ تَلَا",
+   "note": "lam-alif and al- garbled"
+  },
+  "209a": {
+   "text": "وَتَسْهِيلُ الاُخْرَى فِي اخْتِلَافِهِمَا سَمَا",
+   "note": "alif of lam-alif lost by both extractors"
+  },
+  "214b": {
+   "text": "فَوَرْشٌ يُرِيهَا حَرْفَ مَدٍّ مُبَدِّلَا",
+   "note": "stray marks on the rhyme removed"
+  },
+  "218b": {
+   "text": "وَأَرۡجِـٔۡ مَعاً وَٱقۡرَأۡ ثَلَاثاً فَحَصِّلَا",
+   "note": "word space lost; alif of lam-alif lost by both extractors"
+  },
+  "219a": {
+   "text": "وَتُـٔۡوِى وَتُـٔۡوِيهِۦ أَخَفُّ بِهَمْزِهِ",
+   "note": "doubled kasra removed"
+  },
+  "223b": {
+   "text": "وَيَـٔۡلِتۡكُمُ الدُّورِي وَالاِبْدَالُ يُجْتَلَى",
+   "note": "stray word from 224a removed"
+  },
+  "224b": {
+   "text": "وَأَدْغَمَ فِي يَاءِ ٱلنَّسِيِّ فَثَقَّلَا",
+   "note": "word space lost"
+  },
+  "226a": {
+   "text": "وَحَرِّكْ لِوَرْشٍ كُلَّ سَاكِنٍ اۨخِرٍ",
+   "note": "image: small nūn (with a fatḥa) over the alif of اخِر, not in the text layer; written U+06E8 (uncertain)"
+  },
+  "241b": {
+   "text": "لَدَى فَتْحِهِ يَاءً وَوَاواً مُحَوَّلاَ",
+   "note": "word space lost"
+  },
+  "249a": {
+   "text": "كَمَا: هَـٰ وَيَـٰ وَاللَّامِ وَالبَا وَنَحْوِهَا",
+   "note": "word spaces lost; lam-alif rebuilt"
+  },
+  "259a": {
+   "text": "نَعَمْ إِذۡ تَمَشَّتْ زَيْنَبٌ صَالَ دَلُّهَا",
+   "note": "doubled vowel on تْ removed"
+  },
+  "267a": {
+   "text": "فَإِظْهَارُهَا دُرٌّ نَمَتْهُ بُدُورُهُ",
+   "note": "alif misplaced across the word space"
+  },
+  "270a": {
+   "text": "أَلَا بَلۡ وَهَلۡ تَرْوِي ثَنَا ظَعْنُ زَيْنَبٍ",
+   "note": "word order from the image (pieces scrambled)"
+  },
+  "275b": {
+   "text": "وَقُلْ بَلۡ وَهَلۡ رَاهَا لَبِيبٌ وَيَعْقِلَا",
+   "note": "doubled sukun removed"
+  },
+  "279b": {
+   "text": "شَوَاهِدُ حَمَّادٍ، وَأُورِثۡتُمُۥ حَلَا",
+   "note": "rhyme word garbled"
+  },
+  "282b": {
+   "text": "ثَوَابَ، لَبِثۡتُ الفَرْدُ وَالجَمْعُ وَصَّلَا",
+   "note": "stray letters from 283a removed"
+  },
+  "295a": {
+   "text": "وَفِي اسْمٍ فِي الِاسْتِفْهَامِ أَنَّىٰ وَفِي مَتَىٰ",
+   "note": "alif of lam-alif lost by both extractors"
+  },
+  "297a": {
+   "text": "وَكُلُّ ثُلَاثِيٍّ يَزِيدُ فَإِنَّهُ",
+   "note": "stray word from 297b removed"
+  },
+  "299b": {
+   "text": "أَتَى وَخَطَٰيَٰ مِثْلُهُ مُتَقَبَّلَا",
+   "note": "word space lost"
+  },
+  "300a": {
+   "text": "وَمَحۡيَاهُمُۥ أَيْضاً وَحَقَّ تُقَاتِهِ",
+   "note": "word space lost"
+  },
+  "300b": {
+   "text": "وَفِي قَدۡ هَدَىـٰنِۦ لَيْسَ أَمْرُكَ مُشْكِلَا",
+   "note": "word broken by a space; kashida kept as the seat of the dagger alif (text layer)"
+  },
+  "301a": {
+   "text": "وَفِي الكَهْفِ أَنسَىٰنِيـ وَمِنْ قَبْلُ جَاءَ مَنۡ",
+   "note": "the Quranic word is cut after نِيـ, with a kashida, as printed (text layer and image)"
+  },
+  "302a": {
+   "text": "وَفِيهَا وَفِي طَاسِينَ ءَاتَىٰنِۦَ الَّذِي",
+   "note": "word broken by a space"
+  },
+  "304a": {
+   "text": "وَأَمَّا ضُحَىٰهَا وَٱلضُّحَىٰ وَٱلرِّبَوٰاْ مَعَ ٱلۡـ",
+   "note": "stray letters removed; word split across the halves: kashida kept"
+  },
+  "304b": {
+   "text": "ـقُوَىٰ فَأَمَالاَهَا وَبِالوَاوِ تُخْتَلَى",
+   "note": "word split across the halves: kashida kept"
+  },
+  "305a": {
+   "text": "وَرُءۡيَاكَ مَعْ مَثۡوَاىَ عَنْهُ لِحَفْصِهِمْ",
+   "note": "doubled mark removed"
+  },
+  "307b": {
+   "text": "وَفِي «اقْرَأْ» وَفِي وَالنَّازِعَاتِ تَمَيَّلَا",
+   "note": "quotes misplaced"
+  },
+  "308a": {
+   "text": "وَمِنْ تَحْتِهَا ثُمَّ القِيَامَةِ ثُمَّ فِي الـ",
+   "note": "word split across the halves: kashida kept"
+  },
+  "308b": {
+   "text": "ـمَعَارِجِ يَا مِنْهَالُ أَفْلَحْتَ مُنْهِلَا",
+   "note": "word split across the halves: kashida kept"
+  },
+  "312a": {
+   "text": "نَـَٔا شَرْعُ يُمْنٍ بِاخْتِلَافٍ وَشُعْبَةٌ",
+   "note": "word space lost"
+  },
+  "314a": {
+   "text": "وَذُو الرَّاءِ وَرْشٌ بَيْنَ بَيْنَ وَفِي أَرَىٰـ",
+   "note": "word split across the halves (أَرَىٰـ/ـكَهُمۡ): kashida kept"
+  },
+  "314b": {
+   "text": "ـكَهُمۡ وَذَوَاتِ اليَا لَهُ الخُلْفُ جُمِّلَا",
+   "note": "word split across the halves: kashida kept"
+  },
+  "317a": {
+   "text": "وَيَـٰوَيۡلَتَىٰ، أَنَّىٰ وَيَـٰحَسۡرَتَىٰ طَوَوْا",
+   "note": "stray letters removed"
+  },
+  "317b": {
+   "text": "وَعَنْ غَيْرِهِ قِسْهَا وَيَٰأَسَفَىٰ العُلَى",
+   "note": "word broken by a space"
+  },
+  "318a": {
+   "text": "وَكَيْفَ الثُّلَاثِي غَيْرَ زَاغَتۡ بِمَاضِيٍ",
+   "note": "alif of lam-alif lost by both extractors"
+  },
+  "325a": {
+   "text": "وَهَذَانِ عَنْهُۥ بِاخْتِلَافٍ وَمَعْهُ فِي ٱلۡـ",
+   "note": "alif of lam-alif lost; word split across the halves: kashida kept"
+  },
+  "325b": {
+   "text": "ـبَوَارِ وَفِي ٱلۡقَهَّارِ حَمْزَةُ قَلَّلَا",
+   "note": "word split across the halves: kashida kept"
+  },
+  "328a": {
+   "text": "وَءَاذَانِهِمۡ، طُغۡيَٰنِهِمۡ وَيُسَٰرِعُو",
+   "note": "first letter lost; word split across the halves (no kashida after و)"
+  },
+  "328b": {
+   "text": "نَ، ءَاذَانِنَا عَنْهُ ٱلۡجَوَارِۦ تَمَثَّلَا",
+   "note": "letters of 328a removed; word space lost"
+  },
+  "330b": {
+   "text": "وَءَانِيَةٖ فِي «هَلۡ أَتَىٰكَ» لِأَعْدَلَا",
+   "note": "lam + hamza ligature garbled; quote spacing"
+  },
+  "332a": {
+   "text": "حِمَارِكَ وَٱلۡمِحۡرَابِ، إِكۡرَٰهِهِنَّ وَٱلۡـ",
+   "note": "word split across the halves: kashida kept"
+  },
+  "332b": {
+   "text": "ـحِمَارِ وَفِي ٱلۡإِكۡرَامِ، عِمۡرَٰنَ مُثِّلَا",
+   "note": "word split across the halves: kashida kept"
+  },
+  "336a": {
+   "text": "كَ: مُوسَى ٱلۡهُدَىٰ، عِيسَى ٱبۡنِ مَرۡيَمَ وَٱلۡقُرَى ٱلۡـ",
+   "note": "word split across the halves: kashida kept"
+  },
+  "336b": {
+   "text": "ـلَتِى مَعَ ذِكۡرَى ٱلدَّارِ فَافْهَمْ مُحَصِّلَا",
+   "note": "word split across the halves: kashida kept"
+  },
+  "344b": {
+   "text": "سِوَى حَرْفِ الاِسْتِعْلَا سِوَى الخَا فَكَمَّلَا",
+   "note": "alif of lam-alif lost; word space lost"
+  },
+  "360a": {
+   "text": "إِذَا فُتِحَتْ أَوْ سُكِّنَتْ كَ: صَلَاتِهِمۡ",
+   "note": "stray word from 360b removed"
+  },
+  "363a": {
+   "text": "وَكُلٌّ لَدَى اسْمِ ٱللَّهِ مِنْ بَعْدِ كَسْرَةٍ",
+   "note": "Allah ligature garbled (هـ lost, marks scattered)"
+  },
+  "372b": {
+   "text": "بِنَاءً وَإِعْرَابٍ غَدَا مُتَنَقِّلَا",
+   "note": "word space lost"
+  },
+  "374a": {
+   "text": "وَفِي الهَاءِ لِلْإِضْمَارِ قَوْمٌ أَبَوْهُمَا",
+   "note": "lam + hamza ligature garbled (lām lost)"
+  },
+  "378b": {
+   "text": "فَبِالهَاءِ قِفْ حَقّاً رِضاً وَمُعَوَّلَا",
+   "note": "stray marks on the rhyme removed"
+  },
+  "380a": {
+   "text": "وَقِفْ يَـٰأَبَهۡ كُفْئاً دَنَا وَكَأَيِّنِ الـ",
+   "note": "word broken by a space; word split across the halves: kashida kept"
+  },
+  "380b": {
+   "text": "ـوُقُوفُ بِنُونٍ وَهْوَ بِاليَاءِ حُصِّلَا",
+   "note": "word split across the halves: kashida kept"
+  },
+  "381b": {
+   "text": "وَ«سَالَ» عَلَى مَا حَجَّ وَالخُلْفُ رُتِّلَا",
+   "note": "quote spacing as printed"
+  },
+  "382a": {
+   "text": "وَيَٰأَيُّهَ فَوْقَ الدُّخَانِ وَأَيُّهَ",
+   "note": "word broken by a space, space lost"
+  },
+  "385b": {
+   "text": "بِ: مَا، وَبِ: وَادِۦ ٱلنَّمۡلِ بِاليَا سَناً تَلَا",
+   "note": "word space lost"
+  },
+  "386a": {
+   "text": "وَفِيمَهۡ وَمِمَّهۡ قِفْ وَعَمَّهۡ لِمَهۡ بِمَهۡ",
+   "note": "image: وَفِيمَهۡ is one word (Zu'bi وَفي مَهْ)"
+  },
+  "392a": {
+   "text": "ذَرُونِىَ وَٱدۡعُونِى ٱذۡكُرُونِىَ فَتْحُهَا",
+   "note": "Quranic final yā printed undotted"
+  },
+  "398a": {
+   "text": "أَرَهۡطِى سَمَا مَوْلىً، وَمَالِى سَمَا لِواً",
+   "note": "stray letters from 398b removed"
+  },
+  "398b": {
+   "text": "لَعَلِّى سَمَا كُفْئاً، مَعِى نَفَرُ العُلَى",
+   "note": "first word garbled; rebuilt from the image"
+  },
+  "403b": {
+   "text": "دُعَآءِى وَءَابَآءِى لِكُوفٍ تَجَمَّلَا",
+   "note": "Quranic final yā printed undotted; word space lost"
+  },
+  "409a": {
+   "text": "فَخَمْسَ عِبَادِى اعْدُدْ وَعَهۡدِى أَرَادَنِى",
+   "note": "stray letters from 409b removed"
+  },
+  "409b": {
+   "text": "وَرَبِّى ٱلَّذِى، ءَاتَىٰنِ ءَايَٰتِىَ الحُلَى",
+   "note": "Allah-like ligature ٱلَّذِى garbled; rhyme ى as in the text layer and image"
+  },
+  "414a": {
+   "text": "وَعَمَّ عُلىً وَجۡهِى، وَبَيۡتِى بِنُوحَ عَنْ",
+   "note": "word space lost"
+  },
+  "414b": {
+   "text": "لِواً وَسِوَاهُۥ عُدَّ أَصْلاً لِيُحْفَلَا",
+   "note": "garbled start; space lost"
+  },
+  "415a": {
+   "text": "وَمَعْ شُرَكَآءِى مِن وَرَآءِىَ دَوَّنُوا",
+   "note": "Quranic final yā printed undotted"
+  },
+  "418a": {
+   "text": "وَمَعْ تُؤۡمِنُواْ لِى يُؤۡمِنُواْ بِىَ جَا، وَيَٰـ",
+   "note": "word split across the halves: kashida kept"
+  },
+  "418b": {
+   "text": "ـعِبَادِىَ صِفْ وَالحَذْفُ عَنْ شَاكِرٍ دَلاَ",
+   "note": "word split across the halves: kashida kept"
+  },
+  "182b": {
+   "text": "وَعَنْ كُلٍّ ٱلۡمَوۡءُۥدَةُ اقْصُرْ وَمَوۡئِلَا",
+   "note": "small wāw inside the word (no word break)"
+  },
+  "419b": {
+   "text": "وَمَالِىَ فِي يَاسِينَ سَكِّنْ فَتُكْمِلَا",
+   "note": "doubled vowel removed"
+  },
+  "420b": {
+   "text": "لِأَنْ كُنَّ عَنْ خَطِّ المَصَاحِفِ مَعْزِلاَ",
+   "note": "lam + hamza ligature garbled"
+  },
+  "423a": {
+   "text": "فَ: يَسۡرِۦ، إِلَى ٱلدَّاعِ، ٱلۡجَوَارِ، ٱلۡمُنَادِ، يَهۡـ",
+   "note": "word split across the halves: kashida kept"
+  },
+  "423b": {
+   "text": "ـدِيَنۡ، يُؤۡتِيَنۡ، مَعْ أَن تُعَلِّمَنِۦ وِلَا",
+   "note": "word split across the halves; rhyme garbled"
+  },
+  "424a": {
+   "text": "وَأَخَّرۡتَنِ الإِسْرَا وَتَتَّبِعَنۡ سَمَا",
+   "note": "word space lost"
+  },
+  "424b": {
+   "text": "وَفِي الكَهْفِ نَبۡغِۦ، يَأۡتِ فِي هُودَ رُفِّلَا",
+   "note": "word broken by a space"
+  },
+  "429a": {
+   "text": "وَفِي النَّمْلِ ءَاتَىٰنِۦ وَيُفْتَحُ عَنْ أُولِي",
+   "note": "word broken by a space"
+  },
+  "429b": {
+   "text": "حِمىً وَخِلَافُ الوَقْفِ بَيْنَ حُلىً عَلَا",
+   "note": "alif of lam-alif lost by both extractors"
+  },
+  "435a": {
+   "text": "وَفِي ٱلۡمُتَعَالِۦ دُرُّهُ، وَٱلتَّلَاقِ وَٱلتۡـ",
+   "note": "word split across the halves: kashida kept"
+  },
+  "435b": {
+   "text": "ـتَنَادِۦ دَرَا بَاغِيهِ بِالخُلْفِ جُهَّلَا",
+   "note": "word split across the halves: kashida kept"
+  },
+  "437b": {
+   "text": "نِ، فَٱعۡتَزِلُونِۦ، سِتَّةٌ نُذُرِۦ جَلَا",
+   "note": "rhyme garbled"
+  },
+  "438a": {
+   "text": "وَعِيدِۦ ثَلَاثٌ، يُنقِذُونِ، يُكَذِّبُو",
+   "note": "alif of lam-alif lost by both extractors"
+  },
+  "439a": {
+   "text": "فَبَشِّرۡ عِبَادِ افْتَحْ وَقِفْ سَاكِناً يَداً",
+   "note": "word space lost"
+  },
+  "443a": {
+   "text": "وَإِنِّي لَأَرْجُوهُۥ لِنَظْمِ حُرُوفِهِمْ",
+   "note": "doubled marks removed"
+  },
+  "444b": {
+   "text": "وَمَا خَابَ ذُو جِدٍّ إِذَا هُوَ حَسْبَلَا",
+   "note": "rhyme alif lost; Zu'bi has no separator in 444"
+  }
+ }
+}

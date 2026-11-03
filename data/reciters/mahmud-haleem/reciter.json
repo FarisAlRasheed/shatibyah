@@ -3,11 +3,326 @@
   "name": "د. محمود بن حليم",
   "editionId": "qasim",
   "source": "https://a-alqasim.com/sounds-explain/081401asshaatibiyyah_mahmudhaleem/",
-  "partial": {
-    "from": 445,
-    "to": 1173
-  },
   "files": [
+    {
+      "id": "s5",
+      "path": "audio/s5.mp3",
+      "sectionIds": [
+        5
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_01_Intro_MahmudHaleem.mp3",
+      "sourceStart": 47.82,
+      "sourceEnd": 867.64,
+      "bytes": 5750160
+    },
+    {
+      "id": "s6",
+      "path": "audio/s6.mp3",
+      "sectionIds": [
+        6
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_02_Istiadhah_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 45.8,
+      "bytes": 330381
+    },
+    {
+      "id": "s7",
+      "path": "audio/s7.mp3",
+      "sectionIds": [
+        7
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_03_Basmalah_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 72.43,
+      "bytes": 516749
+    },
+    {
+      "id": "s8",
+      "path": "audio/s8.mp3",
+      "sectionIds": [
+        8
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_04_SurahUmmAlQuraan_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 72.87,
+      "bytes": 519843
+    },
+    {
+      "id": "s9",
+      "path": "audio/s9.mp3",
+      "sectionIds": [
+        9
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_05_AlIdghamAlKabir_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 144.19,
+      "bytes": 1019069
+    },
+    {
+      "id": "s10",
+      "path": "audio/s10.mp3",
+      "sectionIds": [
+        10
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_06_IdghamAlHarfyn_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 232.77,
+      "bytes": 1639144
+    },
+    {
+      "id": "s11",
+      "path": "audio/s11.mp3",
+      "sectionIds": [
+        11
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_07_HaAlKinayah_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 92.71,
+      "bytes": 658709
+    },
+    {
+      "id": "s12",
+      "path": "audio/s12.mp3",
+      "sectionIds": [
+        12
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_08_AlMaddWaAlQasr_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 134.91,
+      "bytes": 954095
+    },
+    {
+      "id": "s13",
+      "path": "audio/s13.mp3",
+      "sectionIds": [
+        13
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_09_AlHamzataynMinKalimah_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 161.01,
+      "bytes": 1136823
+    },
+    {
+      "id": "s14",
+      "path": "audio/s14.mp3",
+      "sectionIds": [
+        14
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_10_AlHamzataynMinKalimatyn_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 107.68,
+      "bytes": 763541
+    },
+    {
+      "id": "s15",
+      "path": "audio/s15.mp3",
+      "sectionIds": [
+        15
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_11_AlHamzAlMufrad_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 108.52,
+      "bytes": 769365
+    },
+    {
+      "id": "s16",
+      "path": "audio/s16.mp3",
+      "sectionIds": [
+        16
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_12_NaqlHarakatAlHamzah_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 86.65,
+      "bytes": 616304
+    },
+    {
+      "id": "s17",
+      "path": "audio/s17.mp3",
+      "sectionIds": [
+        17
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_13_WaqafHamzahWaHishamAlaAlHamz_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 179.52,
+      "bytes": 1266408
+    },
+    {
+      "id": "s18",
+      "path": "audio/s18.mp3",
+      "sectionIds": [
+        18
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_14_AlIzharWaAlIdgham_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 41.93,
+      "bytes": 303264
+    },
+    {
+      "id": "s19",
+      "path": "audio/s19.mp3",
+      "sectionIds": [
+        19
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_15_DhalIdh_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 32,
+      "bytes": 233740
+    },
+    {
+      "id": "s20",
+      "path": "audio/s20.mp3",
+      "sectionIds": [
+        20
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_16_DalQad_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 39.28,
+      "bytes": 284700
+    },
+    {
+      "id": "s21",
+      "path": "audio/s21.mp3",
+      "sectionIds": [
+        21
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_17_TaAtTanith_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 41.54,
+      "bytes": 300534
+    },
+    {
+      "id": "s22",
+      "path": "audio/s22.mp3",
+      "sectionIds": [
+        22
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_18_LamHalWaBal_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 43.02,
+      "bytes": 310908
+    },
+    {
+      "id": "s23",
+      "path": "audio/s23.mp3",
+      "sectionIds": [
+        23
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_19_IttifaqhimFiIdgham_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 37.28,
+      "bytes": 270686
+    },
+    {
+      "id": "s24",
+      "path": "audio/s24.mp3",
+      "sectionIds": [
+        24
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_20_HurufQarubtMakharijuha_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 86.26,
+      "bytes": 613574
+    },
+    {
+      "id": "s25",
+      "path": "audio/s25.mp3",
+      "sectionIds": [
+        25
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_21_AhkamAnNunAsSakinahWaAtTanwin_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 52.98,
+      "bytes": 380614
+    },
+    {
+      "id": "s26",
+      "path": "audio/s26.mp3",
+      "sectionIds": [
+        26
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_22_AlFathWalImalah_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 426.57,
+      "bytes": 2995773
+    },
+    {
+      "id": "s27",
+      "path": "audio/s27.mp3",
+      "sectionIds": [
+        27
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_23_MadhhabAlKisaiFiImalah_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 44.4,
+      "bytes": 320554
+    },
+    {
+      "id": "s28",
+      "path": "audio/s28.mp3",
+      "sectionIds": [
+        28
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_24_MadhahibihimFiArRaat_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 144.45,
+      "bytes": 1020890
+    },
+    {
+      "id": "s29",
+      "path": "audio/s29.mp3",
+      "sectionIds": [
+        29
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_25_AlLamat_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 56.59,
+      "bytes": 405912
+    },
+    {
+      "id": "s30",
+      "path": "audio/s30.mp3",
+      "sectionIds": [
+        30
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_26_AlWaqfAlaAwakhirAlKalim_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 95.7,
+      "bytes": 679640
+    },
+    {
+      "id": "s31",
+      "path": "audio/s31.mp3",
+      "sectionIds": [
+        31
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_27_AlWaqfAlaMarsumAlKhatt_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 96.63,
+      "bytes": 686192
+    },
+    {
+      "id": "s32",
+      "path": "audio/s32.mp3",
+      "sectionIds": [
+        32
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_28_MadhahibihimFiYaatAlIdafah_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 290.31,
+      "bytes": 2041911
+    },
+    {
+      "id": "s33",
+      "path": "audio/s33.mp3",
+      "sectionIds": [
+        33
+      ],
+      "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_29_MadhahibihimFiAzZawaid_MahmudHaleem.mp3",
+      "sourceStart": 0,
+      "sourceEnd": 221.88,
+      "bytes": 1562886
+    },
     {
       "id": "s35",
       "path": "audio/s35.mp3",
@@ -15,7 +330,7 @@
         35
       ],
       "sourceUrl": "https://files.a-alqasim.com/audio/Mutoon/MahmudHaleem/0814AsShaatibiyyah/0814AsShaatibiyyah_30_FarshAlHuruf_MahmudHaleem.mp3",
-      "sourceStart": 0.0,
+      "sourceStart": 0,
       "sourceEnd": 873.47,
       "bytes": 6085898
     },
@@ -539,6 +854,3120 @@
     }
   ],
   "verses": [
+    {
+      "n": 1,
+      "file": "s5",
+      "start": 4.94,
+      "end": 12.14,
+      "confidence": 0.95
+    },
+    {
+      "n": 2,
+      "file": "s5",
+      "start": 12.87,
+      "end": 20.57,
+      "confidence": 0.97
+    },
+    {
+      "n": 3,
+      "file": "s5",
+      "start": 21.34,
+      "end": 28.74,
+      "confidence": 0.98
+    },
+    {
+      "n": 4,
+      "file": "s5",
+      "start": 29.44,
+      "end": 37.57,
+      "confidence": 0.99
+    },
+    {
+      "n": 5,
+      "file": "s5",
+      "start": 38.2,
+      "end": 45.82,
+      "confidence": 0.99
+    },
+    {
+      "n": 6,
+      "file": "s5",
+      "start": 46.31,
+      "end": 54.28,
+      "confidence": 0.99
+    },
+    {
+      "n": 7,
+      "file": "s5",
+      "start": 54.74,
+      "end": 62.21,
+      "confidence": 0.96
+    },
+    {
+      "n": 8,
+      "file": "s5",
+      "start": 62.62,
+      "end": 70.24,
+      "confidence": 0.95
+    },
+    {
+      "n": 9,
+      "file": "s5",
+      "start": 70.63,
+      "end": 78.56,
+      "confidence": 0.95
+    },
+    {
+      "n": 10,
+      "file": "s5",
+      "start": 79.14,
+      "end": 87.06,
+      "confidence": 0.97
+    },
+    {
+      "n": 11,
+      "file": "s5",
+      "start": 87.55,
+      "end": 95.63,
+      "confidence": 0.96
+    },
+    {
+      "n": 12,
+      "file": "s5",
+      "start": 96.33,
+      "end": 104.49,
+      "confidence": 0.99
+    },
+    {
+      "n": 13,
+      "file": "s5",
+      "start": 104.96,
+      "end": 113.16,
+      "confidence": 0.98
+    },
+    {
+      "n": 14,
+      "file": "s5",
+      "start": 113.78,
+      "end": 121.66,
+      "confidence": 0.98
+    },
+    {
+      "n": 15,
+      "file": "s5",
+      "start": 122.39,
+      "end": 130.64,
+      "confidence": 0.95
+    },
+    {
+      "n": 16,
+      "file": "s5",
+      "start": 131.28,
+      "end": 139.08,
+      "confidence": 0.98
+    },
+    {
+      "n": 17,
+      "file": "s5",
+      "start": 139.63,
+      "end": 147.45,
+      "confidence": 0.98
+    },
+    {
+      "n": 18,
+      "file": "s5",
+      "start": 147.96,
+      "end": 156.03,
+      "confidence": 0.96
+    },
+    {
+      "n": 19,
+      "file": "s5",
+      "start": 156.62,
+      "end": 165.42,
+      "confidence": 0.99
+    },
+    {
+      "n": 20,
+      "file": "s5",
+      "start": 166.04,
+      "end": 174.56,
+      "confidence": 1
+    },
+    {
+      "n": 21,
+      "file": "s5",
+      "start": 175.45,
+      "end": 183.68,
+      "confidence": 1
+    },
+    {
+      "n": 22,
+      "file": "s5",
+      "start": 184.25,
+      "end": 192.63,
+      "confidence": 1
+    },
+    {
+      "n": 23,
+      "file": "s5",
+      "start": 193.25,
+      "end": 201.46,
+      "confidence": 0.99
+    },
+    {
+      "n": 24,
+      "file": "s5",
+      "start": 202.27,
+      "end": 210.42,
+      "confidence": 0.94
+    },
+    {
+      "n": 25,
+      "file": "s5",
+      "start": 211.15,
+      "end": 219.06,
+      "confidence": 0.93
+    },
+    {
+      "n": 26,
+      "file": "s5",
+      "start": 219.51,
+      "end": 227.73,
+      "confidence": 0.95
+    },
+    {
+      "n": 27,
+      "file": "s5",
+      "start": 228.4,
+      "end": 236.03,
+      "confidence": 0.98
+    },
+    {
+      "n": 28,
+      "file": "s5",
+      "start": 236.69,
+      "end": 244.62,
+      "confidence": 0.97
+    },
+    {
+      "n": 29,
+      "file": "s5",
+      "start": 245.2,
+      "end": 252.95,
+      "confidence": 0.96
+    },
+    {
+      "n": 30,
+      "file": "s5",
+      "start": 253.46,
+      "end": 261.03,
+      "confidence": 0.96
+    },
+    {
+      "n": 31,
+      "file": "s5",
+      "start": 261.44,
+      "end": 269.15,
+      "confidence": 0.97
+    },
+    {
+      "n": 32,
+      "file": "s5",
+      "start": 269.63,
+      "end": 277.79,
+      "confidence": 0.99
+    },
+    {
+      "n": 33,
+      "file": "s5",
+      "start": 278.33,
+      "end": 286.3,
+      "confidence": 0.99
+    },
+    {
+      "n": 34,
+      "file": "s5",
+      "start": 286.79,
+      "end": 294.66,
+      "confidence": 0.98
+    },
+    {
+      "n": 35,
+      "file": "s5",
+      "start": 295.24,
+      "end": 302.83,
+      "confidence": 0.92
+    },
+    {
+      "n": 36,
+      "file": "s5",
+      "start": 303.42,
+      "end": 311.36,
+      "confidence": 1
+    },
+    {
+      "n": 37,
+      "file": "s5",
+      "start": 311.97,
+      "end": 319.35,
+      "confidence": 1
+    },
+    {
+      "n": 38,
+      "file": "s5",
+      "start": 319.96,
+      "end": 327.63,
+      "confidence": 0.96
+    },
+    {
+      "n": 39,
+      "file": "s5",
+      "start": 328.17,
+      "end": 336.17,
+      "confidence": 0.97
+    },
+    {
+      "n": 40,
+      "file": "s5",
+      "start": 336.74,
+      "end": 345,
+      "confidence": 0.96
+    },
+    {
+      "n": 41,
+      "file": "s5",
+      "start": 345.57,
+      "end": 353.52,
+      "confidence": 0.96
+    },
+    {
+      "n": 42,
+      "file": "s5",
+      "start": 354.05,
+      "end": 362.08,
+      "confidence": 0.97
+    },
+    {
+      "n": 43,
+      "file": "s5",
+      "start": 362.67,
+      "end": 370.65,
+      "confidence": 0.98
+    },
+    {
+      "n": 44,
+      "file": "s5",
+      "start": 371.17,
+      "end": 378.87,
+      "confidence": 0.99
+    },
+    {
+      "n": 45,
+      "file": "s5",
+      "start": 379.52,
+      "end": 387.18,
+      "confidence": 1
+    },
+    {
+      "n": 46,
+      "file": "s5",
+      "start": 387.7,
+      "end": 395.65,
+      "confidence": 0.97
+    },
+    {
+      "n": 47,
+      "file": "s5",
+      "start": 396.35,
+      "end": 404.32,
+      "confidence": 0.97
+    },
+    {
+      "n": 48,
+      "file": "s5",
+      "start": 404.91,
+      "end": 412.37,
+      "confidence": 0.98
+    },
+    {
+      "n": 49,
+      "file": "s5",
+      "start": 412.93,
+      "end": 420.55,
+      "confidence": 0.93
+    },
+    {
+      "n": 50,
+      "file": "s5",
+      "start": 421.02,
+      "end": 429.02,
+      "confidence": 0.99
+    },
+    {
+      "n": 51,
+      "file": "s5",
+      "start": 429.72,
+      "end": 437.65,
+      "confidence": 1
+    },
+    {
+      "n": 52,
+      "file": "s5",
+      "start": 438.27,
+      "end": 446.43,
+      "confidence": 0.91
+    },
+    {
+      "n": 53,
+      "file": "s5",
+      "start": 447.12,
+      "end": 455.31,
+      "confidence": 0.99
+    },
+    {
+      "n": 54,
+      "file": "s5",
+      "start": 455.91,
+      "end": 464.11,
+      "confidence": 0.99
+    },
+    {
+      "n": 55,
+      "file": "s5",
+      "start": 464.71,
+      "end": 472.48,
+      "confidence": 0.97
+    },
+    {
+      "n": 56,
+      "file": "s5",
+      "start": 473.07,
+      "end": 481.07,
+      "confidence": 0.97
+    },
+    {
+      "n": 57,
+      "file": "s5",
+      "start": 481.62,
+      "end": 489.99,
+      "confidence": 0.96
+    },
+    {
+      "n": 58,
+      "file": "s5",
+      "start": 490.65,
+      "end": 498.97,
+      "confidence": 0.94
+    },
+    {
+      "n": 59,
+      "file": "s5",
+      "start": 499.56,
+      "end": 507.94,
+      "confidence": 0.96
+    },
+    {
+      "n": 60,
+      "file": "s5",
+      "start": 508.54,
+      "end": 516.03,
+      "confidence": 0.96
+    },
+    {
+      "n": 61,
+      "file": "s5",
+      "start": 516.56,
+      "end": 524.9,
+      "confidence": 0.97
+    },
+    {
+      "n": 62,
+      "file": "s5",
+      "start": 525.48,
+      "end": 533.31,
+      "confidence": 0.98
+    },
+    {
+      "n": 63,
+      "file": "s5",
+      "start": 533.93,
+      "end": 542.25,
+      "confidence": 0.96
+    },
+    {
+      "n": 64,
+      "file": "s5",
+      "start": 542.89,
+      "end": 551.33,
+      "confidence": 0.99
+    },
+    {
+      "n": 65,
+      "file": "s5",
+      "start": 551.99,
+      "end": 559.96,
+      "confidence": 0.99
+    },
+    {
+      "n": 66,
+      "file": "s5",
+      "start": 560.55,
+      "end": 569.16,
+      "confidence": 0.96
+    },
+    {
+      "n": 67,
+      "file": "s5",
+      "start": 569.76,
+      "end": 578.23,
+      "confidence": 1
+    },
+    {
+      "n": 68,
+      "file": "s5",
+      "start": 578.75,
+      "end": 586.91,
+      "confidence": 0.96
+    },
+    {
+      "n": 69,
+      "file": "s5",
+      "start": 587.35,
+      "end": 595.64,
+      "confidence": 0.96
+    },
+    {
+      "n": 70,
+      "file": "s5",
+      "start": 596.18,
+      "end": 604.98,
+      "confidence": 0.65,
+      "checked": true
+    },
+    {
+      "n": 71,
+      "file": "s5",
+      "start": 605.29,
+      "end": 613.67,
+      "confidence": 0.99
+    },
+    {
+      "n": 72,
+      "file": "s5",
+      "start": 614.17,
+      "end": 622.8,
+      "confidence": 0.96
+    },
+    {
+      "n": 73,
+      "file": "s5",
+      "start": 623.55,
+      "end": 631.39,
+      "confidence": 0.99
+    },
+    {
+      "n": 74,
+      "file": "s5",
+      "start": 632.1,
+      "end": 639.76,
+      "confidence": 0.98
+    },
+    {
+      "n": 75,
+      "file": "s5",
+      "start": 640.55,
+      "end": 649.58,
+      "confidence": 0.97
+    },
+    {
+      "n": 76,
+      "file": "s5",
+      "start": 649.99,
+      "end": 658.29,
+      "confidence": 0.98
+    },
+    {
+      "n": 77,
+      "file": "s5",
+      "start": 659.05,
+      "end": 667.31,
+      "confidence": 0.89
+    },
+    {
+      "n": 78,
+      "file": "s5",
+      "start": 667.63,
+      "end": 675.59,
+      "confidence": 0.95
+    },
+    {
+      "n": 79,
+      "file": "s5",
+      "start": 676.12,
+      "end": 684.67,
+      "confidence": 0.97
+    },
+    {
+      "n": 80,
+      "file": "s5",
+      "start": 685.27,
+      "end": 694.12,
+      "confidence": 0.93
+    },
+    {
+      "n": 81,
+      "file": "s5",
+      "start": 694.98,
+      "end": 703.39,
+      "confidence": 0.99
+    },
+    {
+      "n": 82,
+      "file": "s5",
+      "start": 703.91,
+      "end": 712.27,
+      "confidence": 0.98
+    },
+    {
+      "n": 83,
+      "file": "s5",
+      "start": 712.86,
+      "end": 721.62,
+      "confidence": 0.99
+    },
+    {
+      "n": 84,
+      "file": "s5",
+      "start": 722.34,
+      "end": 730.78,
+      "confidence": 0.99
+    },
+    {
+      "n": 85,
+      "file": "s5",
+      "start": 731.42,
+      "end": 739.2,
+      "confidence": 0.97
+    },
+    {
+      "n": 86,
+      "file": "s5",
+      "start": 739.8,
+      "end": 748.43,
+      "confidence": 1
+    },
+    {
+      "n": 87,
+      "file": "s5",
+      "start": 749.13,
+      "end": 757.74,
+      "confidence": 0.99
+    },
+    {
+      "n": 88,
+      "file": "s5",
+      "start": 758.41,
+      "end": 766.6,
+      "confidence": 1
+    },
+    {
+      "n": 89,
+      "file": "s5",
+      "start": 767.32,
+      "end": 775.75,
+      "confidence": 0.97
+    },
+    {
+      "n": 90,
+      "file": "s5",
+      "start": 776.43,
+      "end": 784.94,
+      "confidence": 1
+    },
+    {
+      "n": 91,
+      "file": "s5",
+      "start": 785.61,
+      "end": 794.08,
+      "confidence": 0.98
+    },
+    {
+      "n": 92,
+      "file": "s5",
+      "start": 794.7,
+      "end": 802.61,
+      "confidence": 0.99
+    },
+    {
+      "n": 93,
+      "file": "s5",
+      "start": 803.37,
+      "end": 811.83,
+      "confidence": 0.97
+    },
+    {
+      "n": 94,
+      "file": "s5",
+      "start": 812.62,
+      "end": 822.18,
+      "confidence": 0.88
+    },
+    {
+      "n": 95,
+      "file": "s6",
+      "start": 4.11,
+      "end": 11.57,
+      "confidence": 0.94
+    },
+    {
+      "n": 96,
+      "file": "s6",
+      "start": 11.93,
+      "end": 19.5,
+      "confidence": 0.97
+    },
+    {
+      "n": 97,
+      "file": "s6",
+      "start": 20.14,
+      "end": 27.48,
+      "confidence": 0.98
+    },
+    {
+      "n": 98,
+      "file": "s6",
+      "start": 28.06,
+      "end": 35.65,
+      "confidence": 0.98
+    },
+    {
+      "n": 99,
+      "file": "s6",
+      "start": 36.26,
+      "end": 44.33,
+      "confidence": 0.91
+    },
+    {
+      "n": 100,
+      "file": "s7",
+      "start": 3.85,
+      "end": 11.44,
+      "confidence": 0.78
+    },
+    {
+      "n": 101,
+      "file": "s7",
+      "start": 11.99,
+      "end": 19.75,
+      "confidence": 0.87
+    },
+    {
+      "n": 102,
+      "file": "s7",
+      "start": 20.35,
+      "end": 28.53,
+      "confidence": 0.78
+    },
+    {
+      "n": 103,
+      "file": "s7",
+      "start": 29.06,
+      "end": 36.59,
+      "confidence": 0.96
+    },
+    {
+      "n": 104,
+      "file": "s7",
+      "start": 37.15,
+      "end": 45.26,
+      "confidence": 0.95
+    },
+    {
+      "n": 105,
+      "file": "s7",
+      "start": 45.59,
+      "end": 53.42,
+      "confidence": 0.94
+    },
+    {
+      "n": 106,
+      "file": "s7",
+      "start": 54.02,
+      "end": 62.24,
+      "confidence": 0.94
+    },
+    {
+      "n": 107,
+      "file": "s7",
+      "start": 62.53,
+      "end": 70.93,
+      "confidence": 0.88
+    },
+    {
+      "n": 108,
+      "file": "s8",
+      "start": 4.53,
+      "end": 11.91,
+      "confidence": 0.87
+    },
+    {
+      "n": 109,
+      "file": "s8",
+      "start": 12.45,
+      "end": 20.48,
+      "confidence": 0.98
+    },
+    {
+      "n": 110,
+      "file": "s8",
+      "start": 20.9,
+      "end": 28.74,
+      "confidence": 0.98
+    },
+    {
+      "n": 111,
+      "file": "s8",
+      "start": 29.27,
+      "end": 37.3,
+      "confidence": 0.91
+    },
+    {
+      "n": 112,
+      "file": "s8",
+      "start": 37.84,
+      "end": 45.61,
+      "confidence": 0.95
+    },
+    {
+      "n": 113,
+      "file": "s8",
+      "start": 46.01,
+      "end": 52.55,
+      "confidence": 0.85
+    },
+    {
+      "n": 114,
+      "file": "s8",
+      "start": 52.85,
+      "end": 62.58,
+      "confidence": 0.92
+    },
+    {
+      "n": 115,
+      "file": "s8",
+      "start": 63.06,
+      "end": 71.33,
+      "confidence": 0.92
+    },
+    {
+      "n": 116,
+      "file": "s9",
+      "start": 4.46,
+      "end": 11.73,
+      "confidence": 0.96
+    },
+    {
+      "n": 117,
+      "file": "s9",
+      "start": 12.38,
+      "end": 20.2,
+      "confidence": 0.99
+    },
+    {
+      "n": 118,
+      "file": "s9",
+      "start": 20.84,
+      "end": 28.81,
+      "confidence": 0.99
+    },
+    {
+      "n": 119,
+      "file": "s9",
+      "start": 29.45,
+      "end": 37.35,
+      "confidence": 0.85
+    },
+    {
+      "n": 120,
+      "file": "s9",
+      "start": 37.95,
+      "end": 45.96,
+      "confidence": 1
+    },
+    {
+      "n": 121,
+      "file": "s9",
+      "start": 46.56,
+      "end": 54.33,
+      "confidence": 0.88
+    },
+    {
+      "n": 122,
+      "file": "s9",
+      "start": 54.98,
+      "end": 62.96,
+      "confidence": 0.97
+    },
+    {
+      "n": 123,
+      "file": "s9",
+      "start": 63.55,
+      "end": 71.6,
+      "confidence": 0.99
+    },
+    {
+      "n": 124,
+      "file": "s9",
+      "start": 72.22,
+      "end": 80.37,
+      "confidence": 0.98
+    },
+    {
+      "n": 125,
+      "file": "s9",
+      "start": 81,
+      "end": 89.56,
+      "confidence": 0.82
+    },
+    {
+      "n": 126,
+      "file": "s9",
+      "start": 90.18,
+      "end": 98.31,
+      "confidence": 0.96
+    },
+    {
+      "n": 127,
+      "file": "s9",
+      "start": 98.82,
+      "end": 107.19,
+      "confidence": 0.97
+    },
+    {
+      "n": 128,
+      "file": "s9",
+      "start": 107.88,
+      "end": 116.52,
+      "confidence": 0.97
+    },
+    {
+      "n": 129,
+      "file": "s9",
+      "start": 116.88,
+      "end": 124.92,
+      "confidence": 0.96
+    },
+    {
+      "n": 130,
+      "file": "s9",
+      "start": 125.47,
+      "end": 133.53,
+      "confidence": 1
+    },
+    {
+      "n": 131,
+      "file": "s9",
+      "start": 134.2,
+      "end": 143.01,
+      "confidence": 0.86
+    },
+    {
+      "n": 132,
+      "file": "s10",
+      "start": 8.1,
+      "end": 16.04,
+      "confidence": 0.98
+    },
+    {
+      "n": 133,
+      "file": "s10",
+      "start": 16.69,
+      "end": 25.05,
+      "confidence": 0.95
+    },
+    {
+      "n": 134,
+      "file": "s10",
+      "start": 25.68,
+      "end": 34.01,
+      "confidence": 0.91
+    },
+    {
+      "n": 135,
+      "file": "s10",
+      "start": 34.62,
+      "end": 41.67,
+      "confidence": 0.96
+    },
+    {
+      "n": 136,
+      "file": "s10",
+      "start": 42.3,
+      "end": 49.8,
+      "confidence": 0.97
+    },
+    {
+      "n": 137,
+      "file": "s10",
+      "start": 50.28,
+      "end": 58.97,
+      "confidence": 0.47,
+      "checked": true
+    },
+    {
+      "n": 138,
+      "file": "s10",
+      "start": 59.02,
+      "end": 67.15,
+      "confidence": 0.96
+    },
+    {
+      "n": 139,
+      "file": "s10",
+      "start": 67.88,
+      "end": 76.05,
+      "confidence": 0.98
+    },
+    {
+      "n": 140,
+      "file": "s10",
+      "start": 76.76,
+      "end": 84.82,
+      "confidence": 1
+    },
+    {
+      "n": 141,
+      "file": "s10",
+      "start": 85.39,
+      "end": 93.56,
+      "confidence": 0.91
+    },
+    {
+      "n": 142,
+      "file": "s10",
+      "start": 94.2,
+      "end": 102.13,
+      "confidence": 0.98
+    },
+    {
+      "n": 143,
+      "file": "s10",
+      "start": 102.51,
+      "end": 110.54,
+      "confidence": 0.97
+    },
+    {
+      "n": 144,
+      "file": "s10",
+      "start": 111.13,
+      "end": 120.16,
+      "confidence": 0.51,
+      "checked": true
+    },
+    {
+      "n": 145,
+      "file": "s10",
+      "start": 120.26,
+      "end": 128.29,
+      "confidence": 1
+    },
+    {
+      "n": 146,
+      "file": "s10",
+      "start": 128.86,
+      "end": 136.72,
+      "confidence": 1
+    },
+    {
+      "n": 147,
+      "file": "s10",
+      "start": 137.39,
+      "end": 145.34,
+      "confidence": 0.73
+    },
+    {
+      "n": 148,
+      "file": "s10",
+      "start": 145.94,
+      "end": 153.87,
+      "confidence": 0.95
+    },
+    {
+      "n": 149,
+      "file": "s10",
+      "start": 154.48,
+      "end": 162.39,
+      "confidence": 0.99
+    },
+    {
+      "n": 150,
+      "file": "s10",
+      "start": 163.06,
+      "end": 170.97,
+      "confidence": 0.97
+    },
+    {
+      "n": 151,
+      "file": "s10",
+      "start": 171.61,
+      "end": 180.02,
+      "confidence": 0.98
+    },
+    {
+      "n": 152,
+      "file": "s10",
+      "start": 180.6,
+      "end": 188.52,
+      "confidence": 0.99
+    },
+    {
+      "n": 153,
+      "file": "s10",
+      "start": 189.13,
+      "end": 196.92,
+      "confidence": 1
+    },
+    {
+      "n": 154,
+      "file": "s10",
+      "start": 197.49,
+      "end": 205.35,
+      "confidence": 0.95
+    },
+    {
+      "n": 155,
+      "file": "s10",
+      "start": 205.91,
+      "end": 214.11,
+      "confidence": 0.98
+    },
+    {
+      "n": 156,
+      "file": "s10",
+      "start": 214.68,
+      "end": 222.9,
+      "confidence": 0.96
+    },
+    {
+      "n": 157,
+      "file": "s10",
+      "start": 223.55,
+      "end": 232.36,
+      "confidence": 0.93
+    },
+    {
+      "n": 158,
+      "file": "s11",
+      "start": 3.83,
+      "end": 11.85,
+      "confidence": 0.92
+    },
+    {
+      "n": 159,
+      "file": "s11",
+      "start": 12.16,
+      "end": 20.33,
+      "confidence": 0.81
+    },
+    {
+      "n": 160,
+      "file": "s11",
+      "start": 21.06,
+      "end": 29.35,
+      "confidence": 0.98
+    },
+    {
+      "n": 161,
+      "file": "s11",
+      "start": 29.81,
+      "end": 37.85,
+      "confidence": 0.73
+    },
+    {
+      "n": 162,
+      "file": "s11",
+      "start": 38.29,
+      "end": 47.04,
+      "confidence": 0.71,
+      "checked": true
+    },
+    {
+      "n": 163,
+      "file": "s11",
+      "start": 47.26,
+      "end": 55.55,
+      "confidence": 1
+    },
+    {
+      "n": 164,
+      "file": "s11",
+      "start": 56.18,
+      "end": 64.37,
+      "confidence": 0.72
+    },
+    {
+      "n": 165,
+      "file": "s11",
+      "start": 64.89,
+      "end": 73.45,
+      "confidence": 0.95
+    },
+    {
+      "n": 166,
+      "file": "s11",
+      "start": 74.04,
+      "end": 82.08,
+      "confidence": 0.72
+    },
+    {
+      "n": 167,
+      "file": "s11",
+      "start": 82.66,
+      "end": 91.49,
+      "confidence": 0.86
+    },
+    {
+      "n": 168,
+      "file": "s12",
+      "start": 4.06,
+      "end": 11.88,
+      "confidence": 0.98
+    },
+    {
+      "n": 169,
+      "file": "s12",
+      "start": 12.49,
+      "end": 20.73,
+      "confidence": 0.89
+    },
+    {
+      "n": 170,
+      "file": "s12",
+      "start": 21.33,
+      "end": 29.3,
+      "confidence": 0.79
+    },
+    {
+      "n": 171,
+      "file": "s12",
+      "start": 29.86,
+      "end": 38.28,
+      "confidence": 0.97
+    },
+    {
+      "n": 172,
+      "file": "s12",
+      "start": 38.92,
+      "end": 46.64,
+      "confidence": 0.83
+    },
+    {
+      "n": 173,
+      "file": "s12",
+      "start": 47.32,
+      "end": 55.77,
+      "confidence": 0.95
+    },
+    {
+      "n": 174,
+      "file": "s12",
+      "start": 56.41,
+      "end": 64.35,
+      "confidence": 0.96
+    },
+    {
+      "n": 175,
+      "file": "s12",
+      "start": 64.89,
+      "end": 72.53,
+      "confidence": 0.96
+    },
+    {
+      "n": 176,
+      "file": "s12",
+      "start": 73.12,
+      "end": 81.05,
+      "confidence": 0.99
+    },
+    {
+      "n": 177,
+      "file": "s12",
+      "start": 81.66,
+      "end": 89.6,
+      "confidence": 1
+    },
+    {
+      "n": 178,
+      "file": "s12",
+      "start": 90.13,
+      "end": 98.71,
+      "confidence": 0.99
+    },
+    {
+      "n": 179,
+      "file": "s12",
+      "start": 99.28,
+      "end": 107.17,
+      "confidence": 0.83
+    },
+    {
+      "n": 180,
+      "file": "s12",
+      "start": 107.72,
+      "end": 115.96,
+      "confidence": 0.98
+    },
+    {
+      "n": 181,
+      "file": "s12",
+      "start": 116.5,
+      "end": 124.43,
+      "confidence": 0.99
+    },
+    {
+      "n": 182,
+      "file": "s12",
+      "start": 124.87,
+      "end": 134.64,
+      "confidence": 0.67,
+      "checked": true
+    },
+    {
+      "n": 183,
+      "file": "s13",
+      "start": 4.54,
+      "end": 11.64,
+      "confidence": 0.98
+    },
+    {
+      "n": 184,
+      "file": "s13",
+      "start": 12.2,
+      "end": 19.45,
+      "confidence": 1
+    },
+    {
+      "n": 185,
+      "file": "s13",
+      "start": 20.03,
+      "end": 27.34,
+      "confidence": 0.92
+    },
+    {
+      "n": 186,
+      "file": "s13",
+      "start": 27.9,
+      "end": 35.4,
+      "confidence": 0.97
+    },
+    {
+      "n": 187,
+      "file": "s13",
+      "start": 35.91,
+      "end": 43.38,
+      "confidence": 1
+    },
+    {
+      "n": 188,
+      "file": "s13",
+      "start": 44.04,
+      "end": 51.58,
+      "confidence": 0.98
+    },
+    {
+      "n": 189,
+      "file": "s13",
+      "start": 52.06,
+      "end": 59.71,
+      "confidence": 0.99
+    },
+    {
+      "n": 190,
+      "file": "s13",
+      "start": 60.26,
+      "end": 67.94,
+      "confidence": 0.98
+    },
+    {
+      "n": 191,
+      "file": "s13",
+      "start": 68.49,
+      "end": 76.05,
+      "confidence": 0.96
+    },
+    {
+      "n": 192,
+      "file": "s13",
+      "start": 76.86,
+      "end": 84.63,
+      "confidence": 0.99
+    },
+    {
+      "n": 193,
+      "file": "s13",
+      "start": 85.28,
+      "end": 92.93,
+      "confidence": 0.82
+    },
+    {
+      "n": 194,
+      "file": "s13",
+      "start": 93.42,
+      "end": 100.98,
+      "confidence": 0.98
+    },
+    {
+      "n": 195,
+      "file": "s13",
+      "start": 101.66,
+      "end": 109.11,
+      "confidence": 0.88
+    },
+    {
+      "n": 196,
+      "file": "s13",
+      "start": 109.74,
+      "end": 117.49,
+      "confidence": 0.88
+    },
+    {
+      "n": 197,
+      "file": "s13",
+      "start": 118.12,
+      "end": 125.69,
+      "confidence": 0.97
+    },
+    {
+      "n": 198,
+      "file": "s13",
+      "start": 126.3,
+      "end": 134.19,
+      "confidence": 0.95
+    },
+    {
+      "n": 199,
+      "file": "s13",
+      "start": 134.74,
+      "end": 142.51,
+      "confidence": 1
+    },
+    {
+      "n": 200,
+      "file": "s13",
+      "start": 143.11,
+      "end": 150.92,
+      "confidence": 0.84
+    },
+    {
+      "n": 201,
+      "file": "s13",
+      "start": 151.49,
+      "end": 159.97,
+      "confidence": 0.92
+    },
+    {
+      "n": 202,
+      "file": "s14",
+      "start": 4.96,
+      "end": 12.41,
+      "confidence": 0.95
+    },
+    {
+      "n": 203,
+      "file": "s14",
+      "start": 12.89,
+      "end": 20.69,
+      "confidence": 0.99
+    },
+    {
+      "n": 204,
+      "file": "s14",
+      "start": 21.14,
+      "end": 29.36,
+      "confidence": 0.95
+    },
+    {
+      "n": 205,
+      "file": "s14",
+      "start": 29.74,
+      "end": 37.71,
+      "confidence": 0.94
+    },
+    {
+      "n": 206,
+      "file": "s14",
+      "start": 38.19,
+      "end": 46.37,
+      "confidence": 0.94
+    },
+    {
+      "n": 207,
+      "file": "s14",
+      "start": 46.72,
+      "end": 54.75,
+      "confidence": 0.93
+    },
+    {
+      "n": 208,
+      "file": "s14",
+      "start": 55.44,
+      "end": 63.19,
+      "confidence": 0.99
+    },
+    {
+      "n": 209,
+      "file": "s14",
+      "start": 63.92,
+      "end": 71.39,
+      "confidence": 0.75
+    },
+    {
+      "n": 210,
+      "file": "s14",
+      "start": 72,
+      "end": 79.91,
+      "confidence": 0.97
+    },
+    {
+      "n": 211,
+      "file": "s14",
+      "start": 80.49,
+      "end": 88.32,
+      "confidence": 0.97
+    },
+    {
+      "n": 212,
+      "file": "s14",
+      "start": 88.92,
+      "end": 96.83,
+      "confidence": 0.98
+    },
+    {
+      "n": 213,
+      "file": "s14",
+      "start": 97.42,
+      "end": 106.37,
+      "confidence": 0.93
+    },
+    {
+      "n": 214,
+      "file": "s15",
+      "start": 4.2,
+      "end": 11.94,
+      "confidence": 0.99
+    },
+    {
+      "n": 215,
+      "file": "s15",
+      "start": 12.51,
+      "end": 19.93,
+      "confidence": 0.95
+    },
+    {
+      "n": 216,
+      "file": "s15",
+      "start": 20.63,
+      "end": 28.36,
+      "confidence": 1
+    },
+    {
+      "n": 217,
+      "file": "s15",
+      "start": 29.04,
+      "end": 37.04,
+      "confidence": 0.97
+    },
+    {
+      "n": 218,
+      "file": "s15",
+      "start": 37.75,
+      "end": 45.65,
+      "confidence": 0.89
+    },
+    {
+      "n": 219,
+      "file": "s15",
+      "start": 46.25,
+      "end": 54.15,
+      "confidence": 0.97
+    },
+    {
+      "n": 220,
+      "file": "s15",
+      "start": 54.77,
+      "end": 62.52,
+      "confidence": 0.97
+    },
+    {
+      "n": 221,
+      "file": "s15",
+      "start": 63.04,
+      "end": 71.43,
+      "confidence": 1
+    },
+    {
+      "n": 222,
+      "file": "s15",
+      "start": 72.09,
+      "end": 80.53,
+      "confidence": 0.83
+    },
+    {
+      "n": 223,
+      "file": "s15",
+      "start": 81.11,
+      "end": 89.43,
+      "confidence": 0.92
+    },
+    {
+      "n": 224,
+      "file": "s15",
+      "start": 90,
+      "end": 98.33,
+      "confidence": 0.91
+    },
+    {
+      "n": 225,
+      "file": "s15",
+      "start": 98.83,
+      "end": 107.43,
+      "confidence": 0.92
+    },
+    {
+      "n": 226,
+      "file": "s16",
+      "start": 6.11,
+      "end": 14.02,
+      "confidence": 0.92
+    },
+    {
+      "n": 227,
+      "file": "s16",
+      "start": 14.52,
+      "end": 22.63,
+      "confidence": 1
+    },
+    {
+      "n": 228,
+      "file": "s16",
+      "start": 23.24,
+      "end": 31.49,
+      "confidence": 0.97
+    },
+    {
+      "n": 229,
+      "file": "s16",
+      "start": 31.87,
+      "end": 40.19,
+      "confidence": 0.81
+    },
+    {
+      "n": 230,
+      "file": "s16",
+      "start": 40.74,
+      "end": 49.17,
+      "confidence": 0.87
+    },
+    {
+      "n": 231,
+      "file": "s16",
+      "start": 49.7,
+      "end": 57.87,
+      "confidence": 0.99
+    },
+    {
+      "n": 232,
+      "file": "s16",
+      "start": 58.64,
+      "end": 67.02,
+      "confidence": 0.96
+    },
+    {
+      "n": 233,
+      "file": "s16",
+      "start": 67.69,
+      "end": 75.72,
+      "confidence": 0.92
+    },
+    {
+      "n": 234,
+      "file": "s16",
+      "start": 76.32,
+      "end": 84.89,
+      "confidence": 0.89
+    },
+    {
+      "n": 235,
+      "file": "s17",
+      "start": 6.11,
+      "end": 13.39,
+      "confidence": 0.97
+    },
+    {
+      "n": 236,
+      "file": "s17",
+      "start": 14.16,
+      "end": 21.91,
+      "confidence": 0.99
+    },
+    {
+      "n": 237,
+      "file": "s17",
+      "start": 22.49,
+      "end": 30.14,
+      "confidence": 1
+    },
+    {
+      "n": 238,
+      "file": "s17",
+      "start": 30.86,
+      "end": 38.52,
+      "confidence": 0.97
+    },
+    {
+      "n": 239,
+      "file": "s17",
+      "start": 39.1,
+      "end": 46.84,
+      "confidence": 0.99
+    },
+    {
+      "n": 240,
+      "file": "s17",
+      "start": 47.53,
+      "end": 55.48,
+      "confidence": 0.98
+    },
+    {
+      "n": 241,
+      "file": "s17",
+      "start": 56,
+      "end": 64.15,
+      "confidence": 1
+    },
+    {
+      "n": 242,
+      "file": "s17",
+      "start": 64.68,
+      "end": 72.41,
+      "confidence": 0.99
+    },
+    {
+      "n": 243,
+      "file": "s17",
+      "start": 73.04,
+      "end": 80.95,
+      "confidence": 0.99
+    },
+    {
+      "n": 244,
+      "file": "s17",
+      "start": 81.49,
+      "end": 89.68,
+      "confidence": 0.98
+    },
+    {
+      "n": 245,
+      "file": "s17",
+      "start": 90.57,
+      "end": 98.63,
+      "confidence": 0.93
+    },
+    {
+      "n": 246,
+      "file": "s17",
+      "start": 99.32,
+      "end": 107.49,
+      "confidence": 0.97
+    },
+    {
+      "n": 247,
+      "file": "s17",
+      "start": 108.05,
+      "end": 116.1,
+      "confidence": 0.99
+    },
+    {
+      "n": 248,
+      "file": "s17",
+      "start": 116.62,
+      "end": 124.74,
+      "confidence": 1
+    },
+    {
+      "n": 249,
+      "file": "s17",
+      "start": 125.34,
+      "end": 133.62,
+      "confidence": 1
+    },
+    {
+      "n": 250,
+      "file": "s17",
+      "start": 134.21,
+      "end": 142.14,
+      "confidence": 0.99
+    },
+    {
+      "n": 251,
+      "file": "s17",
+      "start": 142.72,
+      "end": 151.01,
+      "confidence": 0.9
+    },
+    {
+      "n": 252,
+      "file": "s17",
+      "start": 151.68,
+      "end": 159.6,
+      "confidence": 0.98
+    },
+    {
+      "n": 253,
+      "file": "s17",
+      "start": 160.19,
+      "end": 166.8,
+      "confidence": 0.87
+    },
+    {
+      "n": 254,
+      "file": "s17",
+      "start": 167.1,
+      "end": 178.64,
+      "confidence": 0.76
+    },
+    {
+      "n": 255,
+      "file": "s18",
+      "start": 4.8,
+      "end": 12.59,
+      "confidence": 0.95
+    },
+    {
+      "n": 256,
+      "file": "s18",
+      "start": 13.47,
+      "end": 21.15,
+      "confidence": 0.99
+    },
+    {
+      "n": 257,
+      "file": "s18",
+      "start": 22.14,
+      "end": 30.69,
+      "confidence": 0.99
+    },
+    {
+      "n": 258,
+      "file": "s18",
+      "start": 31.41,
+      "end": 40.36,
+      "confidence": 0.86
+    },
+    {
+      "n": 259,
+      "file": "s19",
+      "start": 3.59,
+      "end": 12.49,
+      "confidence": 0.71,
+      "checked": true
+    },
+    {
+      "n": 260,
+      "file": "s19",
+      "start": 12.62,
+      "end": 20.68,
+      "confidence": 0.72
+    },
+    {
+      "n": 261,
+      "file": "s19",
+      "start": 21.47,
+      "end": 30.35,
+      "confidence": 0.75
+    },
+    {
+      "n": 262,
+      "file": "s20",
+      "start": 3.31,
+      "end": 11.74,
+      "confidence": 0.62
+    },
+    {
+      "n": 263,
+      "file": "s20",
+      "start": 12.34,
+      "end": 19.91,
+      "confidence": 0.66
+    },
+    {
+      "n": 264,
+      "file": "s20",
+      "start": 20.33,
+      "end": 28.36,
+      "confidence": 0.74
+    },
+    {
+      "n": 265,
+      "file": "s20",
+      "start": 28.8,
+      "end": 37.68,
+      "confidence": 0.81
+    },
+    {
+      "n": 266,
+      "file": "s21",
+      "start": 4.44,
+      "end": 12.74,
+      "confidence": 0.73
+    },
+    {
+      "n": 267,
+      "file": "s21",
+      "start": 13.31,
+      "end": 21.28,
+      "confidence": 0.95
+    },
+    {
+      "n": 268,
+      "file": "s21",
+      "start": 21.93,
+      "end": 30.36,
+      "confidence": 0.67
+    },
+    {
+      "n": 269,
+      "file": "s21",
+      "start": 31,
+      "end": 39.82,
+      "confidence": 0.75
+    },
+    {
+      "n": 270,
+      "file": "s22",
+      "start": 3.65,
+      "end": 12.08,
+      "confidence": 0.68
+    },
+    {
+      "n": 271,
+      "file": "s22",
+      "start": 12.88,
+      "end": 21.33,
+      "confidence": 0.64
+    },
+    {
+      "n": 272,
+      "file": "s22",
+      "start": 21.94,
+      "end": 30.82,
+      "confidence": 0.82
+    },
+    {
+      "n": 273,
+      "file": "s22",
+      "start": 31.38,
+      "end": 41.01,
+      "confidence": 0.84
+    },
+    {
+      "n": 274,
+      "file": "s23",
+      "start": 8.91,
+      "end": 17.19,
+      "confidence": 0.74
+    },
+    {
+      "n": 275,
+      "file": "s23",
+      "start": 17.88,
+      "end": 26.19,
+      "confidence": 0.68
+    },
+    {
+      "n": 276,
+      "file": "s23",
+      "start": 26.85,
+      "end": 35.67,
+      "confidence": 0.87
+    },
+    {
+      "n": 277,
+      "file": "s24",
+      "start": 5.03,
+      "end": 13.08,
+      "confidence": 0.78
+    },
+    {
+      "n": 278,
+      "file": "s24",
+      "start": 13.65,
+      "end": 21.51,
+      "confidence": 0.89
+    },
+    {
+      "n": 279,
+      "file": "s24",
+      "start": 22.07,
+      "end": 30.32,
+      "confidence": 0.8
+    },
+    {
+      "n": 280,
+      "file": "s24",
+      "start": 30.85,
+      "end": 39.26,
+      "confidence": 0.92
+    },
+    {
+      "n": 281,
+      "file": "s24",
+      "start": 39.75,
+      "end": 47.9,
+      "confidence": 0.73
+    },
+    {
+      "n": 282,
+      "file": "s24",
+      "start": 48.45,
+      "end": 56.4,
+      "confidence": 0.99
+    },
+    {
+      "n": 283,
+      "file": "s24",
+      "start": 56.86,
+      "end": 65.2,
+      "confidence": 0.8
+    },
+    {
+      "n": 284,
+      "file": "s24",
+      "start": 65.78,
+      "end": 74.28,
+      "confidence": 0.6
+    },
+    {
+      "n": 285,
+      "file": "s24",
+      "start": 75.06,
+      "end": 84.35,
+      "confidence": 0.84
+    },
+    {
+      "n": 286,
+      "file": "s25",
+      "start": 9.16,
+      "end": 14.61,
+      "confidence": 0.68
+    },
+    {
+      "n": 287,
+      "file": "s25",
+      "start": 15.09,
+      "end": 23.23,
+      "confidence": 0.97
+    },
+    {
+      "n": 288,
+      "file": "s25",
+      "start": 23.73,
+      "end": 32,
+      "confidence": 1
+    },
+    {
+      "n": 289,
+      "file": "s25",
+      "start": 32.66,
+      "end": 41.14,
+      "confidence": 0.78
+    },
+    {
+      "n": 290,
+      "file": "s25",
+      "start": 41.71,
+      "end": 51.25,
+      "confidence": 0.92
+    },
+    {
+      "n": 291,
+      "file": "s26",
+      "start": 6.26,
+      "end": 14.08,
+      "confidence": 1
+    },
+    {
+      "n": 292,
+      "file": "s26",
+      "start": 14.71,
+      "end": 22.5,
+      "confidence": 0.99
+    },
+    {
+      "n": 293,
+      "file": "s26",
+      "start": 23.44,
+      "end": 31.73,
+      "confidence": 0.95
+    },
+    {
+      "n": 294,
+      "file": "s26",
+      "start": 32.17,
+      "end": 40.42,
+      "confidence": 0.97
+    },
+    {
+      "n": 295,
+      "file": "s26",
+      "start": 41.2,
+      "end": 49.23,
+      "confidence": 0.92
+    },
+    {
+      "n": 296,
+      "file": "s26",
+      "start": 49.91,
+      "end": 57.72,
+      "confidence": 0.85
+    },
+    {
+      "n": 297,
+      "file": "s26",
+      "start": 58.26,
+      "end": 66.16,
+      "confidence": 0.71
+    },
+    {
+      "n": 298,
+      "file": "s26",
+      "start": 66.93,
+      "end": 75.17,
+      "confidence": 0.88
+    },
+    {
+      "n": 299,
+      "file": "s26",
+      "start": 75.93,
+      "end": 83.51,
+      "confidence": 0.99
+    },
+    {
+      "n": 300,
+      "file": "s26",
+      "start": 84.34,
+      "end": 92.45,
+      "confidence": 0.97
+    },
+    {
+      "n": 301,
+      "file": "s26",
+      "start": 93.02,
+      "end": 101.13,
+      "confidence": 0.88
+    },
+    {
+      "n": 302,
+      "file": "s26",
+      "start": 101.9,
+      "end": 109.97,
+      "confidence": 0.98
+    },
+    {
+      "n": 303,
+      "file": "s26",
+      "start": 110.56,
+      "end": 118.73,
+      "confidence": 0.99
+    },
+    {
+      "n": 304,
+      "file": "s26",
+      "start": 119.53,
+      "end": 127.72,
+      "confidence": 0.85
+    },
+    {
+      "n": 305,
+      "file": "s26",
+      "start": 128.29,
+      "end": 136.46,
+      "confidence": 0.86
+    },
+    {
+      "n": 306,
+      "file": "s26",
+      "start": 137.12,
+      "end": 145.22,
+      "confidence": 0.97
+    },
+    {
+      "n": 307,
+      "file": "s26",
+      "start": 145.95,
+      "end": 154.37,
+      "confidence": 0.98
+    },
+    {
+      "n": 308,
+      "file": "s26",
+      "start": 154.97,
+      "end": 162.98,
+      "confidence": 0.99
+    },
+    {
+      "n": 309,
+      "file": "s26",
+      "start": 163.61,
+      "end": 171.85,
+      "confidence": 0.92
+    },
+    {
+      "n": 310,
+      "file": "s26",
+      "start": 172.71,
+      "end": 180.61,
+      "confidence": 0.79
+    },
+    {
+      "n": 311,
+      "file": "s26",
+      "start": 181.45,
+      "end": 189.57,
+      "confidence": 0.84
+    },
+    {
+      "n": 312,
+      "file": "s26",
+      "start": 190.15,
+      "end": 198.3,
+      "confidence": 0.86
+    },
+    {
+      "n": 313,
+      "file": "s26",
+      "start": 199.14,
+      "end": 207.66,
+      "confidence": 0.82
+    },
+    {
+      "n": 314,
+      "file": "s26",
+      "start": 208.1,
+      "end": 216.29,
+      "confidence": 0.9
+    },
+    {
+      "n": 315,
+      "file": "s26",
+      "start": 216.79,
+      "end": 225.38,
+      "confidence": 0.97
+    },
+    {
+      "n": 316,
+      "file": "s26",
+      "start": 225.94,
+      "end": 233.92,
+      "confidence": 0.79
+    },
+    {
+      "n": 317,
+      "file": "s26",
+      "start": 234.41,
+      "end": 242.53,
+      "confidence": 0.73
+    },
+    {
+      "n": 318,
+      "file": "s26",
+      "start": 243.14,
+      "end": 251.55,
+      "confidence": 0.95
+    },
+    {
+      "n": 319,
+      "file": "s26",
+      "start": 252.33,
+      "end": 260.64,
+      "confidence": 0.91
+    },
+    {
+      "n": 320,
+      "file": "s26",
+      "start": 261.38,
+      "end": 269.51,
+      "confidence": 0.98
+    },
+    {
+      "n": 321,
+      "file": "s26",
+      "start": 270.24,
+      "end": 278.34,
+      "confidence": 0.97
+    },
+    {
+      "n": 322,
+      "file": "s26",
+      "start": 279.12,
+      "end": 287.23,
+      "confidence": 0.97
+    },
+    {
+      "n": 323,
+      "file": "s26",
+      "start": 287.7,
+      "end": 296.19,
+      "confidence": 0.65
+    },
+    {
+      "n": 324,
+      "file": "s26",
+      "start": 297.1,
+      "end": 305.27,
+      "confidence": 0.95
+    },
+    {
+      "n": 325,
+      "file": "s26",
+      "start": 305.91,
+      "end": 314,
+      "confidence": 0.99
+    },
+    {
+      "n": 326,
+      "file": "s26",
+      "start": 314.88,
+      "end": 322.66,
+      "confidence": 0.71
+    },
+    {
+      "n": 327,
+      "file": "s26",
+      "start": 323.36,
+      "end": 331.24,
+      "confidence": 0.89
+    },
+    {
+      "n": 328,
+      "file": "s26",
+      "start": 331.86,
+      "end": 339.71,
+      "confidence": 0.89
+    },
+    {
+      "n": 329,
+      "file": "s26",
+      "start": 340.39,
+      "end": 348.2,
+      "confidence": 0.77
+    },
+    {
+      "n": 330,
+      "file": "s26",
+      "start": 348.85,
+      "end": 356.33,
+      "confidence": 0.74
+    },
+    {
+      "n": 331,
+      "file": "s26",
+      "start": 356.92,
+      "end": 364.67,
+      "confidence": 0.99
+    },
+    {
+      "n": 332,
+      "file": "s26",
+      "start": 365.45,
+      "end": 373.07,
+      "confidence": 0.84
+    },
+    {
+      "n": 333,
+      "file": "s26",
+      "start": 373.78,
+      "end": 381.67,
+      "confidence": 1
+    },
+    {
+      "n": 334,
+      "file": "s26",
+      "start": 382.44,
+      "end": 390.5,
+      "confidence": 0.98
+    },
+    {
+      "n": 335,
+      "file": "s26",
+      "start": 391.21,
+      "end": 399.2,
+      "confidence": 0.93
+    },
+    {
+      "n": 336,
+      "file": "s26",
+      "start": 399.81,
+      "end": 407.55,
+      "confidence": 0.81
+    },
+    {
+      "n": 337,
+      "file": "s26",
+      "start": 408.16,
+      "end": 416.4,
+      "confidence": 0.98
+    },
+    {
+      "n": 338,
+      "file": "s26",
+      "start": 417.15,
+      "end": 426.66,
+      "confidence": 0.79
+    },
+    {
+      "n": 339,
+      "file": "s27",
+      "start": 7.56,
+      "end": 15.72,
+      "confidence": 0.97
+    },
+    {
+      "n": 340,
+      "file": "s27",
+      "start": 16.32,
+      "end": 24.02,
+      "confidence": 0.97
+    },
+    {
+      "n": 341,
+      "file": "s27",
+      "start": 24.43,
+      "end": 32.71,
+      "confidence": 0.96
+    },
+    {
+      "n": 342,
+      "file": "s27",
+      "start": 33.18,
+      "end": 42.8,
+      "confidence": 0.83
+    },
+    {
+      "n": 343,
+      "file": "s28",
+      "start": 4.98,
+      "end": 13.01,
+      "confidence": 0.94
+    },
+    {
+      "n": 344,
+      "file": "s28",
+      "start": 13.39,
+      "end": 21.13,
+      "confidence": 0.95
+    },
+    {
+      "n": 345,
+      "file": "s28",
+      "start": 21.66,
+      "end": 29.61,
+      "confidence": 1
+    },
+    {
+      "n": 346,
+      "file": "s28",
+      "start": 30.31,
+      "end": 38.4,
+      "confidence": 1
+    },
+    {
+      "n": 347,
+      "file": "s28",
+      "start": 39.07,
+      "end": 47.01,
+      "confidence": 0.91
+    },
+    {
+      "n": 348,
+      "file": "s28",
+      "start": 47.5,
+      "end": 55.45,
+      "confidence": 0.96
+    },
+    {
+      "n": 349,
+      "file": "s28",
+      "start": 55.84,
+      "end": 63.72,
+      "confidence": 0.96
+    },
+    {
+      "n": 350,
+      "file": "s28",
+      "start": 64.23,
+      "end": 72.24,
+      "confidence": 0.77
+    },
+    {
+      "n": 351,
+      "file": "s28",
+      "start": 72.87,
+      "end": 81.15,
+      "confidence": 0.89
+    },
+    {
+      "n": 352,
+      "file": "s28",
+      "start": 81.73,
+      "end": 90.08,
+      "confidence": 0.96
+    },
+    {
+      "n": 353,
+      "file": "s28",
+      "start": 90.63,
+      "end": 99.05,
+      "confidence": 0.97
+    },
+    {
+      "n": 354,
+      "file": "s28",
+      "start": 99.53,
+      "end": 107.54,
+      "confidence": 0.99
+    },
+    {
+      "n": 355,
+      "file": "s28",
+      "start": 108.07,
+      "end": 116.16,
+      "confidence": 0.98
+    },
+    {
+      "n": 356,
+      "file": "s28",
+      "start": 116.9,
+      "end": 124.9,
+      "confidence": 0.99
+    },
+    {
+      "n": 357,
+      "file": "s28",
+      "start": 125.6,
+      "end": 133.53,
+      "confidence": 0.96
+    },
+    {
+      "n": 358,
+      "file": "s28",
+      "start": 134.32,
+      "end": 143.53,
+      "confidence": 0.91
+    },
+    {
+      "n": 359,
+      "file": "s29",
+      "start": 3.6,
+      "end": 11.34,
+      "confidence": 0.98
+    },
+    {
+      "n": 360,
+      "file": "s29",
+      "start": 11.85,
+      "end": 19.4,
+      "confidence": 0.99
+    },
+    {
+      "n": 361,
+      "file": "s29",
+      "start": 19.91,
+      "end": 28.06,
+      "confidence": 0.97
+    },
+    {
+      "n": 362,
+      "file": "s29",
+      "start": 28.45,
+      "end": 36.64,
+      "confidence": 0.86
+    },
+    {
+      "n": 363,
+      "file": "s29",
+      "start": 37.03,
+      "end": 44.85,
+      "confidence": 0.97
+    },
+    {
+      "n": 364,
+      "file": "s29",
+      "start": 45.45,
+      "end": 54.79,
+      "confidence": 0.87
+    },
+    {
+      "n": 365,
+      "file": "s30",
+      "start": 5.32,
+      "end": 12.59,
+      "confidence": 0.96
+    },
+    {
+      "n": 366,
+      "file": "s30",
+      "start": 13.21,
+      "end": 20.52,
+      "confidence": 1
+    },
+    {
+      "n": 367,
+      "file": "s30",
+      "start": 21.47,
+      "end": 28.68,
+      "confidence": 0.99
+    },
+    {
+      "n": 368,
+      "file": "s30",
+      "start": 29.28,
+      "end": 36.73,
+      "confidence": 0.95
+    },
+    {
+      "n": 369,
+      "file": "s30",
+      "start": 37.18,
+      "end": 44.7,
+      "confidence": 0.99
+    },
+    {
+      "n": 370,
+      "file": "s30",
+      "start": 45.46,
+      "end": 53.08,
+      "confidence": 0.95
+    },
+    {
+      "n": 371,
+      "file": "s30",
+      "start": 53.35,
+      "end": 60.74,
+      "confidence": 0.93
+    },
+    {
+      "n": 372,
+      "file": "s30",
+      "start": 61.29,
+      "end": 68.98,
+      "confidence": 0.96
+    },
+    {
+      "n": 373,
+      "file": "s30",
+      "start": 69.54,
+      "end": 77.35,
+      "confidence": 0.98
+    },
+    {
+      "n": 374,
+      "file": "s30",
+      "start": 77.83,
+      "end": 85.45,
+      "confidence": 0.98
+    },
+    {
+      "n": 375,
+      "file": "s30",
+      "start": 86.11,
+      "end": 94.62,
+      "confidence": 0.86
+    },
+    {
+      "n": 376,
+      "file": "s31",
+      "start": 5.23,
+      "end": 12.62,
+      "confidence": 0.96
+    },
+    {
+      "n": 377,
+      "file": "s31",
+      "start": 13.1,
+      "end": 20.61,
+      "confidence": 0.89
+    },
+    {
+      "n": 378,
+      "file": "s31",
+      "start": 21.02,
+      "end": 28.13,
+      "confidence": 0.76
+    },
+    {
+      "n": 379,
+      "file": "s31",
+      "start": 28.44,
+      "end": 36.08,
+      "confidence": 0.8
+    },
+    {
+      "n": 380,
+      "file": "s31",
+      "start": 36.57,
+      "end": 44.29,
+      "confidence": 0.68
+    },
+    {
+      "n": 381,
+      "file": "s31",
+      "start": 44.71,
+      "end": 52.07,
+      "confidence": 0.89
+    },
+    {
+      "n": 382,
+      "file": "s31",
+      "start": 52.7,
+      "end": 60.36,
+      "confidence": 0.78
+    },
+    {
+      "n": 383,
+      "file": "s31",
+      "start": 61.03,
+      "end": 68.98,
+      "confidence": 0.96
+    },
+    {
+      "n": 384,
+      "file": "s31",
+      "start": 69.48,
+      "end": 77.47,
+      "confidence": 0.76
+    },
+    {
+      "n": 385,
+      "file": "s31",
+      "start": 77.87,
+      "end": 85.86,
+      "confidence": 0.78
+    },
+    {
+      "n": 386,
+      "file": "s31",
+      "start": 86.47,
+      "end": 95.21,
+      "confidence": 0.78
+    },
+    {
+      "n": 387,
+      "file": "s32",
+      "start": 5.72,
+      "end": 12.67,
+      "confidence": 0.97
+    },
+    {
+      "n": 388,
+      "file": "s32",
+      "start": 13.23,
+      "end": 21,
+      "confidence": 0.99
+    },
+    {
+      "n": 389,
+      "file": "s32",
+      "start": 21.61,
+      "end": 29.11,
+      "confidence": 0.99
+    },
+    {
+      "n": 390,
+      "file": "s32",
+      "start": 29.64,
+      "end": 37.47,
+      "confidence": 0.98
+    },
+    {
+      "n": 391,
+      "file": "s32",
+      "start": 38.39,
+      "end": 46.24,
+      "confidence": 0.88
+    },
+    {
+      "n": 392,
+      "file": "s32",
+      "start": 46.84,
+      "end": 54.62,
+      "confidence": 0.79
+    },
+    {
+      "n": 393,
+      "file": "s32",
+      "start": 55.35,
+      "end": 63.34,
+      "confidence": 0.95
+    },
+    {
+      "n": 394,
+      "file": "s32",
+      "start": 63.89,
+      "end": 71.68,
+      "confidence": 0.97
+    },
+    {
+      "n": 395,
+      "file": "s32",
+      "start": 72.07,
+      "end": 79.76,
+      "confidence": 0.77
+    },
+    {
+      "n": 396,
+      "file": "s32",
+      "start": 80.39,
+      "end": 88.45,
+      "confidence": 0.76
+    },
+    {
+      "n": 397,
+      "file": "s32",
+      "start": 89.19,
+      "end": 96.19,
+      "confidence": 0.77
+    },
+    {
+      "n": 398,
+      "file": "s32",
+      "start": 96.65,
+      "end": 104.4,
+      "confidence": 0.66
+    },
+    {
+      "n": 399,
+      "file": "s32",
+      "start": 104.81,
+      "end": 112.62,
+      "confidence": 0.82
+    },
+    {
+      "n": 400,
+      "file": "s32",
+      "start": 113.34,
+      "end": 121.15,
+      "confidence": 1
+    },
+    {
+      "n": 401,
+      "file": "s32",
+      "start": 121.79,
+      "end": 130.08,
+      "confidence": 1
+    },
+    {
+      "n": 402,
+      "file": "s32",
+      "start": 131,
+      "end": 139.06,
+      "confidence": 0.73
+    },
+    {
+      "n": 403,
+      "file": "s32",
+      "start": 139.93,
+      "end": 148.35,
+      "confidence": 0.74
+    },
+    {
+      "n": 404,
+      "file": "s32",
+      "start": 149,
+      "end": 157.37,
+      "confidence": 0.98
+    },
+    {
+      "n": 405,
+      "file": "s32",
+      "start": 157.94,
+      "end": 166.1,
+      "confidence": 0.98
+    },
+    {
+      "n": 406,
+      "file": "s32",
+      "start": 166.87,
+      "end": 175.12,
+      "confidence": 0.99
+    },
+    {
+      "n": 407,
+      "file": "s32",
+      "start": 175.9,
+      "end": 183.82,
+      "confidence": 0.86
+    },
+    {
+      "n": 408,
+      "file": "s32",
+      "start": 184.56,
+      "end": 192.79,
+      "confidence": 0.67
+    },
+    {
+      "n": 409,
+      "file": "s32",
+      "start": 193.43,
+      "end": 201.57,
+      "confidence": 0.75
+    },
+    {
+      "n": 410,
+      "file": "s32",
+      "start": 202.13,
+      "end": 210.49,
+      "confidence": 0.86
+    },
+    {
+      "n": 411,
+      "file": "s32",
+      "start": 211.3,
+      "end": 219.39,
+      "confidence": 0.86
+    },
+    {
+      "n": 412,
+      "file": "s32",
+      "start": 220.14,
+      "end": 228.73,
+      "confidence": 0.72
+    },
+    {
+      "n": 413,
+      "file": "s32",
+      "start": 229.36,
+      "end": 237.46,
+      "confidence": 0.95
+    },
+    {
+      "n": 414,
+      "file": "s32",
+      "start": 238.19,
+      "end": 246.24,
+      "confidence": 0.83
+    },
+    {
+      "n": 415,
+      "file": "s32",
+      "start": 246.97,
+      "end": 254.86,
+      "confidence": 0.79
+    },
+    {
+      "n": 416,
+      "file": "s32",
+      "start": 255.58,
+      "end": 263.9,
+      "confidence": 0.76
+    },
+    {
+      "n": 417,
+      "file": "s32",
+      "start": 264.37,
+      "end": 272.55,
+      "confidence": 0.9
+    },
+    {
+      "n": 418,
+      "file": "s32",
+      "start": 273.12,
+      "end": 281,
+      "confidence": 0.78
+    },
+    {
+      "n": 419,
+      "file": "s32",
+      "start": 281.5,
+      "end": 289.83,
+      "confidence": 0.72
+    },
+    {
+      "n": 420,
+      "file": "s33",
+      "start": 4.72,
+      "end": 11.95,
+      "confidence": 0.88
+    },
+    {
+      "n": 421,
+      "file": "s33",
+      "start": 12.23,
+      "end": 19.98,
+      "confidence": 0.95
+    },
+    {
+      "n": 422,
+      "file": "s33",
+      "start": 20.54,
+      "end": 28.56,
+      "confidence": 0.96
+    },
+    {
+      "n": 423,
+      "file": "s33",
+      "start": 29.19,
+      "end": 37.04,
+      "confidence": 0.92
+    },
+    {
+      "n": 424,
+      "file": "s33",
+      "start": 37.69,
+      "end": 47.8,
+      "confidence": 0.59
+    },
+    {
+      "n": 425,
+      "file": "s33",
+      "start": 48.1,
+      "end": 54.83,
+      "confidence": 0.66
+    },
+    {
+      "n": 426,
+      "file": "s33",
+      "start": 55.41,
+      "end": 63.17,
+      "confidence": 0.77
+    },
+    {
+      "n": 427,
+      "file": "s33",
+      "start": 63.87,
+      "end": 71.78,
+      "confidence": 0.94
+    },
+    {
+      "n": 428,
+      "file": "s33",
+      "start": 72.54,
+      "end": 80.36,
+      "confidence": 0.79
+    },
+    {
+      "n": 429,
+      "file": "s33",
+      "start": 80.9,
+      "end": 88.54,
+      "confidence": 0.75
+    },
+    {
+      "n": 430,
+      "file": "s33",
+      "start": 89.03,
+      "end": 96.94,
+      "confidence": 0.82
+    },
+    {
+      "n": 431,
+      "file": "s33",
+      "start": 97.41,
+      "end": 105.38,
+      "confidence": 0.99
+    },
+    {
+      "n": 432,
+      "file": "s33",
+      "start": 105.93,
+      "end": 113.85,
+      "confidence": 0.81
+    },
+    {
+      "n": 433,
+      "file": "s33",
+      "start": 114.48,
+      "end": 122.86,
+      "confidence": 0.83
+    },
+    {
+      "n": 434,
+      "file": "s33",
+      "start": 123.67,
+      "end": 131.82,
+      "confidence": 0.78
+    },
+    {
+      "n": 435,
+      "file": "s33",
+      "start": 132.4,
+      "end": 140.49,
+      "confidence": 0.8
+    },
+    {
+      "n": 436,
+      "file": "s33",
+      "start": 141.22,
+      "end": 149.53,
+      "confidence": 0.84
+    },
+    {
+      "n": 437,
+      "file": "s33",
+      "start": 150.15,
+      "end": 158.12,
+      "confidence": 0.83
+    },
+    {
+      "n": 438,
+      "file": "s33",
+      "start": 158.57,
+      "end": 166.75,
+      "confidence": 0.76
+    },
+    {
+      "n": 439,
+      "file": "s33",
+      "start": 167.5,
+      "end": 175.32,
+      "confidence": 0.98
+    },
+    {
+      "n": 440,
+      "file": "s33",
+      "start": 176.1,
+      "end": 184.59,
+      "confidence": 0.96
+    },
+    {
+      "n": 441,
+      "file": "s33",
+      "start": 184.95,
+      "end": 192.63,
+      "confidence": 0.66
+    },
+    {
+      "n": 442,
+      "file": "s33",
+      "start": 192.96,
+      "end": 201.17,
+      "confidence": 0.96
+    },
+    {
+      "n": 443,
+      "file": "s33",
+      "start": 201.98,
+      "end": 210.08,
+      "confidence": 0.94
+    },
+    {
+      "n": 444,
+      "file": "s33",
+      "start": 210.81,
+      "end": 220.45,
+      "confidence": 0.86
+    },
     {
       "n": 445,
       "file": "s35",
@@ -1732,7 +5161,7 @@
     {
       "n": 615,
       "file": "s38",
-      "start": 11.0,
+      "start": 11,
       "end": 18.64,
       "confidence": 0.98
     },
@@ -1775,7 +5204,7 @@
       "n": 621,
       "file": "s38",
       "start": 61.06,
-      "end": 69.0,
+      "end": 69,
       "confidence": 0.92
     },
     {
@@ -1788,7 +5217,7 @@
     {
       "n": 623,
       "file": "s38",
-      "start": 78.0,
+      "start": 78,
       "end": 86.17,
       "confidence": 0.67
     },
@@ -2475,7 +5904,7 @@
       "n": 721,
       "file": "s41",
       "start": 59.69,
-      "end": 67.0,
+      "end": 67,
       "confidence": 0.82
     },
     {
@@ -2803,7 +6232,7 @@
     {
       "n": 768,
       "file": "s44",
-      "start": 110.0,
+      "start": 110,
       "end": 117.74,
       "confidence": 0.98
     },
@@ -2999,7 +6428,7 @@
     {
       "n": 796,
       "file": "s46",
-      "start": 76.0,
+      "start": 76,
       "end": 84.72,
       "confidence": 0.92
     },
@@ -3237,7 +6666,7 @@
     {
       "n": 830,
       "file": "s51",
-      "start": 4.0,
+      "start": 4,
       "end": 11.37,
       "confidence": 0.73
     },
@@ -3476,7 +6905,7 @@
       "n": 864,
       "file": "s52",
       "start": 35.56,
-      "end": 43.0,
+      "end": 43,
       "confidence": 0.92
     },
     {
@@ -3580,7 +7009,7 @@
     {
       "n": 879,
       "file": "s53",
-      "start": 67.0,
+      "start": 67,
       "end": 75.2,
       "confidence": 0.98
     },
@@ -4210,7 +7639,7 @@
     {
       "n": 969,
       "file": "s63",
-      "start": 98.0,
+      "start": 98,
       "end": 107.69,
       "confidence": 0.83
     },
@@ -4644,7 +8073,7 @@
     {
       "n": 1031,
       "file": "s72",
-      "start": 4.0,
+      "start": 4,
       "end": 12.45,
       "confidence": 0.9
     },
@@ -4729,7 +8158,7 @@
       "n": 1043,
       "file": "s73",
       "start": 50.75,
-      "end": 59.0,
+      "end": 59,
       "confidence": 0.96
     },
     {
@@ -4953,7 +8382,7 @@
       "n": 1075,
       "file": "s76",
       "start": 86.31,
-      "end": 94.0,
+      "end": 94,
       "confidence": 0.99
     },
     {
@@ -5651,6 +9080,7 @@
     "Several verses (e.g. 674, 1016, 1017, 1149, 1150) have damaged or abjad-letter text in the PDF text layer, so their whisper match is low; their timing follows the pause/length fit and neighbours that match well.",
     "No repeated, skipped or inserted verse was detected: every section's verse count fit its duration at about 0.2 s per letter.",
     "Section ids follow the literal order of the PDF table of contents (entries 2-4 النسخ المعتمدة / رموز القراء / الأضداد are counted). If the text agent excluded them, ids shift by 3.",
-    "2026-10-21: verses 672–675, 797, 1015–1017, 1031–1032 and 1173 corrected by hand. The automatic fit had set boundaries at the middle of verses, inside a spoken chapter title, or after the closing words «تم بحمد الله». The fix was checked with a whisper word-level transcript and snapped to the pause between verses."
+    "2026-10-21: verses 672–675, 797, 1015–1017, 1031–1032 and 1173 corrected by hand. The automatic fit had set boundaries at the middle of verses, inside a spoken chapter title, or after the closing words «تم بحمد الله». The fix was checked with a whisper word-level transcript and snapped to the pause between verses.",
+    "2026-11-03 run 3: verses 1-444 (sections 5-33, source files 01-29, one file per section) added. Word-anchored alignment (whisper.cpp large-v3-turbo words -> verse-level DP on PDF word sets and letter lengths -> boundary snapped to the pause between the words), spoken titles and non-verse speech excluded first; times are speech edges. File 01 (مقدمة الناظم) starts with the book title and editor credits; its audio is trimmed to start just before the bismillah (sourceStart 47.82 s). Several verses in the code-letter sections (ذكر ذال إذ ... ) have damaged PDF text, so their whisper match is low; see timing-report-usul.md."
   ]
 }
