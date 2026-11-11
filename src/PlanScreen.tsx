@@ -1,6 +1,6 @@
 // الحفظ tab: memorization plan builder, today's wird and progress. Track D owns this file (see SWEEP-PLAN.md).
 // Schedule logic lives in plan.ts; this file is the UI only.
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   AlarmClock,
   CalendarCheck,
@@ -76,7 +76,8 @@ function chapterOf(edition: Edition, r: Range) {
 
 // ---- Screen ----
 
-function useToday() {
+/** Today's date ('YYYY-MM-DD'), kept current while the app stays open. */
+export function useToday() {
   const [today, setToday] = useState(() => P.todayISO())
   useEffect(() => {
     const tick = () => setToday(P.todayISO())
@@ -90,12 +91,18 @@ function useToday() {
   return today
 }
 
-export default function PlanScreen(p: PlanScreenProps) {
+/** The stored plan ('plan' on the device), shared by this screen and the reader's wird strip. */
+export function usePlan() {
   const [stored, setStored] = useStored<{ plan: P.Plan | null }>('plan', { plan: null })
+  const plan = stored.plan?.version === 1 ? stored.plan : null
+  const setPlan = useCallback((next: P.Plan | null) => setStored({ plan: next }), [setStored])
+  return [plan, setPlan] as const
+}
+
+export default function PlanScreen(p: PlanScreenProps & { plan: P.Plan | null; setPlan: (plan: P.Plan | null) => void }) {
+  const { plan, setPlan } = p
   const [editing, setEditing] = useState(false)
   const today = useToday()
-  const plan = stored.plan?.version === 1 ? stored.plan : null
-  const setPlan = (next: P.Plan | null) => setStored({ plan: next })
 
   return (
     <section className="screen plan-screen">

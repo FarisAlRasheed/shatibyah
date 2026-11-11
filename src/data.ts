@@ -1,4 +1,4 @@
-import type { AudioFile, Edition, EditionColors, Manifest, Reciter, Section } from './types'
+import type { AudioFile, Edition, EditionColors, EditionPages, Manifest, Reciter, Section } from './types'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -13,6 +13,8 @@ export const loadEdition = (id: string) => getJson<Edition>(`editions/${id}/edit
 export const loadReciter = (id: string) => getJson<Reciter>(`reciters/${id}/reciter.json`)
 /** The edition's coloured codes and Quranic words, or null when it has none. */
 export const loadColors = (id: string) => getJson<EditionColors>(`editions/${id}/colors.json`).catch(() => null)
+/** Where the printed pages begin, or null when the edition has no page data. */
+export const loadPages = (id: string) => getJson<EditionPages>(`editions/${id}/pages.json`).then((d) => d.pages, () => null)
 
 // `?v=` changes whenever a file is re-cut, so an offline copy of an older cut is never
 // served with the new timings (the service worker and offline.ts key on the full URL).

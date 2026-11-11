@@ -36,15 +36,16 @@ interface PinchOptions {
   active: boolean
   size: () => number
   limits: () => { min: number; max: number }
-  /** Show a size right away (no React render); called on every frame of a pinch. */
+  /** Show a size right away (no React render); called on every frame of a gesture. */
   preview: (size: number) => void
-  /** The pinch ended: keep this size. */
+  /** The gesture ended: keep this size. */
   commit: (size: number) => void
 }
 
 /**
- * Pinch (touch), trackpad pinch / Ctrl+wheel, and ⌘ + − 0 change the verse size.
- * The verse under the fingers stays where it is while the size changes.
+ * Pinch (touch), trackpad pinch / Ctrl+wheel, and ⌘ + − 0 change the verse size, live: the text is
+ * laid out at the new size on every frame (cheap, since rows off screen skip layout: styles.css),
+ * and the verse under the fingers is held where it is.
  */
 export function usePinch(ref: RefObject<HTMLElement | null>, opts: PinchOptions) {
   const latest = useRef(opts)
@@ -60,22 +61,18 @@ export function usePinch(ref: RefObject<HTMLElement | null>, opts: PinchOptions)
 
     const begin = (y: number) => {
       size = latest.current.size()
-      const hit = document.elementFromPoint(innerWidth / 2, y)?.closest('.verse, .banner')
-      const target = hit ?? [...el.querySelectorAll('.verse')].find((v) => v.getBoundingClientRect().bottom > y)
-      if (!target) return (anchor = null)
-      const r = target.getBoundingClientRect()
-      anchor = { el: target, frac: r.height ? (y - r.top) / r.height : 0, y }
+      anchor = anchorAt(el, y)
+    }
+    const show = (s: number) => {
+      latest.current.preview(s)
+      if (anchor) holdAnchor(anchor)
     }
     const apply = (next: number) => {
       size = clamp(next)
       if (frame) return
       frame = requestAnimationFrame(() => {
         frame = 0
-        if (!size) return
-        latest.current.preview(size)
-        if (!anchor) return
-        const r = anchor.el.getBoundingClientRect()
-        window.scrollBy(0, r.top + anchor.frac * r.height - anchor.y)
+        if (size) show(size)
       })
     }
     const clamp = (s: number) => {
@@ -89,7 +86,7 @@ export function usePinch(ref: RefObject<HTMLElement | null>, opts: PinchOptions)
       // A frame may still be waiting (or never come, in a background tab): settle now.
       cancelAnimationFrame(frame)
       frame = 0
-      latest.current.preview(final)
+      show(final)
       latest.current.commit(final)
     }
     /** Wheel and key steps have no "end" event: commit shortly after the last one. */
@@ -182,4 +179,22 @@ export function usePinch(ref: RefObject<HTMLElement | null>, opts: PinchOptions)
       window.removeEventListener('keydown', key)
     }
   }, [ref, opts.active])
+}
+
+export type Anchor = { el: Element; frac: number; y: number }
+
+/** The verse (or chapter title) at height `y` on screen, and how far down it `y` falls. */
+export function anchorAt(list: HTMLElement, y: number): Anchor | null {
+  const hit = document.elementFromPoint(innerWidth / 2, y)?.closest('.verse, .banner')
+  const target = hit && list.contains(hit) ? hit : [...list.querySelectorAll('.verse')].find((v) => v.getBoundingClientRect().bottom > y)
+  if (!target) return null
+  const r = target.getBoundingClientRect()
+  return { el: target, frac: r.height ? (y - r.top) / r.height : 0, y }
+}
+
+/** Scroll so the anchored point is back at its height on screen. */
+export function holdAnchor(a: Anchor) {
+  const r = a.el.getBoundingClientRect()
+  const off = r.top + a.frac * r.height - a.y
+  if (Math.abs(off) >= 0.5) window.scrollBy(0, off)
 }

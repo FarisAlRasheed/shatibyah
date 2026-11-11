@@ -1,6 +1,6 @@
 # UX and UI improvement plan (2026-11-11)
 
-Status: ideas agreed with the owner in chat. **Nothing is built yet. Wait for the owner's "start" before writing code.**
+Status (2026-11-12): all six phases are built. Phases 1, 2 and 4 are committed; phases 3, 5 and 6 are in the working tree, checked in the browser but not committed or deployed. Differences from the text below: cumulative repeat is a switch in the repeat sheet (not a fifth choice); the action bar says «تكرار من هنا»; 978 verses share their last word (not 962); the page data of 6.1 exists (`data/editions/qasim/pages.json`). Not yet checked: the wird strip with a real plan, sepia, and pinch on a real iPhone.
 
 How the list was made: I read all the app code and walked every screen in the browser at phone and desktop size (reader, verse sheet, repeat, display, memorize, test-yourself, index, plan, search, settings). The kashida idea was tested in the browser on verses 1146–1159 and gave straight edges on both sides.
 

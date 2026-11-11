@@ -1,10 +1,10 @@
-import { Fragment, memo, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { Fragment, memo, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
 import { Bookmark, Check, Pencil } from 'lucide-react'
 import { toArabicDigits } from './arabic'
 import { HalfText, veilFor, type OpenMark } from './colors'
 import { DEFAULT_HALF_EM, type Fits, type HalfFit } from './kashida'
 import type { Bookmarks, Mastered, Notes, VerseLayout } from './store'
-import { clampSize, layoutFor, sizeLimits, usePinch } from './zoom'
+import { anchorAt, clampSize, holdAnchor, layoutFor, sizeLimits, usePinch, type Anchor } from './zoom'
 import type { ColorMark, Edition, EditionColors, Section } from './types'
 
 const NO_MARKS: ColorMark[] = []
@@ -22,10 +22,25 @@ interface Props {
   fits: Fits | null
   fontSize: number
   layout: VerseLayout
+  /** Everything else that changes how tall the rows are (spacing, font, numbers…): when any of it
+   *  changes, the verse at the top of the screen is kept where it was. */
+  look: string
   /** Search matches to mark, by verse number. */
   hits: Map<number, VerseHits> | null
   /** «إخفاء تدريجي»: the verse being repeated and the share of its words to hide now. */
   veil?: { n: number; share: number } | null
+  /** The small action bar, drawn under verse `n`. */
+  bar?: { n: number; el: ReactNode } | null
+  /** Range being picked in the text: tinted from `from` to `to` (only `from` before the end is chosen). */
+  pick?: { from: number; to: number } | null
+  /** The range a running repeat walks: its first and last verse carry a marker. */
+  run?: { from: number; to: number } | null
+  /** The verse repeating now and its count, shown as a ring on its number. */
+  count?: { n: number; round: number; times: number } | null
+  /** Recitation curtain: every second half-line veiled, except in the verses in `revealed`. */
+  curtain?: { revealed: Set<number> } | null
+  /** Printed page that begins at each verse (page markers). */
+  pageStarts?: Map<number, number> | null
   /** The reader is on screen with nothing over it (pinch and zoom keys work). */
   active: boolean
   onFontSize: (px: number) => void
@@ -101,6 +116,8 @@ export function VerseSample(p: {
   )
 }
 const noop = () => {}
+/** Height on screen, below the title bar, where the reader's place is read. */
+const TOP_Y = 120
 
 export default function Reader(p: Props) {
   const { edition, scrollTarget, onSectionChange } = p
@@ -126,6 +143,20 @@ export default function Reader(p: Props) {
     },
     commit: p.onFontSize,
   })
+
+  // A change of look re-lays the whole list: keep the verse at the top of the screen in place.
+  // The anchor is read while rendering, i.e. from the page as it still is, before React applies it.
+  const lookKey = `${size}|${layout}|${half}|${p.fits ? 1 : 0}|${p.look}`
+  const lastLook = useRef(lookKey)
+  const lookAnchor = useRef<Anchor | null>(null)
+  if (lookKey !== lastLook.current && ref.current && !lookAnchor.current) {
+    lookAnchor.current = anchorAt(ref.current, TOP_Y)
+  }
+  useLayoutEffect(() => {
+    lastLook.current = lookKey
+    if (lookAnchor.current) holdAnchor(lookAnchor.current)
+    lookAnchor.current = null
+  }, [lookKey])
 
   useEffect(() => {
     if (!scrollTarget) return
@@ -178,6 +209,11 @@ export default function Reader(p: Props) {
     >
       {edition.verses.map((v, i) => (
         <Fragment key={v.n}>
+          {p.pageStarts?.has(v.n) && (
+            <div className="page-mark" role="separator">
+              <span>صفحة {toArabicDigits(p.pageStarts.get(v.n)!)}</span>
+            </div>
+          )}
           {headers.get(v.n)?.map((s) => (
             <h2 key={s.id} id={`s-${s.id}`} className={`banner ${s.kind}`}>
               <span>{s.title}</span>
@@ -197,6 +233,12 @@ export default function Reader(p: Props) {
             fitB={p.fits?.b[i]}
             hits={p.hits?.get(v.n)}
             veil={p.veil?.n === v.n ? p.veil.share : 0}
+            curtain={!!p.curtain && !p.curtain.revealed.has(v.n)}
+            pick={roleIn(p.pick, v.n, true)}
+            run={roleIn(p.run, v.n, false)}
+            round={p.count?.n === v.n ? p.count.round : undefined}
+            times={p.count?.n === v.n ? p.count.times : undefined}
+            below={p.bar?.n === v.n ? p.bar.el : undefined}
             onTap={p.onTap}
             onMark={p.onMark}
           />
@@ -205,6 +247,19 @@ export default function Reader(p: Props) {
     </main>
   )
 }
+
+type RangeRole = 'start' | 'end' | 'both' | 'mid'
+
+/** Where verse n sits in a range; `mid` only when the inside is tinted too. */
+function roleIn(r: { from: number; to: number } | null | undefined, n: number, inside: boolean): RangeRole | undefined {
+  if (!r || n < r.from || n > r.to) return undefined
+  if (r.from === r.to) return 'both'
+  if (n === r.from) return 'start'
+  if (n === r.to) return 'end'
+  return inside ? 'mid' : undefined
+}
+
+const ALL_WORDS = () => true
 
 interface RowProps {
   n: number
@@ -221,6 +276,17 @@ interface RowProps {
   hits?: VerseHits
   /** Share of the words to veil (0 = none). */
   veil?: number
+  /** Second half veiled (recitation curtain). */
+  curtain?: boolean
+  /** Part of the range being picked. */
+  pick?: RangeRole
+  /** First or last verse of the range a repeat is playing. */
+  run?: RangeRole
+  /** Repeat count while this verse plays more than once (times 0 = endless). */
+  round?: number
+  times?: number
+  /** Drawn right under the verse (the action bar). */
+  below?: ReactNode
   /** Drawn in a preview: no element id, so it never shadows the reader's own row. */
   sample?: boolean
   onTap: (n: number) => void
@@ -228,8 +294,17 @@ interface RowProps {
 }
 
 /** One half-line; a half wider than the shared width is squeezed back into it. */
-function Half(p: { h: 'a' | 'b'; text: string; marks: ColorMark[]; fit?: HalfFit; hits?: [number, number][]; veil?: number; onMark: (m: OpenMark) => void }) {
-  const veil = p.veil ? veilFor(p.text, p.veil) : undefined
+function Half(p: {
+  h: 'a' | 'b'
+  text: string
+  marks: ColorMark[]
+  fit?: HalfFit
+  hits?: [number, number][]
+  veil?: number
+  curtain?: boolean
+  onMark: (m: OpenMark) => void
+}) {
+  const veil = p.curtain ? ALL_WORDS : p.veil ? veilFor(p.text, p.veil) : undefined
   const body = <HalfText text={p.text} marks={p.marks.filter((m) => m.h === p.h)} onMark={p.onMark} ins={p.fit?.ins} hits={p.hits} veil={veil} />
   const s = p.fit?.squeeze ?? 1
   return (
@@ -245,12 +320,25 @@ function Half(p: { h: 'a' | 'b'; text: string; marks: ColorMark[]; fit?: HalfFit
   )
 }
 
-const VerseRow = memo(function VerseRow(p: RowProps) {
+/** The verse number; while the verse repeats, its count «٢/٣» with a ring (a bar in the plain style). */
+function VerseNumber({ n, round, times }: { n: number; round?: number; times?: number }) {
+  if (round == null || times == null) return <span className="vnum">{toArabicDigits(n)}</span>
+  const label = `${toArabicDigits(round)}/${times === 0 ? '∞' : toArabicDigits(times)}`
+  const share = times === 0 ? 1 : Math.min(1, round / times)
   return (
-    <article id={p.sample ? undefined : `v-${p.n}`} className={`verse${p.isSelected ? ' selected' : ''}${p.isPlaying ? ' playing' : ''}`}>
+    <span className="vnum counting" style={{ '--share': share } as CSSProperties} aria-label={`البيت ${toArabicDigits(n)}، المرة ${label}`}>
+      <span className={`count${label.length > 4 ? ' long' : ''}`}>{label}</span>
+    </span>
+  )
+}
+
+const VerseRow = memo(function VerseRow(p: RowProps) {
+  const cls = `verse${p.isSelected ? ' selected' : ''}${p.isPlaying ? ' playing' : ''}${p.pick ? ` pick pick-${p.pick}` : ''}${p.run ? ` run-${p.run}` : ''}`
+  return (
+    <article id={p.sample ? undefined : `v-${p.n}`} className={cls}>
       <button className="verse-body" onClick={() => p.onTap(p.n)}>
         <span className="vnum-col">
-          <span className="vnum">{toArabicDigits(p.n)}</span>
+          <VerseNumber n={p.n} round={p.round} times={p.times} />
           {(p.hasBookmark || p.hasNote || p.isMastered) && (
             <span className="marks">
               {p.hasBookmark && <Bookmark size={12} aria-label="علامة" />}
@@ -261,9 +349,10 @@ const VerseRow = memo(function VerseRow(p: RowProps) {
         </span>
         <span className="halves verse-text">
           <Half h="a" text={p.a} marks={p.marks} fit={p.fitA} hits={p.hits?.a} veil={p.veil} onMark={p.onMark} />
-          <Half h="b" text={p.b} marks={p.marks} fit={p.fitB} hits={p.hits?.b} veil={p.veil} onMark={p.onMark} />
+          <Half h="b" text={p.b} marks={p.marks} fit={p.fitB} hits={p.hits?.b} veil={p.veil} curtain={p.curtain} onMark={p.onMark} />
         </span>
       </button>
+      {p.below}
     </article>
   )
 })

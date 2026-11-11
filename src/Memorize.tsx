@@ -37,6 +37,8 @@ interface Props {
   /** Toggle «إخفاء تدريجي». */
   onFade: () => void
   onMastered: (n: number, yes: boolean) => void
+  /** Offer «البيت التالي»: a peek at the first word of the next verse (recitation curtain). */
+  peek?: boolean
 }
 
 export default function Memorize(p: Props) {
@@ -47,6 +49,10 @@ export default function Memorize(p: Props) {
   const section = sectionOf(p.edition, p.verse)
   const [revealed, setRevealed] = useState(false)
   useEffect(() => setRevealed(false), [p.verse, p.hide, s.verseRound, s.rangeRound])
+  const [peeking, setPeeking] = useState(false)
+  useEffect(() => setPeeking(false), [p.verse])
+  const at = p.edition.verses.findIndex((x) => x.n === p.verse)
+  const next = p.peek && at >= 0 ? p.edition.verses[at + 1] : undefined
 
   // Pull down to close; swipe sideways to change verse (RTL: finger moving right = next, like turning a page).
   const [slide, setSlide] = useState<'' | 'slide-next' | 'slide-prev'>('')
@@ -115,6 +121,20 @@ export default function Memorize(p: Props) {
         {hideA ? <HiddenHalf label="اضغط لإظهار الصدر" /> : <p>{half('a')}</p>}
         {hideB ? <HiddenHalf label={hideA ? 'والعجز' : 'اضغط لإظهار العجز'} /> : <p>{half('b')}</p>}
       </div>
+
+      {next && (
+        <button className={`mem-peek${peeking ? ' on' : ''}`} onClick={() => setPeeking((x) => !x)} aria-expanded={peeking}>
+          {peeking ? (
+            <>
+              البيت التالي يبدأ بـ <span className="verse-text">«{next.a.trim().split(/\s+/)[0]} …»</span>
+            </>
+          ) : (
+            <>
+              <Eye size={16} /> البيت التالي
+            </>
+          )}
+        </button>
+      )}
 
       {testing ? (
         <div className="grade">

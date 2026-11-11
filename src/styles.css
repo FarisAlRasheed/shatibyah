@@ -115,6 +115,16 @@ a { color: var(--accent); }
 .banner.bab span { font-size: calc(var(--verse-size) * 1.2); }
 
 .verse { border-radius: 14px; margin: 2px 0; scroll-margin: 90px 0 calc(var(--dock-h) + var(--player-h) + 40px); transition: background-color 0.25s; }
+/* Rows off screen skip layout and paint: a size change then only lays out the rows in view.
+   Every row is the same height, so the estimate is exact and the scroll length stays true.
+   The selected row is left out: its action bar hangs below it and must not be clipped. */
+.reader > .verse:not(.selected) {
+  content-visibility: auto;
+  contain-intrinsic-size: calc(var(--verse-size) * var(--verse-lh, 1.95) + 16px);
+}
+.reader[data-layout='stack'] > .verse:not(.selected) {
+  contain-intrinsic-size: calc(var(--verse-size) * var(--verse-lh, 1.95) * 2 + 16px);
+}
 .verse.selected { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); }
 .verse.playing { background: var(--playing); }
 .verse-body {

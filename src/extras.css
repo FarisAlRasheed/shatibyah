@@ -1,0 +1,167 @@
+/* Phases 3, 5 and 6: the verse action bar, range picking, the count on a repeating verse,
+   recitation curtain, today's wird strip, printed page markers and the wide-screen side panel. */
+
+.verse { position: relative; }
+
+/* Small action bar under a tapped verse. Absolute, so the rows below don't move. */
+.verse-bar {
+  position: absolute; z-index: 6; top: calc(100% - 6px); left: 50%; transform: translateX(-50%);
+  display: flex; gap: 2px; padding: 4px; width: max-content; max-width: calc(100vw - 16px);
+  background: var(--raised); border: 0.5px solid var(--line); border-radius: 16px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.16); font-family: var(--ui-font);
+  animation: bar-in 0.16s ease-out;
+}
+.verse-bar.above { top: auto; bottom: calc(100% - 6px); }
+.verse-bar button {
+  flex: 1 1 0; min-width: 50px; max-width: 86px; min-height: 50px; padding: 5px 4px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  border: 0; border-radius: 12px; background: none; color: var(--accent);
+  font-size: 11px; line-height: 1.2; text-align: center;
+}
+.verse-bar button span { color: var(--text); }
+.verse-bar button:active, .verse-bar button.on { background: var(--accent-soft); }
+@keyframes bar-in { from { opacity: 0; transform: translate(-50%, -4px); } }
+@media (prefers-reduced-motion: reduce) { .verse-bar { animation: none; } }
+
+/* Range being picked in the text: tinted, with an accent edge on the side of the numbers. */
+.verse.pick { background: color-mix(in srgb, var(--accent-soft) 80%, transparent); border-radius: 0; box-shadow: inset -3px 0 0 var(--accent); }
+.verse.pick-start { border-radius: 14px 14px 0 0; }
+.verse.pick-end { border-radius: 0 0 14px 14px; }
+.verse.pick-both { border-radius: 14px; }
+
+/* The first and last verse of a running range repeat: corner brackets on the side of the numbers. */
+.verse.run-start::before, .verse.run-end::before {
+  content: ''; position: absolute; right: 0; width: 16px; height: 16px; pointer-events: none;
+  border: 0 solid var(--accent);
+}
+.verse.run-start::before { top: 0; border-top-width: 2.5px; border-right-width: 2.5px; border-top-right-radius: 12px; }
+.verse.run-end::before { bottom: 0; border-bottom-width: 2.5px; border-right-width: 2.5px; border-bottom-right-radius: 12px; }
+
+/* Count on the verse number while it repeats: «٢/٣» with a ring (a bar under plain numbers). */
+.vnum.counting { position: relative; outline-color: transparent; }
+.vnum .count { font-size: 0.82em; font-weight: 600; white-space: nowrap; }
+.vnum .count.long { font-size: 0.68em; }
+.vnum.counting::before {
+  content: ''; position: absolute; inset: -0.24em; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(var(--accent) calc(var(--share) * 1turn), var(--accent-soft) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 0.2em), #000 calc(100% - 0.19em));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 0.2em), #000 calc(100% - 0.19em));
+}
+.plain-numbers .vnum.counting::before {
+  inset: auto 0.2em -0.3em; height: 0.18em; border-radius: 2px; -webkit-mask: none; mask: none;
+  background: linear-gradient(to left, var(--accent) calc(var(--share) * 100%), var(--accent-soft) 0);
+}
+
+/* Range picking: the prompt at the top, the chosen range above the player. */
+.pick-banner {
+  position: fixed; z-index: 11; left: 50%; transform: translateX(-50%);
+  top: calc(env(safe-area-inset-top) + 66px);
+  display: inline-flex; align-items: center; gap: 6px; max-width: calc(100vw - 24px);
+  padding: 0 4px; padding-inline-start: 16px; border-radius: 999px; white-space: nowrap;
+  background: var(--accent); color: var(--on-accent); font-size: 14px; font-weight: 600;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.18); animation: pill-down 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.pick-banner > span { overflow: hidden; text-overflow: ellipsis; }
+.pick-banner .x {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 12px;
+  border: 0; border-radius: 999px; background: rgb(255 255 255 / 0.16); color: inherit; font: inherit; font-weight: 500;
+}
+.pick-bar {
+  position: fixed; z-index: 16; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--dock-h) + var(--player-h) + env(safe-area-inset-bottom) + 14px);
+  display: flex; align-items: center; gap: 4px; width: max-content; max-width: calc(100vw - 20px);
+  padding: 4px; padding-inline-start: 16px; border-radius: 999px;
+  background: var(--raised); border: 0.5px solid var(--line); box-shadow: 0 6px 22px rgb(0 0 0 / 0.18);
+  animation: pill-in 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.pick-what { flex: 1; min-width: 0; margin-inline-end: 6px; font-size: 14px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pick-what small { font-size: 13px; font-weight: 400; color: var(--muted); }
+.pick-what small::before { content: ' · '; }
+@media (max-width: 480px) {
+  .pick-what { display: flex; flex-direction: column; line-height: 1.3; }
+  .pick-what small::before { content: none; }
+}
+.pick-bar button {
+  flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 13px;
+  border: 0; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 13.5px; font-weight: 600;
+}
+.pick-bar .go { background: var(--accent); color: var(--on-accent); }
+.pick-bar .x { min-width: 40px; padding: 0; justify-content: center; background: none; color: var(--muted); }
+
+/* Repeat sheet: verse fields that take either kind of digit, the first words of each end, shortcuts. */
+.num-field {
+  flex: none; width: 90px; padding: 6px 10px; border: 0.5px solid var(--line); border-radius: 10px;
+  background: var(--surface); text-align: center; font-variant-numeric: tabular-nums;
+}
+.field-row .list-main .end-words { font-size: 15px; line-height: 1.6; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chips.range-chips { justify-content: flex-start; }
+.pick-link { gap: 8px; color: var(--accent); font-size: 15px; }
+
+/* Today's wird: a second row of the top bar, so it slides away with it. */
+.topbar { flex-wrap: wrap; }
+.wird-strip {
+  flex-basis: 100%; display: flex; align-items: center; gap: 4px; min-height: 40px;
+  margin: 4px -10px -6px; padding: 0 12px 0 4px; border-top: 0.5px solid var(--line); font-size: 13.5px;
+}
+.wird-strip > span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.wird-strip .go {
+  flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 16px; margin-block: 2px;
+  border: 0; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 600;
+}
+.wird-strip .x { flex: none; min-width: 40px; min-height: 40px; border: 0; background: none; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; }
+.app.has-strip .back-pill, .app.has-strip .pick-banner { top: calc(env(safe-area-inset-top) + 108px); }
+.app.has-strip .rail { top: calc(env(safe-area-inset-top) + 106px); }
+.app.has-strip .banner { scroll-margin-top: 122px; }
+.app.has-strip .verse { scroll-margin-top: 132px; }
+.app.immersed.has-strip .back-pill { top: calc(env(safe-area-inset-top) + 12px); }
+.app.immersed.has-strip .rail { top: calc(env(safe-area-inset-top) + 12px); }
+
+/* Printed page markers: a faint line with the page number at its end. */
+.page-mark { display: flex; align-items: center; gap: 10px; margin: 12px 8px 4px; color: var(--muted); font-size: 11.5px; opacity: 0.85; }
+.page-mark::before { content: ''; flex: 1; border-top: 0.5px dashed var(--muted); opacity: 0.6; }
+.page-mark span { font-variant-numeric: tabular-nums; }
+.page-jump .field-row { gap: 10px; }
+.pj-icon { vertical-align: -3px; color: var(--accent); }
+.pj-go { flex: none; min-height: 40px; padding: 0 14px; border-radius: 10px; font-size: 14px; }
+
+/* Memorization mode: a peek at the start of the next verse. */
+.memorize > .mem-peek {
+  width: auto; align-self: center; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px;
+  border-radius: 999px; border: 0.5px solid var(--line); background: none; color: var(--muted); font-size: 13.5px;
+}
+.mem-peek.on { color: var(--text); background: var(--accent-soft); border-color: transparent; }
+.mem-peek .verse-text { font-size: 19px; color: var(--accent); }
+
+/* Wide-screen side panel: on the left, clear of the fast-scroll rail; the verses move over for it. */
+.side-panel { display: none; }
+@media (min-width: 1180px) {
+  .side-panel {
+    position: fixed; z-index: 7; left: 40px; width: 300px; display: flex; flex-direction: column; gap: 16px;
+    top: calc(env(safe-area-inset-top) + 72px); bottom: calc(var(--dock-h) + var(--player-h) + env(safe-area-inset-bottom) + 18px);
+    overflow-y: auto; overscroll-behavior: contain; padding: 16px;
+    background: var(--raised); border: 0.5px solid var(--line); border-radius: 18px;
+    transition: top 0.28s, bottom 0.28s;
+  }
+  .app.has-strip .side-panel { top: calc(env(safe-area-inset-top) + 114px); }
+  .app.immersed .side-panel { top: calc(env(safe-area-inset-top) + 16px); bottom: calc(env(safe-area-inset-bottom) + 16px); }
+  .app.side-open main.reader { margin-left: calc(356px + max(0px, (100% - 1336px) / 2)); margin-right: auto; }
+}
+.sp-kicker { margin: 0; font-size: 13px; color: var(--muted); }
+.sp-verse { margin: 0; font-size: 20px; line-height: 1.9; }
+.side-panel section { display: flex; flex-direction: column; gap: 6px; }
+.side-panel h4 { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.side-panel ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.side-panel li { display: flex; align-items: baseline; gap: 10px; font-size: 14px; line-height: 1.5; }
+.side-panel li small { display: block; color: var(--muted); font-size: 12px; }
+.sp-word { flex: none; font-size: 19px; }
+.sp-note { margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.7; }
+.sp-link {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px;
+  border: 0; border-radius: 10px; background: var(--accent-soft); color: var(--accent); font-size: 13.5px;
+}
+.sp-twins li { display: block; }
+.sp-twins button {
+  width: 100%; display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 6px;
+  border: 0; border-radius: 10px; background: none; color: inherit; text-align: right; font-size: 17px; line-height: 1.6;
+}
+.sp-twins button:hover { background: var(--surface); }

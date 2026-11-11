@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { BookOpen, GraduationCap, List, LocateFixed, Search, Settings as SettingsIcon, Undo2, X } from 'lucide-react'
-import { audioUrl, loadColors, loadEdition, loadManifest, loadReciter, sectionOf, verseRange } from './data'
+import { BookOpen, Eye, EyeOff, GraduationCap, List, LocateFixed, Search, Settings as SettingsIcon, Undo2, X } from 'lucide-react'
+import { audioUrl, loadColors, loadEdition, loadManifest, loadPages, loadReciter, sectionOf, verseRange } from './data'
 import { ColorCard, fadeShare, type OpenMark } from './colors'
 import { DEFAULT_EDITION } from './config'
 import { toArabicDigits } from './arabic'
@@ -8,7 +8,7 @@ import { cumulativeStages, idleState, RepeatPlayer, type PlayState } from './pla
 import { useFits } from './kashida'
 import { DEFAULT_SIZE } from './zoom'
 import { useStored, type Bookmarks, type Mastered, type Notes, type RepeatSettings, type Settings, type Weak } from './store'
-import type { Edition, EditionColors, Manifest, Reciter, Section, VerseTiming } from './types'
+import type { Edition, EditionColors, Manifest, PrintedPage, Reciter, Section, VerseTiming } from './types'
 import Reader from './Reader'
 import MiniPlayer from './MiniPlayer'
 import Memorize from './Memorize'
@@ -16,10 +16,18 @@ import './flow.css'
 import './chrome.css'
 import { Drawer, FlagSheet, NoteSheet, RepeatSheet, VerseSheet } from './sheets'
 import { IndexScreen, SettingsScreen } from './screens'
-import PlanScreen from './PlanScreen'
+import PlanScreen, { usePlan, useToday } from './PlanScreen'
+import { todayState } from './plan'
 import { FindBar, FindList, useFind, type FindState } from './Find'
 import LookPanel from './Look'
 import Rail from './Rail'
+import VerseBar from './VerseBar'
+import { PickBanner, PickBar, pickSpan, pickTap, type PickState } from './RangePick'
+import TwinsSheet from './TwinsSheet'
+import { buildTwins } from './twins'
+import WirdStrip from './WirdStrip'
+import SidePanel, { useWide } from './SidePanel'
+import './extras.css'
 
 type Tab = 'read' | 'plan' | 'settings'
 export type Panel =
@@ -30,6 +38,7 @@ export type Panel =
   | { type: 'verse'; n: number }
   | { type: 'note'; n: number }
   | { type: 'flag'; n: number }
+  | { type: 'twins'; n: number }
 
 // The tab bar. «أ» (المظهر) sits between the first two: it opens a panel over the reader, not a screen.
 const TABS: [Tab, string, typeof BookOpen][] = [
@@ -123,6 +132,8 @@ export default function App() {
   const [edition, setEdition] = useState<Edition | null>(null)
   // undefined while loading, null when the edition has no colours file
   const [colors, setColors] = useState<EditionColors | null | undefined>(undefined)
+  // Where the printed pages begin; null when the edition has no page data.
+  const [pages, setPages] = useState<PrintedPage[] | null>(null)
   const [openMark, setOpenMark] = useState<OpenMark | null>(null)
   const [reciter, setReciter] = useState<Reciter | null>(null)
   const [error, setError] = useState('')
@@ -148,6 +159,19 @@ export default function App() {
   const readScroll = useRef(0)
   // Follow the recited verse until the user scrolls or jumps away; a pill brings them back.
   const [following, setFollowing] = useState(true)
+  // The verse whose small action bar is showing.
+  const [bar, setBar] = useState<number | null>(null)
+  // Choosing a range to repeat by tapping verses.
+  const [pick, setPick] = useState<PickState | null>(null)
+  // The range the running repeat walks, for its end markers.
+  const [run, setRun] = useState<{ from: number; to: number } | null>(null)
+  // Recitation curtain: on for this visit only, with the verses tapped open.
+  const [curtainOn, setCurtainOn] = useState(false)
+  const [revealed, setRevealed] = useState<Set<number>>(() => new Set())
+  const [plan, setPlan] = usePlan()
+  const today = useToday()
+  const [wirdHidden, setWirdHidden] = useStored<{ day: string }>('wirdStrip', { day: '' })
+  const wide = useWide()
 
   useTheme(settings.theme)
 
@@ -170,6 +194,8 @@ export default function App() {
     setColors(undefined)
     loadEdition(editionId).then(setEdition, (e) => setError(String(e)))
     loadColors(editionId).then(setColors)
+    setPages(null)
+    loadPages(editionId).then(setPages)
   }, [editionId])
 
   useEffect(() => {
@@ -192,10 +218,12 @@ export default function App() {
   const fits = useFits(settings.kashida ? edition : null, colors, settings.font, FONT_FAMILY[settings.font], true, settings.lastVerse)
 
   const timings = useMemo(() => new Map<number, VerseTiming>(reciter?.verses.map((v) => [v.n, v]) ?? []), [reciter])
+  const twins = useMemo(() => (edition ? buildTwins(edition) : new Map<number, number[]>()), [edition])
+  const pageStarts = useMemo(() => (pages ? new Map(pages.map((x) => [x.from, x.page])) : null), [pages])
   useEffect(() => player.setTimings(reciter?.verses ?? []), [reciter])
 
   const startQueue = useCallback(
-    (from: number, to: number, startAt: number, opts: Pick<RepeatSettings, 'verseTimes' | 'rangeTimes'>, cumulative = false) => {
+    (from: number, to: number, startAt: number, opts: Pick<RepeatSettings, 'verseTimes' | 'rangeTimes'>, cumulative = false, marked = false) => {
       const queue: VerseTiming[] = []
       for (let n = from; n <= to; n++) {
         const t = timings.get(n)
@@ -203,6 +231,7 @@ export default function App() {
       }
       const startIndex = Math.max(0, queue.findIndex((t) => t.n >= startAt))
       setFollowing(true)
+      setRun(marked && from < to ? { from, to } : null)
       const stages =
         cumulative && queue.length > 1 ? cumulativeStages(queue.length, Math.max(1, opts.verseTimes), Math.max(1, opts.rangeTimes)) : undefined
       player.start(queue, { ...opts, pause: repeat.pause, speed: repeat.speed, echo: repeat.echo }, startIndex, stages)
@@ -226,7 +255,7 @@ export default function App() {
         if (s) [from, to] = [s.start, s.end]
       }
       // A single verse has no range to repeat; its rounds count is hidden in the repeat sheet.
-      startQueue(from, to, from, r.scope === 'verse' ? { ...r, rangeTimes: 1 } : r, r.cumulative && r.scope !== 'verse')
+      startQueue(from, to, from, r.scope === 'verse' ? { ...r, rangeTimes: 1 } : r, r.cumulative && r.scope !== 'verse', r.scope !== 'verse')
       // Remember the last few ranges, for the repeat sheet's shortcuts.
       if (r.scope === 'range')
         setRepeat((x) => ({ ...x, recent: [[from, to] as [number, number], ...(x.recent ?? []).filter(([a, b]) => a !== from || b !== to)].slice(0, 3) }))
@@ -275,6 +304,7 @@ export default function App() {
     pendingRestore.current = false
     setFollowing(false)
     setSelected(n)
+    setBar(null)
     setTab('read')
     setScrollTarget({ n, key: Date.now() })
     setPanel(null)
@@ -365,10 +395,9 @@ export default function App() {
     }
   }, [playing, following, tab])
 
-  const onTap = useCallback((n: number) => {
-    setSelected(n)
-    setPanel({ type: 'verse', n })
-  }, [])
+  // Kept stable, so a tap handler that changes doesn't redraw every verse row.
+  const tap = useRef((_n: number) => {})
+  const onTap = useCallback((n: number) => tap.current(n), [])
 
   if (error) return <div className="center-msg">تعذّر تحميل البيانات: {error}</div>
   if (!manifest || !edition) return <div className="center-msg">جارٍ التحميل…</div>
@@ -379,11 +408,36 @@ export default function App() {
   const hasAudio = !!reciter
 
   const togglePlay = () => (active ? player.toggle() : startRepeat())
+  const toggleBookmark = (n: number) =>
+    setBookmarks((b) => {
+      const next = { ...b }
+      if (next[n]) delete next[n]
+      else next[n] = { label: '', at: Date.now() }
+      return next
+    })
+
+  tap.current = (n) => {
+    if (pick) return setPick(pickTap(pick, n))
+    if (curtainOn) setRevealed((r) => (r.has(n) ? r : new Set(r).add(n)))
+    setSelected(n)
+    setBar((b) => (b === n ? null : n))
+  }
+  const span = pickSpan(pick)
+  const pickRepeat = (): RepeatSettings => ({ ...repeat, scope: 'range', from: span!.from, to: span!.to })
+
+  // Today's wird of the memorization plan: for the strip (when due) and the repeat sheet's shortcut.
+  const wirdNow = plan ? todayState(plan, today) : null
+  const wird = wirdNow && wirdNow.kind !== 'finished' ? wirdNow.wird : null
+  const wirdDue = wirdNow?.kind === 'wird' && !wirdNow.offDay && !wirdNow.notStarted ? wirdNow.wird : null
+  const showStrip = settings.wirdStrip && !!wirdDue && wirdHidden.day !== today && tab === 'read' && !find && !memorize
+  const showSide = settings.sidePanel && wide && tab === 'read' && !memorize && panel !== 'look'
+
   const step = (d: 1 | -1) => {
     if (active && play.total > 1) return player.step(d)
     if (active) player.stop()
     const n = Math.min(all.to, Math.max(all.from, focusVerse + d))
     setSelected(n)
+    setBar(null)
     setScrollTarget({ n, key: Date.now() })
   }
   const repeatVerse = (n: number, times: number) => {
@@ -425,7 +479,7 @@ export default function App() {
     step,
     find: openFind,
     repeat: () => hasAudio && setPanel({ type: 'repeat', n: focusVerse }),
-    closeFind: () => setFind(null),
+    closeFind: () => (pick ? setPick(null) : setFind(null)),
     busy: tab !== 'read' || !!panel || memorize,
   }
   const times = (n: number) => (n === 0 ? '∞' : toArabicDigits(n))
@@ -459,6 +513,7 @@ export default function App() {
             mastered={mastered}
             setBookmarks={setBookmarks}
             onJump={jumpTo}
+            pages={settings.pageMarks ? pages : null}
           />
         </Drawer>
       )
@@ -470,6 +525,13 @@ export default function App() {
           setRepeat={setRepeat}
           selected={panel.n}
           timings={timings}
+          wird={wird}
+          onPickFromText={() => {
+            close()
+            setMemorize(false)
+            setTab('read')
+            setPick({ anchor: null, end: null })
+          }}
           onStart={(r) => {
             setSelected(panel.n)
             startRepeat(r, panel.n)
@@ -497,14 +559,7 @@ export default function App() {
             setRepeat((r) => ({ ...r, scope: 'verse' }))
             setPanel({ type: 'repeat', n: panel.n })
           }}
-          onToggleBookmark={() =>
-            setBookmarks((b) => {
-              const next = { ...b }
-              if (next[panel.n]) delete next[panel.n]
-              else next[panel.n] = { label: '', at: Date.now() }
-              return next
-            })
-          }
+          onToggleBookmark={() => toggleBookmark(panel.n)}
           onNote={() => setPanel({ type: 'note', n: panel.n })}
           onMemorize={() => {
             close()
@@ -516,16 +571,50 @@ export default function App() {
       )
     if (panel?.type === 'note') return <NoteSheet n={panel.n} edition={edition} notes={notes} setNotes={setNotes} onClose={close} />
     if (panel?.type === 'flag') return <FlagSheet n={panel.n} edition={edition} reciter={reciter} playState={play} onClose={close} />
+    if (panel?.type === 'twins') return <TwinsSheet n={panel.n} edition={edition} twins={twins.get(panel.n) ?? []} onJump={jumpTo} onClose={close} />
     return null
   })()
 
-  const hideBars = immersed && tab === 'read' && !panel && !find && !memorize
+  const barEl =
+    bar != null && tab === 'read' && !panel && !pick && !memorize ? (
+      <VerseBar
+        key={bar}
+        n={bar}
+        canPlay={hasAudio && timings.has(bar)}
+        bookmarked={!!bookmarks[bar]}
+        twins={settings.twins ? (twins.get(bar)?.length ?? 0) : 0}
+        onPlayFrom={() => {
+          setBar(null)
+          playFrom(bar)
+        }}
+        onRepeatFrom={() => {
+          setBar(null)
+          setPick({ anchor: bar, end: null })
+        }}
+        onBookmark={() => toggleBookmark(bar)}
+        onNote={() => {
+          setBar(null)
+          setPanel({ type: 'note', n: bar })
+        }}
+        onTwins={() => {
+          setBar(null)
+          setPanel({ type: 'twins', n: bar })
+        }}
+        onMore={() => {
+          setBar(null)
+          setPanel({ type: 'verse', n: bar })
+        }}
+        onClose={() => setBar(null)}
+      />
+    ) : null
+
+  const hideBars = immersed && tab === 'read' && !panel && !find && !memorize && !pick
   const sectionTitle = topSection?.title ?? sectionOf(edition, focusVerse)?.title ?? ''
   const titleSection = topSection ?? sectionOf(edition, focusVerse)
 
   return (
     <div
-      className={`app${reciters.length ? ' has-player' : ''}${settings.numberStyle === 'plain' ? ' plain-numbers' : ''}${hideBars ? ' immersed' : ''}${panel === 'look' ? ' look-open' : ''}`}
+      className={`app${reciters.length ? ' has-player' : ''}${settings.numberStyle === 'plain' ? ' plain-numbers' : ''}${hideBars ? ' immersed' : ''}${panel === 'look' ? ' look-open' : ''}${showStrip ? ' has-strip' : ''}${showSide ? ' side-open' : ''}`}
       style={{
         ['--verse-size' as string]: `${settings.fontSize}px`,
         ['--verse-font' as string]: FONT_FAMILY[settings.font],
@@ -557,10 +646,26 @@ export default function App() {
                   </small>
                 )}
               </button>
+              {settings.curtain && (
+                <button
+                  className={`icon-btn${curtainOn ? ' on' : ''}`}
+                  onClick={() => {
+                    setCurtainOn((x) => !x)
+                    setRevealed(new Set())
+                  }}
+                  aria-pressed={curtainOn}
+                  aria-label={curtainOn ? 'إظهار الأشطر' : 'ستارة التسميع'}
+                >
+                  {curtainOn ? <EyeOff size={21} /> : <Eye size={21} />}
+                </button>
+              )}
               <button className="icon-btn" onClick={() => setPanel('index')} aria-label="الفهرس">
                 <List size={22} />
               </button>
             </>
+          )}
+          {showStrip && (
+            <WirdStrip wird={wirdDue!} onStart={() => startSession(wirdDue!.from, wirdDue!.to)} onHide={() => setWirdHidden({ day: today })} />
           )}
         </header>
       )}
@@ -574,7 +679,28 @@ export default function App() {
         />
       )}
       {tab === 'read' && settings.rail && !panel && !memorize && <Rail edition={edition} />}
-      {tab === 'read' && settings.backPill && back != null && !find?.list && (
+      {tab === 'read' && pick && pick.end == null && <PickBanner pick={pick} onCancel={() => setPick(null)} />}
+      {tab === 'read' && pick && pick.end != null && span && (
+        <PickBar
+          from={span.from}
+          to={span.to}
+          canPlay={hasAudio}
+          onStart={() => {
+            const r = pickRepeat()
+            setRepeat(r)
+            setSelected(r.from)
+            startRepeat(r, r.from)
+            setPick(null)
+          }}
+          onEdit={() => {
+            setRepeat(pickRepeat())
+            setPanel({ type: 'repeat', n: span.from })
+            setPick(null)
+          }}
+          onCancel={() => setPick(null)}
+        />
+      )}
+      {tab === 'read' && settings.backPill && back != null && !find?.list && !pick && (
         <span className="back-pill">
           <button
             className="back-go"
@@ -605,8 +731,15 @@ export default function App() {
           fits={fits}
           fontSize={settings.fontSize}
           layout={settings.layout}
+          look={`${settings.lineHeight}|${settings.font}|${settings.numberStyle}|${settings.colors}|${settings.pageMarks}`}
           hits={find ? results.hits : null}
           veil={repeat.fade && active && play.verse != null ? { n: play.verse, share: fadeShare(play) } : null}
+          bar={barEl ? { n: bar!, el: barEl } : null}
+          pick={span}
+          run={active ? run : null}
+          count={active && play.verse != null && play.verseTimes !== 1 ? { n: play.verse, round: play.verseRound, times: play.verseTimes } : null}
+          curtain={settings.curtain && curtainOn ? { revealed } : null}
+          pageStarts={settings.pageMarks ? pageStarts : null}
           active={tab === 'read' && !panel && !memorize && !find?.list}
           onBackgroundTap={() => setImmersed(false)}
           onFontSize={(fontSize) => setSettings((x) => ({ ...x, fontSize }))}
@@ -620,6 +753,8 @@ export default function App() {
           edition={edition}
           mastered={mastered}
           weak={weak}
+          plan={plan}
+          setPlan={setPlan}
           onStartSession={startSession}
           onFreeSession={() => setMemorize(true)}
           onJump={jumpTo}
@@ -640,7 +775,19 @@ export default function App() {
         />
       )}
 
-      {tab === 'read' && active && !following && settings.autoScroll && play.verse != null && (
+      {showSide && (
+        <SidePanel
+          n={selected ?? focusVerse}
+          edition={edition}
+          colors={colors ?? null}
+          note={notes[selected ?? focusVerse] ?? ''}
+          twins={settings.twins ? (twins.get(selected ?? focusVerse) ?? []) : null}
+          onNote={() => setPanel({ type: 'note', n: selected ?? focusVerse })}
+          onJump={jumpTo}
+        />
+      )}
+
+      {tab === 'read' && active && !following && settings.autoScroll && play.verse != null && !pick && (
         <button
           className="follow-pill"
           onClick={() => {
@@ -700,6 +847,7 @@ export default function App() {
           colors={settings.memorizeColors ? (colors ?? null) : null}
           onMark={setOpenMark}
           canPlay={hasAudio}
+          peek={settings.curtain}
           onHide={(hide) => setSettings((s) => ({ ...s, hide }))}
           onClose={() => setMemorize(false)}
           onPlay={togglePlay}

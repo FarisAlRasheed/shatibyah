@@ -1,12 +1,12 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { Bookmark, BookmarkCheck, Flag, GraduationCap, Pencil, Play, Repeat, X } from 'lucide-react'
-import { toArabicDigits } from './arabic'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { Bookmark, BookmarkCheck, Flag, GraduationCap, Pencil, Play, Repeat, TextSelect, X } from 'lucide-react'
+import { toArabicDigits, toLatinDigits } from './arabic'
 import { useSwipe } from './gestures'
 import { APP_VERSION, OWNER_EMAIL, OWNER_WHATSAPP } from './config'
 import { sectionOf, verseRange } from './data'
 import { cumulativeStages, type PlayState, type Stage } from './player'
 import type { Notes, RepeatSettings } from './store'
-import type { Edition, Reciter, VerseTiming } from './types'
+import type { Edition, Range, Reciter, VerseTiming } from './types'
 
 export type SetState<T> = (next: T | ((prev: T) => T)) => void
 
@@ -21,6 +21,7 @@ export function Sheet({ title, onClose, children, clear, pinned }: { title?: str
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
   const swipeRef = useSwipe<HTMLElement>({ onDismiss: onClose })
+  const steady = useSteadyControls()
   return (
     <div className={`overlay${clear ? ' clear' : ''}`} onClick={onClose}>
       <section className="sheet" role="dialog" aria-label={title} onClick={(e) => e.stopPropagation()} ref={swipeRef}>
@@ -33,11 +34,52 @@ export function Sheet({ title, onClose, children, clear, pinned }: { title?: str
             </button>
           </header>
         )}
-        {pinned}
-        <div className="sheet-body">{children}</div>
+        {pinned && <div ref={steady.pinned} style={{ flex: 'none' }}>{pinned}</div>}
+        <div className="sheet-body" ref={steady.body} onPointerDownCapture={steady.grab} onFocusCapture={steady.grab}>
+          {children}
+        </div>
       </section>
     </div>
   )
+}
+
+/**
+ * Keeps the control being used (a slider under the finger, a button just tapped) still while what it
+ * changes resizes the part above it, e.g. the sample verses growing with the line spacing.
+ * Growth is taken up by scrolling the sheet's body; while a finger is down the pinned part may not
+ * shrink, so nothing jumps under it (it settles when the finger lifts).
+ */
+function useSteadyControls() {
+  const body = useRef<HTMLDivElement>(null)
+  const pinned = useRef<HTMLDivElement>(null)
+  const held = useRef<{ el: Element; top: number } | null>(null)
+
+  const grab = (e: { target: EventTarget; type: string }) => {
+    const el = e.target as Element
+    held.current = { el, top: el.getBoundingClientRect().top }
+    const p = pinned.current
+    if (!p || e.type !== 'pointerdown') return
+    p.style.minHeight = `${p.offsetHeight}px`
+    const release = () => {
+      p.style.minHeight = ''
+      removeEventListener('pointerup', release)
+      removeEventListener('pointercancel', release)
+    }
+    addEventListener('pointerup', release)
+    addEventListener('pointercancel', release)
+  }
+
+  // After every render: put the held control back where it was.
+  useLayoutEffect(() => {
+    const h = held.current
+    const b = body.current
+    if (!h || !b || !h.el.isConnected) return
+    const top = h.el.getBoundingClientRect().top
+    if (Math.abs(top - h.top) >= 0.5) b.scrollTop += top - h.top
+    h.top = h.el.getBoundingClientRect().top
+  })
+
+  return { body, pinned, grab }
 }
 
 /** A whole screen shown over the reader: a tall sheet on a phone, a side drawer on a wide screen. */
@@ -315,6 +357,35 @@ function Count({ label, value, onChange, finite }: { label: string; value: numbe
   )
 }
 
+/** A verse number typed in Arabic or Latin digits; shown in Arabic digits. */
+function VerseField({ label, value, words, onChange, onBlur }: { label: string; value: number; words?: string; onChange: (n: number) => void; onBlur: () => void }) {
+  return (
+    <label className="field-row">
+      <span className="list-main">
+        {label}
+        {words && <small className="end-words verse-text">{words}</small>}
+      </span>
+      <input
+        className="num-field"
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        value={value ? toArabicDigits(value) : ''}
+        onChange={(e) => onChange(+toLatinDigits(e.target.value).replace(/[^0-9]/g, '').slice(0, 5))}
+        onBlur={onBlur}
+      />
+    </label>
+  )
+}
+
+/** The opening words of a verse, to recognise it by. */
+function firstWords(edition: Edition, n: number) {
+  const v = edition.verses.find((x) => x.n === n)
+  if (!v) return undefined
+  const w = v.a.trim().split(/\s+/)
+  return w.length > 3 ? `${w.slice(0, 3).join(' ')} …` : v.a
+}
+
 export function RepeatSheet(p: {
   edition: Edition
   repeat: RepeatSettings
@@ -324,6 +395,10 @@ export function RepeatSheet(p: {
   onClose: () => void
   /** Verse timings of the current reciter; without them the summary shows counts only. */
   timings?: Map<number, VerseTiming>
+  /** Today's wird of the memorization plan, for its shortcut. */
+  wird?: Range | null
+  /** Choose the range by tapping verses in the text. */
+  onPickFromText?: () => void
 }) {
   const all = verseRange(p.edition)
   const anchor = p.selected ?? all.from
@@ -349,6 +424,12 @@ export function RepeatSheet(p: {
   const verses = p.edition.verses.filter((v) => v.n >= from && v.n <= to).map((v) => v.n)
   const summary = repeatSummary(verses, r, r.scope === 'verse', p.timings)
   const cumulative = r.cumulative && r.scope !== 'verse'
+  const here = sectionOf(p.edition, anchor)
+  const shortcuts: [string, number, number][] = [
+    ...(here ? ([['هذا الباب', here.start, here.end], ['من هنا إلى آخر الباب', anchor, here.end]] as [string, number, number][]) : []),
+    ...(p.wird ? ([['ورد اليوم', p.wird.from, p.wird.to]] as [string, number, number][]) : []),
+    ...(p.repeat.recent ?? []).map(([a, b]) => [`${toArabicDigits(a)}–${toArabicDigits(b)}`, a, b] as [string, number, number]),
+  ]
 
   return (
     <Sheet title="التكرار" onClose={p.onClose}>
@@ -367,16 +448,24 @@ export function RepeatSheet(p: {
         ))}
       </div>
       {r.scope === 'range' && (
-        <div className="group">
-          <label className="field-row">
-            <span>من البيت</span>
-            <input type="number" inputMode="numeric" min={all.from} max={all.to} value={r.from} onChange={(e) => set({ from: +e.target.value })} onBlur={() => set({ from: clamp(r.from) })} />
-          </label>
-          <label className="field-row">
-            <span>إلى البيت</span>
-            <input type="number" inputMode="numeric" min={all.from} max={all.to} value={r.to} onChange={(e) => set({ to: +e.target.value })} onBlur={() => set({ to: clamp(r.to) })} />
-          </label>
-        </div>
+        <>
+          <div className="chips range-chips" role="group" aria-label="اختيارات سريعة">
+            {shortcuts.map(([label, a, b]) => (
+              <button key={`${label}${a}`} className={`chip${from === a && to === b ? ' on' : ''}`} onClick={() => set({ from: a, to: b })}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="group">
+            <VerseField label="من البيت" value={r.from} words={firstWords(p.edition, clamp(r.from))} onChange={(n) => set({ from: n })} onBlur={() => set({ from: clamp(r.from) })} />
+            <VerseField label="إلى البيت" value={r.to} words={firstWords(p.edition, clamp(r.to))} onChange={(n) => set({ to: n })} onBlur={() => set({ to: clamp(r.to) })} />
+            {p.onPickFromText && (
+              <button className="check-row pick-link" onClick={p.onPickFromText}>
+                <TextSelect size={18} /> تحديد من النص
+              </button>
+            )}
+          </div>
+        </>
       )}
       {r.scope === 'section' && (
         <select value={r.sectionId} onChange={(e) => set({ sectionId: +e.target.value })}>

@@ -88,3 +88,16 @@ export interface EditionColors {
   codes: Record<string, ColorCode>
   verses: Record<string, ColorMark[]>
 }
+
+/** Where each page of the printed edition begins (data/editions/<id>/pages.json). */
+export interface PrintedPage {
+  page: number // number printed on the page
+  pdf: number // page of the PDF
+  from: number
+  to: number
+}
+
+export interface EditionPages {
+  edition: string
+  pages: PrintedPage[]
+}

@@ -1,12 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { BookOpen, Bookmark, Check, ChevronLeft, Download, GraduationCap, NotebookPen, Trash2 } from 'lucide-react'
-import { toArabicDigits } from './arabic'
+import { BookOpen, Bookmark, Check, ChevronLeft, Download, FileText, GraduationCap, NotebookPen, Trash2 } from 'lucide-react'
+import { toArabicDigits, toLatinDigits } from './arabic'
 import { APP_VERSION } from './config'
 import { audioUrl, sectionOf, verseRange } from './data'
 import { download, formatMB, isDownloaded, offlineSupported, remove } from './offline'
 import type { Bookmarks, Mastered, Notes, Settings, Theme, VerseFont } from './store'
 import { matchRanges } from './search'
-import type { Edition, Manifest, Reciter, Verse } from './types'
+import type { Edition, Manifest, PrintedPage, Reciter, Verse } from './types'
 import { VersePreview, type SetState } from './sheets'
 
 function Screen({ title, children }: { title: string; children: ReactNode }) {
@@ -38,6 +38,8 @@ export function IndexScreen(p: {
   mastered: Mastered
   setBookmarks: SetState<Bookmarks>
   onJump: (n: number) => void
+  /** Printed pages, for «الانتقال إلى صفحة»; null hides it. */
+  pages?: PrintedPage[] | null
 }) {
   const [view, setView] = useState<IndexView>('sections')
   const counts = {
@@ -82,6 +84,7 @@ export function IndexScreen(p: {
       {view === 'sections' ? (
         <>
           <PilotNote edition={p.edition} />
+          {p.pages && p.pages.length > 0 && <PageJump pages={p.pages} onJump={p.onJump} />}
           <ul className="group list">
             {p.edition.sections.map((s) => {
               const isHere = here?.id === s.id
@@ -112,6 +115,56 @@ export function IndexScreen(p: {
         <SavedLists {...p} view={view} />
       )}
     </Screen>
+  )
+}
+
+/** «الانتقال إلى صفحة»: a page number of the printed edition, in either kind of digits. */
+function PageJump({ pages, onJump }: { pages: PrintedPage[]; onJump: (n: number) => void }) {
+  const [q, setQ] = useState('')
+  const [bad, setBad] = useState(false)
+  const first = pages[0].page
+  const last = pages[pages.length - 1].page
+  const go = () => {
+    const n = +toLatinDigits(q).replace(/[^0-9]/g, '')
+    const pg = pages.find((x) => x.page === n)
+    setBad(!pg)
+    if (pg) onJump(pg.from)
+  }
+  return (
+    <form
+      className="group page-jump"
+      onSubmit={(e) => {
+        e.preventDefault()
+        go()
+      }}
+    >
+      <label className="field-row">
+        <span className="list-main">
+          <span>
+            <FileText size={16} className="pj-icon" /> الانتقال إلى صفحة من المطبوع
+          </span>
+          <small className={bad ? 'err' : 'muted'}>
+            {bad ? 'لا توجد صفحة بهذا الرقم' : `من ${toArabicDigits(first)} إلى ${toArabicDigits(last)}`}
+          </small>
+        </span>
+        <input
+          className="num-field"
+          type="text"
+          inputMode="numeric"
+          enterKeyHint="go"
+          autoComplete="off"
+          aria-label="رقم الصفحة"
+          value={toArabicDigits(q)}
+          onChange={(e) => {
+            setBad(false)
+            setQ(toLatinDigits(e.target.value).replace(/[^0-9]/g, '').slice(0, 4))
+          }}
+        />
+        <button type="submit" className="btn pj-go" disabled={!q}>
+          انتقل
+        </button>
+      </label>
+    </form>
   )
 }
 
@@ -400,6 +453,11 @@ export const EXTRAS: [keyof Settings & ('immersive' | 'rail' | 'backPill' | 'cur
   ['immersive', 'إخفاء الأشرطة أثناء القراءة', 'تختفي عند النزول في الصفحة وتعود عند الصعود أو اللمس'],
   ['rail', 'شريط التنقل السريع', 'اسحبه على حافة الصفحة للانتقال في المتن كله'],
   ['backPill', 'زر الرجوع بعد الانتقال', 'يعيدك إلى موضعك بعد الانتقال من البحث أو الفهرس'],
+  ['curtain', 'ستارة التسميع', 'زر عين في الأعلى يخفي الشطر الثاني من كل بيت لتسمّعه من حفظك'],
+  ['twins', 'الأبيات المتشابهة الخواتيم', 'زر «متشابهات» للأبيات التي تنتهي بالكلمة نفسها'],
+  ['wirdStrip', 'شريط ورد اليوم', 'سطر أعلى القراءة بورد اليوم من خطة الحفظ، يبدؤه بلمسة'],
+  ['pageMarks', 'أرقام صفحات المطبوع', 'خط خفيف حيث تبدأ كل صفحة من الطبعة الورقية، والانتقال إلى صفحة من الفهرس'],
+  ['sidePanel', 'اللوحة الجانبية على الشاشات الواسعة', 'تفاصيل البيت المختار بجانب النص: الرموز والكلمات القرآنية والملاحظة'],
 ]
 
 export function SettingsScreen(p: FieldProps & {
