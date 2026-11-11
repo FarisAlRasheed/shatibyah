@@ -62,6 +62,56 @@ export interface Reciter {
 export interface Manifest {
   editions: { id: string; name: string }[]
   reciters: { id: string; name: string; editionId: string }[]
+  commentaries: { id: string; name: string; editionId: string }[]
+}
+
+/** A commentary on the poem (data/commentaries/<id>/book.json). */
+export interface CommentaryBook {
+  id: string
+  name: string
+  author: string
+  source: string
+  turathId: number
+  editionId: string
+  /** Edition sections that have a file s<id>.json, in reading order. */
+  sections: number[]
+}
+
+export interface CommentaryNote {
+  mark: string
+  text: string
+}
+
+/** The explanation of verses `from`–`to` (the edition's numbers). */
+export interface ExplanationBlock {
+  intro?: false
+  id: string
+  from: number
+  to: number
+  page: number // printed page
+  text: string[] // pieces, joined with a space
+  breaks: number[] // a new paragraph starts before each of these pieces
+  parts?: Record<string, number[]> // verse → the pieces about it
+  partial?: true // second half of a verse explained in two blocks
+  notes?: CommentaryNote[]
+}
+
+/** Text before verse `before`: a chapter's introduction. */
+export interface IntroBlock {
+  intro: true
+  id: string
+  title: string
+  before: number
+  page: number
+  text: string[]
+  breaks: number[]
+  notes?: CommentaryNote[]
+}
+
+/** data/commentaries/<id>/s<sectionId>.json */
+export interface CommentarySection {
+  section: number
+  blocks: (ExplanationBlock | IntroBlock)[]
 }
 
 /** A coloured piece of a verse half, as printed: red = a reader code, green = Quranic words. */

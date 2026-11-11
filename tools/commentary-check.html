@@ -1,0 +1,77 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>مراجعة الشرح</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f7f1e3;color:#2a2418;font:15px/1.9 -apple-system,'SF Arabic',Tahoma,sans-serif}
+header{position:sticky;top:0;background:#f7f1e3ee;border-bottom:1px solid #e2d7bd;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;z-index:2}
+select{font:inherit;padding:4px 8px;max-width:70vw}
+main{max-width:720px;margin:0 auto;padding:12px}
+.grp{margin:0 0 18px}
+.vs{background:#efe2bf99;box-shadow:inset -3px 0 0 #c9a65f;border-radius:12px 12px 0 0;padding:6px 14px}
+.v{font:19px/1.9 'Amiri',serif;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.v small{font-size:13px;color:#8b8068;min-width:2.5em}
+.ex{background:#fffaf0;border:1px solid #e2d7bd;border-top:0;border-radius:0 0 12px 12px;padding:10px 14px}
+.ex p{margin:0 0 8px}
+.ex span:hover{background:#efe2bf}
+.ex sup{color:#b9a777;font-size:10px;margin-inline-end:2px;user-select:none}
+.ex span.part{background:#f4eddc;box-shadow:0 -2px 0 #c9a65f inset}
+.meta{font-size:12px;color:#8b8068;display:flex;gap:12px;flex-wrap:wrap}
+.tag{background:#a33a2a;color:#fff;border-radius:999px;padding:0 8px}
+.intro{border-top:1px solid #e2d7bd;border-radius:12px}
+.note{font-size:13px;color:#6f664f;border-top:1px dashed #e2d7bd;padding-top:6px}
+label{font-size:13px}
+</style>
+<body dir="rtl">
+<header><b id="book"></b><select id="sec"></select><label><input type="checkbox" id="nums"> أرقام الجمل</label><span id="sum" class="meta"></span></header>
+<main id="m">…</main>
+<script>
+const id = new URLSearchParams(location.search).get('book') || 'wafi', B = `../data/commentaries/${id}/`
+const j = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u); return r.json() })
+const ar = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d])
+const el = (t, c, s) => { const e = document.createElement(t); if (c) e.className = c; if (s != null) e.textContent = s; return e }
+;(async () => {
+  const [book, ed] = await Promise.all([j(B + 'book.json'), j(`../data/editions/qasim/edition.json`)])
+  const verse = Object.fromEntries(ed.verses.map((v) => [v.n, v])), secs = Object.fromEntries(ed.sections.map((s) => [s.id, s]))
+  document.getElementById('book').textContent = book.name
+  const sel = document.getElementById('sec'), nums = document.getElementById('nums'), m = document.getElementById('m')
+  for (const s of book.sections) sel.append(new Option(`${secs[s].title} (${ar(secs[s].start)}–${ar(secs[s].end)})`, s))
+  sel.value = location.hash.slice(1) || 10
+  const text = (b, box) => {
+    let p = el('p'); box.append(p)
+    b.text.forEach((s, i) => {
+      if (b.breaks.includes(i)) { p = el('p'); box.append(p) }
+      const sp = el('span', b.parts && Object.values(b.parts).some((a) => a.includes(i)) ? 'part' : '')
+      if (nums.checked) sp.append(el('sup', '', i))
+      sp.append(s + ' ')
+      if (b.parts) sp.title = Object.entries(b.parts).filter(([, a]) => a.includes(i)).map(([n]) => 'البيت ' + ar(n)).join('، ')
+      p.append(sp)
+    })
+    for (const n of b.notes || []) box.append(el('div', 'note', `(${n.mark}) ${n.text}`))
+  }
+  const show = async () => {
+    location.hash = sel.value
+    const d = await j(B + `s${sel.value}.json`)
+    m.textContent = ''
+    for (const b of d.blocks) {
+      const g = el('div', 'grp')
+      if (b.intro) {
+        const ex = el('div', 'ex intro'); ex.append(el('div', 'meta', `تمهيد قبل البيت ${ar(b.before)} · ${b.title} · ص ${ar(b.page)}`)); text(b, ex); g.append(ex)
+      } else {
+        const vs = el('div', 'vs')
+        for (let n = b.from; n <= b.to; n++) { const v = el('div', 'v'); v.append(el('span', '', verse[n].a), el('span', '', verse[n].b), el('small', '', ar(n))); vs.append(v) }
+        const ex = el('div', 'ex'), meta = el('div', 'meta', `${b.id} · ص ${ar(b.page)} · ${ar(b.text.length)} جملة`)
+        if (b.partial) meta.append(el('span', 'tag', 'بيت مشروح على جزأين'))
+        if (!b.text.length) meta.append(el('span', 'tag', 'بلا شرح'))
+        ex.append(meta); text(b, ex); g.append(vs, ex)
+      }
+      m.append(g)
+    }
+    const real = d.blocks.filter((b) => !b.intro)
+    document.getElementById('sum').textContent = `${ar(real.length)} مجموعة`
+    scrollTo(0, 0)
+  }
+  sel.onchange = nums.onchange = show
+  show()
+})().catch((e) => (document.getElementById('m').textContent = 'تعذّر التحميل: ' + e.message))
+</script>
+</body>

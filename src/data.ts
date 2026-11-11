@@ -1,4 +1,4 @@
-import type { AudioFile, Edition, EditionColors, EditionPages, Manifest, Reciter, Section } from './types'
+import type { AudioFile, CommentaryBook, CommentarySection, Edition, EditionColors, EditionPages, Manifest, Reciter, Section } from './types'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -15,6 +15,23 @@ export const loadReciter = (id: string) => getJson<Reciter>(`reciters/${id}/reci
 export const loadColors = (id: string) => getJson<EditionColors>(`editions/${id}/colors.json`).catch(() => null)
 /** Where the printed pages begin, or null when the edition has no page data. */
 export const loadPages = (id: string) => getJson<EditionPages>(`editions/${id}/pages.json`).then((d) => d.pages, () => null)
+
+// Commentaries load on demand, each file once per visit (offline copies come from the service worker's precache).
+const cache = new Map<string, Promise<unknown>>()
+function getCached<T>(path: string): Promise<T> {
+  let p = cache.get(path)
+  if (!p) {
+    p = getJson<T>(path).catch((e) => {
+      cache.delete(path) // a failed load is tried again next time
+      throw e
+    })
+    cache.set(path, p)
+  }
+  return p as Promise<T>
+}
+export const loadCommentary = (id: string) => getCached<CommentaryBook>(`commentaries/${id}/book.json`)
+export const loadCommentarySection = (id: string, sectionId: number) =>
+  getCached<CommentarySection>(`commentaries/${id}/s${sectionId}.json`)
 
 // `?v=` changes whenever a file is re-cut, so an offline copy of an older cut is never
 // served with the new timings (the service worker and offline.ts key on the full URL).

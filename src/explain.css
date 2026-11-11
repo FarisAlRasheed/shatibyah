@@ -1,0 +1,96 @@
+/* The explanation (الشرح) panel: a sheet above the bottom dock on a phone, the side panel on a wide
+   screen, and the tint on the explained group in the reader. */
+
+/* The explained group: tinted, with an accent edge on the side of the numbers (like range picking,
+   under its own names). The verse the panel was opened from is darker. The playing verse and a range
+   being picked keep their own look. */
+.verse.ex:not(.playing):not(.pick) {
+  background: color-mix(in srgb, var(--accent-soft) 70%, transparent); border-radius: 0;
+  box-shadow: inset -3px 0 0 color-mix(in srgb, var(--accent) 75%, transparent);
+}
+.verse.ex.ex-here:not(.playing):not(.pick) { background: color-mix(in srgb, var(--accent) 16%, var(--accent-soft)); }
+.verse.ex.ex-start:not(.pick) { border-radius: 14px 14px 0 0; }
+.verse.ex.ex-end:not(.pick) { border-radius: 0 0 14px 14px; }
+.verse.ex.ex-both:not(.pick) { border-radius: 14px; }
+
+/* Phone: a sheet that leaves the poem above it scrollable and tappable (no backdrop). */
+.ex-sheet {
+  position: fixed; z-index: 14; inset-inline: 0; margin-inline: auto; width: 100%; max-width: 640px;
+  max-height: calc(100dvh - env(safe-area-inset-top) - 8px);
+  display: flex; flex-direction: column;
+  background: var(--raised); border: 0.5px solid var(--line); border-bottom: 0; border-radius: 22px 22px 0 0;
+  box-shadow: 0 -8px 30px rgb(0 0 0 / 0.14);
+  transition: height 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+  animation: rise 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.ex-sheet.dragging { transition: none; }
+@media (prefers-reduced-motion: reduce) { .ex-sheet { transition: none; animation: none; } }
+
+.ex-head { flex: none; padding: 0 12px 4px; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+.ex-sheet.dragging .ex-head { cursor: grabbing; }
+.ex-grab { display: block; width: 100%; height: 20px; padding: 0; border: 0; background: none; cursor: inherit; }
+.ex-grab .grabber { margin: 7px auto 0; }
+.ex-books { display: flex; align-items: center; gap: 6px; }
+.ex-chips { flex: 1; min-width: 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; touch-action: pan-x; }
+.ex-chips::-webkit-scrollbar { display: none; }
+.ex-chips .chip { flex: none; min-height: 34px; padding: 4px 14px; font-size: 13.5px; }
+.ex-close { flex: none; color: var(--muted); }
+.ex-title { margin: 2px 4px 0; font-size: 14px; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+.ex-body {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  padding: 6px 16px 14px; font-family: var(--ui-font); font-size: 16px; line-height: 1.95; text-align: justify;
+}
+.ex-body p { margin: 0 0 10px; }
+.ex-body .muted { padding: 12px 0; text-align: center; }
+.ex-hit { background: color-mix(in srgb, var(--accent) 20%, var(--raised)); border-radius: 4px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.ex-block + .ex-block { margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--line); }
+.ex-body h4 { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.ex-notes {
+  list-style: none; margin: 10px 0 0; padding: 8px 0 0; border-top: 0.5px dashed var(--line);
+  font-size: 13px; line-height: 1.75; color: var(--muted);
+}
+.ex-notes li + li { margin-top: 4px; }
+.ex-mark { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* A chapter's introduction, folded above its first group. */
+.ex-intro { margin-bottom: 12px; padding: 4px 0 8px; border-bottom: 0.5px solid var(--line); }
+.ex-intro-toggle {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px;
+  border: 0; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 13.5px; font-weight: 600;
+}
+.ex-intro-toggle svg { transition: transform 0.2s; }
+.ex-intro-toggle svg.up { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .ex-intro-toggle svg { transition: none; } }
+.ex-intro section { margin-top: 10px; }
+
+.ex-foot {
+  flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 6px 10px 8px; border-top: 0.5px solid var(--line);
+}
+.ex-foot button {
+  display: inline-flex; align-items: center; gap: 2px; min-height: 40px; padding: 0 12px;
+  border: 0; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 13.5px; font-weight: 600;
+}
+.ex-foot button:disabled { opacity: 0.4; }
+.ex-page { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* The reader, the follow pill and the range bar make room for the sheet (--explain-h: its height). */
+.app.explain-sheet main.reader {
+  padding-bottom: calc(var(--dock-h) + var(--player-h) + env(safe-area-inset-bottom) + var(--explain-h, 0px) + 40px);
+}
+.app.explain-sheet .follow-pill, .app.explain-sheet .pick-bar {
+  bottom: calc(var(--dock-h) + var(--player-h) + env(safe-area-inset-bottom) + var(--explain-h, 0px) + 14px);
+}
+.app.explain-sheet .rail { display: none; }
+
+/* Wide screen: in the side panel's place, a little wider for reading, the verses moved over for it. */
+@media (min-width: 1180px) {
+  .side-panel.ex-side { width: 380px; padding: 0; gap: 0; overflow: hidden; }
+  .ex-side .ex-head { padding: 12px 12px 6px; touch-action: auto; cursor: auto; }
+  .ex-side .ex-body { padding-inline: 18px; }
+  .app.side-open.explain-side main.reader { margin-left: calc(436px + max(0px, (100% - 1416px) / 2)); }
+}
+
+/* The verse bar has one more button: on a phone the buttons share the width. */
+@media (max-width: 420px) { .verse-bar button { min-width: 0; padding-inline: 2px; } }

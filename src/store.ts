@@ -72,6 +72,7 @@ export interface Settings {
   wirdStrip: boolean // today's wird at the top of the reader
   pageMarks: boolean // printed page markers
   sidePanel: boolean // verse details beside the text on wide screens
+  commentary: string // last commentary book chosen in the explanation panel
 }
 
 export interface RepeatSettings {

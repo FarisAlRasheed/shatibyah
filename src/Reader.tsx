@@ -39,6 +39,8 @@ interface Props {
   count?: { n: number; round: number; times: number } | null
   /** Recitation curtain: every second half-line veiled, except in the verses in `revealed`. */
   curtain?: { revealed: Set<number> } | null
+  /** The group the explanation panel shows, and the verse it was opened from (tinted more strongly). */
+  explain?: { from: number; to: number; n: number | null } | null
   /** Printed page that begins at each verse (page markers). */
   pageStarts?: Map<number, number> | null
   /** The reader is on screen with nothing over it (pinch and zoom keys work). */
@@ -236,6 +238,8 @@ export default function Reader(p: Props) {
             curtain={!!p.curtain && !p.curtain.revealed.has(v.n)}
             pick={roleIn(p.pick, v.n, true)}
             run={roleIn(p.run, v.n, false)}
+            explain={roleIn(p.explain, v.n, true)}
+            explainHere={p.explain?.n === v.n}
             round={p.count?.n === v.n ? p.count.round : undefined}
             times={p.count?.n === v.n ? p.count.times : undefined}
             below={p.bar?.n === v.n ? p.bar.el : undefined}
@@ -282,6 +286,9 @@ interface RowProps {
   pick?: RangeRole
   /** First or last verse of the range a repeat is playing. */
   run?: RangeRole
+  /** Part of the group the explanation panel shows; `explainHere` = the verse it was opened from. */
+  explain?: RangeRole
+  explainHere?: boolean
   /** Repeat count while this verse plays more than once (times 0 = endless). */
   round?: number
   times?: number
@@ -333,7 +340,7 @@ function VerseNumber({ n, round, times }: { n: number; round?: number; times?: n
 }
 
 const VerseRow = memo(function VerseRow(p: RowProps) {
-  const cls = `verse${p.isSelected ? ' selected' : ''}${p.isPlaying ? ' playing' : ''}${p.pick ? ` pick pick-${p.pick}` : ''}${p.run ? ` run-${p.run}` : ''}`
+  const cls = `verse${p.isSelected ? ' selected' : ''}${p.isPlaying ? ' playing' : ''}${p.pick ? ` pick pick-${p.pick}` : ''}${p.run ? ` run-${p.run}` : ''}${p.explain ? ` ex ex-${p.explain}${p.explainHere ? ' ex-here' : ''}` : ''}`
   return (
     <article id={p.sample ? undefined : `v-${p.n}`} className={cls}>
       <button className="verse-body" onClick={() => p.onTap(p.n)}>

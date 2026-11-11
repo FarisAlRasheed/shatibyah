@@ -1,6 +1,6 @@
 // The small action bar under a tapped verse (UX-PLAN 3.1). «المزيد» opens the full verse sheet.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Bookmark, BookmarkCheck, Ellipsis, Pencil, Play, Repeat, Rows3 } from 'lucide-react'
+import { Bookmark, BookmarkCheck, BookOpenText, Ellipsis, Pencil, Play, Repeat, Rows3 } from 'lucide-react'
 import { toArabicDigits } from './arabic'
 
 export default function VerseBar(p: {
@@ -14,6 +14,8 @@ export default function VerseBar(p: {
   onBookmark: () => void
   onNote: () => void
   onTwins: () => void
+  /** Opens the explanation panel; absent when the edition has no commentary. */
+  onExplain?: () => void
   onMore: () => void
   onClose: () => void
 }) {
@@ -32,7 +34,8 @@ export default function VerseBar(p: {
       frame = 0
       const v = verse.getBoundingClientRect()
       const dock = document.querySelector('.bottom-dock')?.getBoundingClientRect().top ?? innerHeight
-      const floor = Math.min(dock, innerHeight) - 8
+      const sheet = document.querySelector('.ex-sheet')?.getBoundingClientRect().top ?? innerHeight
+      const floor = Math.min(dock, sheet, innerHeight) - 8
       setAbove(v.bottom + el.offsetHeight > floor && v.top - el.offsetHeight > 70)
     }
     const onScroll = () => {
@@ -76,6 +79,12 @@ export default function VerseBar(p: {
             <span>تكرار من هنا</span>
           </button>
         </>
+      )}
+      {p.onExplain && (
+        <button onClick={p.onExplain}>
+          <BookOpenText size={19} />
+          <span>الشرح</span>
+        </button>
       )}
       <button onClick={p.onBookmark} className={p.bookmarked ? 'on' : ''} aria-pressed={p.bookmarked}>
         {p.bookmarked ? <BookmarkCheck size={19} /> : <Bookmark size={19} />}

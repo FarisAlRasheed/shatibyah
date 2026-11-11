@@ -23,12 +23,14 @@ function manifest() {
     fs.existsSync(path.join(DATA, kind))
       ? fs.readdirSync(path.join(DATA, kind)).flatMap((id) => {
           const p = path.join(DATA, kind, id, file)
+          if (skip(`${kind}/${id}`)) return []
           return fs.existsSync(p) ? [JSON.parse(fs.readFileSync(p, 'utf8'))] : []
         })
       : []
   return {
     editions: read('editions', 'edition.json').map((e) => ({ id: e.id, name: e.name })),
     reciters: read('reciters', 'reciter.json').map((r) => ({ id: r.id, name: r.name, editionId: r.editionId })),
+    commentaries: read('commentaries', 'book.json').map((c) => ({ id: c.id, name: c.name, editionId: c.editionId })),
   }
 }
 

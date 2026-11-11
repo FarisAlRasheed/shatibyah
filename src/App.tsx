@@ -8,7 +8,7 @@ import { cumulativeStages, idleState, RepeatPlayer, type PlayState } from './pla
 import { useFits } from './kashida'
 import { DEFAULT_SIZE } from './zoom'
 import { useStored, type Bookmarks, type Mastered, type Notes, type RepeatSettings, type Settings, type Weak } from './store'
-import type { Edition, EditionColors, Manifest, PrintedPage, Reciter, Section, VerseTiming } from './types'
+import type { Edition, EditionColors, Manifest, PrintedPage, Range, Reciter, Section, VerseTiming } from './types'
 import Reader from './Reader'
 import MiniPlayer from './MiniPlayer'
 import Memorize from './Memorize'
@@ -27,6 +27,8 @@ import TwinsSheet from './TwinsSheet'
 import { buildTwins } from './twins'
 import WirdStrip from './WirdStrip'
 import SidePanel, { useWide } from './SidePanel'
+import ExplainPanel, { type ExplainTarget } from './Explain'
+import './explain.css'
 import './extras.css'
 
 type Tab = 'read' | 'plan' | 'settings'
@@ -87,6 +89,7 @@ const defaultSettings: Settings = {
   wirdStrip: true,
   pageMarks: false,
   sidePanel: true,
+  commentary: '',
 }
 const defaultRepeat: RepeatSettings = {
   scope: 'verse',
@@ -172,6 +175,13 @@ export default function App() {
   const today = useToday()
   const [wirdHidden, setWirdHidden] = useStored<{ day: string }>('wirdStrip', { day: '' })
   const wide = useWide()
+  // The explanation panel: the verse it shows, and the group it found there (tinted in the reader).
+  const [explain, setExplain] = useState<ExplainTarget | null>(null)
+  const [explainGroup, setExplainGroup] = useState<Range | null>(null)
+  const closeExplain = useCallback(() => {
+    setExplain(null)
+    setExplainGroup(null)
+  }, [])
 
   useTheme(settings.theme)
 
@@ -187,16 +197,19 @@ export default function App() {
     [manifest, editionId],
   )
   const reciterId = reciters.some((r) => r.id === settings.reciterId) ? settings.reciterId : reciters[0]?.id
+  const books = useMemo(() => manifest?.commentaries?.filter((c) => c.editionId === editionId) ?? [], [manifest, editionId])
+  const bookId = books.some((b) => b.id === settings.commentary) ? settings.commentary : books[0]?.id
 
   useEffect(() => {
     if (!editionId) return
+    closeExplain()
     setEdition(null)
     setColors(undefined)
     loadEdition(editionId).then(setEdition, (e) => setError(String(e)))
     loadColors(editionId).then(setColors)
     setPages(null)
     loadPages(editionId).then(setPages)
-  }, [editionId])
+  }, [editionId, closeExplain])
 
   useEffect(() => {
     setReciter(null)
@@ -430,7 +443,10 @@ export default function App() {
   const wird = wirdNow && wirdNow.kind !== 'finished' ? wirdNow.wird : null
   const wirdDue = wirdNow?.kind === 'wird' && !wirdNow.offDay && !wirdNow.notStarted ? wirdNow.wird : null
   const showStrip = settings.wirdStrip && !!wirdDue && wirdHidden.day !== today && tab === 'read' && !find && !memorize
-  const showSide = settings.sidePanel && wide && tab === 'read' && !memorize && panel !== 'look'
+  const explaining = !!explain && !!bookId && tab === 'read' && !memorize
+  // On a wide screen the explanation takes the side panel's place (shown even when that extra is off).
+  const showSide = (settings.sidePanel || explaining) && wide && tab === 'read' && !memorize && panel !== 'look'
+  const explainSheet = explaining && !wide
 
   const step = (d: 1 | -1) => {
     if (active && play.total > 1) return player.step(d)
@@ -604,17 +620,26 @@ export default function App() {
           setBar(null)
           setPanel({ type: 'verse', n: bar })
         }}
+        onExplain={
+          bookId
+            ? () => {
+                setBar(null)
+                setExplain({ n: bar, opened: bar, key: Date.now() })
+              }
+            : undefined
+        }
         onClose={() => setBar(null)}
       />
     ) : null
 
-  const hideBars = immersed && tab === 'read' && !panel && !find && !memorize && !pick
+  // The bars stay while the explanation sheet sits on them.
+  const hideBars = immersed && tab === 'read' && !panel && !find && !memorize && !pick && !explainSheet
   const sectionTitle = topSection?.title ?? sectionOf(edition, focusVerse)?.title ?? ''
   const titleSection = topSection ?? sectionOf(edition, focusVerse)
 
   return (
     <div
-      className={`app${reciters.length ? ' has-player' : ''}${settings.numberStyle === 'plain' ? ' plain-numbers' : ''}${hideBars ? ' immersed' : ''}${panel === 'look' ? ' look-open' : ''}${showStrip ? ' has-strip' : ''}${showSide ? ' side-open' : ''}`}
+      className={`app${reciters.length ? ' has-player' : ''}${settings.numberStyle === 'plain' ? ' plain-numbers' : ''}${hideBars ? ' immersed' : ''}${panel === 'look' ? ' look-open' : ''}${showStrip ? ' has-strip' : ''}${showSide ? ' side-open' : ''}${explainSheet ? ' explain-sheet' : ''}${explaining && showSide ? ' explain-side' : ''}`}
       style={{
         ['--verse-size' as string]: `${settings.fontSize}px`,
         ['--verse-font' as string]: FONT_FAMILY[settings.font],
@@ -740,6 +765,7 @@ export default function App() {
           count={active && play.verse != null && play.verseTimes !== 1 ? { n: play.verse, round: play.verseRound, times: play.verseTimes } : null}
           curtain={settings.curtain && curtainOn ? { revealed } : null}
           pageStarts={settings.pageMarks ? pageStarts : null}
+          explain={explain && explainGroup ? { ...explainGroup, n: explain.opened } : null}
           active={tab === 'read' && !panel && !memorize && !find?.list}
           onBackgroundTap={() => setImmersed(false)}
           onFontSize={(fontSize) => setSettings((x) => ({ ...x, fontSize }))}
@@ -775,7 +801,20 @@ export default function App() {
         />
       )}
 
-      {showSide && (
+      {explaining && (wide ? showSide : true) && (
+        <ExplainPanel
+          edition={edition}
+          books={books}
+          bookId={bookId!}
+          onBook={(commentary) => setSettings((s) => ({ ...s, commentary }))}
+          target={explain!}
+          side={wide}
+          onGroup={setExplainGroup}
+          onGo={(n) => setExplain({ n, opened: null, key: Date.now() })}
+          onClose={closeExplain}
+        />
+      )}
+      {showSide && !explaining && (
         <SidePanel
           n={selected ?? focusVerse}
           edition={edition}
