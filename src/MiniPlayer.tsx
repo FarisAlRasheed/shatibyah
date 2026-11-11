@@ -1,4 +1,4 @@
-import { Loader2, Pause, Play, SkipBack } from 'lucide-react'
+import { Loader2, Pause, Play, Repeat, Square } from 'lucide-react'
 import { toArabicDigits } from './arabic'
 import type { PlayState } from './player'
 
@@ -7,10 +7,14 @@ interface Props {
   verse: number | null
   reciterName: string
   ready: boolean
+  /** What is playing, or what ▶ would start, in plain words. */
   summary: string
+  /** Short label for the repeat chip, e.g. «×٣». */
+  repeatLabel: string
   onOpen: () => void
   onPlay: () => void
-  onNext: () => void
+  onRepeat: () => void
+  onStop: () => void
 }
 
 /** Repeat count as a ring: filled share = verseRound / verseTimes. */
@@ -55,12 +59,18 @@ export default function MiniPlayer(p: Props) {
           </small>
         </span>
       </button>
+      <button className="repeat-chip" onClick={p.onRepeat} disabled={!p.ready} aria-label={`التكرار: ${p.summary}`}>
+        <Repeat size={15} />
+        {p.repeatLabel}
+      </button>
       <button className="icon-btn big" onClick={p.onPlay} disabled={!p.ready} aria-label={playing ? 'إيقاف مؤقت' : 'تشغيل'}>
         {s.status === 'loading' ? <Loader2 size={24} className="spin" /> : playing ? <Pause size={24} /> : <Play size={24} />}
       </button>
-      <button className="icon-btn" onClick={p.onNext} disabled={!active} aria-label="البيت التالي">
-        <SkipBack size={20} />
-      </button>
+      {active && (
+        <button className="icon-btn big" onClick={p.onStop} aria-label="إيقاف">
+          <Square size={19} />
+        </button>
+      )}
     </div>
   )
 }

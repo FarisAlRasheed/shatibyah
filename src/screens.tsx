@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { BookOpen, Bookmark, Check, ChevronLeft, Download, GraduationCap, Hash, NotebookPen, Search, SearchX, Trash2, X } from 'lucide-react'
-import { normalize, toArabicDigits, toLatinDigits } from './arabic'
+import { useEffect, useState, type ReactNode } from 'react'
+import { BookOpen, Bookmark, Check, ChevronLeft, Download, GraduationCap, NotebookPen, Trash2 } from 'lucide-react'
+import { toArabicDigits } from './arabic'
 import { APP_VERSION } from './config'
 import { audioUrl, sectionOf, verseRange } from './data'
 import { download, formatMB, isDownloaded, offlineSupported, remove } from './offline'
 import type { Bookmarks, Mastered, Notes, Settings, Theme, VerseFont } from './store'
-import { fold, matches, matchRanges, queryPattern } from './search'
+import { matchRanges } from './search'
 import type { Edition, Manifest, Reciter, Verse } from './types'
-import { plural, VERSES, VersePreview, type SetState } from './sheets'
+import { VersePreview, type SetState } from './sheets'
 
 function Screen({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -142,7 +142,7 @@ function ProgressRing({ value }: { value: number }) {
   )
 }
 
-function Highlight({ text, ranges }: { text: string; ranges: [number, number][] }) {
+export function Highlight({ text, ranges }: { text: string; ranges: [number, number][] }) {
   const parts: ReactNode[] = []
   let at = 0
   for (const [a, b] of ranges) {
@@ -155,7 +155,7 @@ function Highlight({ text, ranges }: { text: string; ranges: [number, number][] 
 }
 
 /** A search result: the verse with the matched words marked. */
-function VerseHit({ v, re }: { v: Verse; re: RegExp }) {
+export function VerseHit({ v, re }: { v: Verse; re: RegExp }) {
   const half = (s: string) => <Highlight text={s} ranges={matchRanges(re, s)} />
   return (
     <div className="preview">
@@ -167,88 +167,8 @@ function VerseHit({ v, re }: { v: Verse; re: RegExp }) {
   )
 }
 
-export function SearchScreen({ edition, onJump }: { edition: Edition; onJump: (n: number) => void }) {
-  const [q, setQ] = useState('')
-  const index = useMemo(() => edition.verses.map((v) => ({ v, text: fold(`${v.a} ${v.b}`).text })), [edition])
-  const query = normalize(toLatinDigits(q))
-  const num = /^\d+$/.test(query) ? +query : null
-  const all = verseRange(edition)
-  const re = num == null ? queryPattern(q) : null
-
-  const sections = re ? edition.sections.filter((s) => matches(re, s.title)) : []
-  const verses = re
-    ? index
-        .filter((x) => {
-          re.lastIndex = 0
-          return re.test(x.text)
-        })
-        .slice(0, 100)
-    : []
-
-  return (
-    <Screen title="البحث">
-      <label className="search-box">
-        <Search size={18} />
-        <input
-          type="search"
-          enterKeyHint="search"
-          placeholder="كلمة، أو رقم بيت، أو اسم باب"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && num != null && num >= all.from && num <= all.to && onJump(num)}
-        />
-        {q && (
-          <button className="clear-btn" aria-label="مسح" onClick={() => setQ('')}>
-            <span>
-              <X size={13} strokeWidth={3} />
-            </span>
-          </button>
-        )}
-      </label>
-      {num != null &&
-        (num >= all.from && num <= all.to ? (
-          <button className="result" onClick={() => onJump(num)}>
-            <VersePreview edition={edition} n={num} />
-          </button>
-        ) : (
-          <Empty icon={<Hash size={26} />}>
-            البيت {toArabicDigits(num)} غير موجود في هذه النسخة{edition.partial ? ' التجريبية' : ''}.
-          </Empty>
-        ))}
-      {sections.length > 0 && <h2 className="group-title">الأبواب</h2>}
-      {sections.map((s) => (
-        <button key={s.id} className="result section-hit" onClick={() => onJump(s.start)}>
-          <strong className="verse-text">
-            <Highlight text={s.title} ranges={matchRanges(re!, s.title)} />
-          </strong>
-          <small>
-            {toArabicDigits(s.start)}–{toArabicDigits(s.end)}
-          </small>
-        </button>
-      ))}
-      {verses.length > 0 && (
-        <h2 className="group-title">
-          {verses.length === 100 ? 'أول ' : ''}
-          {plural(verses.length, VERSES)}
-        </h2>
-      )}
-      {verses.map(({ v }) => (
-        <button key={v.n} className="result" onClick={() => onJump(v.n)}>
-          <VerseHit v={v} re={re!} />
-        </button>
-      ))}
-      {re && !sections.length && !verses.length && <Empty icon={<SearchX size={26} />}>لا نتائج لـ«{q.trim()}».</Empty>}
-      {!query && (
-        <Empty icon={<Search size={26} />}>
-          ابحث دون تشكيل، مثل: وانجلى، أو اكتب رقم البيت.
-        </Empty>
-      )}
-    </Screen>
-  )
-}
-
 /** A quiet centred message for empty lists. */
-function Empty({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+export function Empty({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
     <div className="empty">
       {icon}
@@ -370,19 +290,6 @@ export function FontField({ settings, setSettings }: FieldProps) {
   )
 }
 
-export function FontSizeField({ settings, setSettings }: FieldProps) {
-  return (
-    <label className="field-row">
-      <span>حجم الخط</span>
-      <span className="slider">
-        <small>ا</small>
-        <input type="range" min={18} max={44} value={settings.fontSize} onChange={(e) => setSettings((s) => ({ ...s, fontSize: +e.target.value }))} />
-        <span style={{ fontSize: 22 }}>ا</span>
-      </span>
-    </label>
-  )
-}
-
 function Downloads({ edition, reciter }: { edition: Edition; reciter: Reciter }) {
   const [done, setDone] = useState<Record<string, boolean>>({})
   const [progress, setProgress] = useState<Record<string, number>>({})
@@ -471,9 +378,9 @@ export function ColorsField({ settings, setSettings }: FieldProps) {
   return (
     <>
       <label className="field-row">
-        <span className="list-title">
+        <span className="list-main">
           ألوان الرموز والكلمات القرآنية
-          <small>اضغط على الكلمة الملوّنة لمعرفة القارئ أو موضعها من القرآن</small>
+          <small className="muted">اضغط على الكلمة الملوّنة لمعرفة القارئ أو موضعها من القرآن</small>
         </span>
         <input type="checkbox" className="switch" checked={settings.colors} onChange={(e) => setSettings((x) => ({ ...x, colors: e.target.checked }))} />
       </label>
@@ -485,8 +392,20 @@ export function ColorsField({ settings, setSettings }: FieldProps) {
   )
 }
 
+/**
+ * Optional extras the user can switch off (الإعدادات ← مزايا إضافية).
+ * Add a line here when a new optional feature is built; `settings[key]` is its switch.
+ */
+export const EXTRAS: [keyof Settings & ('immersive' | 'rail' | 'backPill' | 'curtain' | 'twins' | 'wirdStrip' | 'pageMarks' | 'sidePanel'), string, string][] = [
+  ['immersive', 'إخفاء الأشرطة أثناء القراءة', 'تختفي عند النزول في الصفحة وتعود عند الصعود أو اللمس'],
+  ['rail', 'شريط التنقل السريع', 'اسحبه على حافة الصفحة للانتقال في المتن كله'],
+  ['backPill', 'زر الرجوع بعد الانتقال', 'يعيدك إلى موضعك بعد الانتقال من البحث أو الفهرس'],
+]
+
 export function SettingsScreen(p: FieldProps & {
   hasColors: boolean
+  /** Open the appearance panel over the reader. */
+  onLook: () => void
   manifest: Manifest
   editionId?: string
   reciterId?: string
@@ -528,14 +447,30 @@ export function SettingsScreen(p: FieldProps & {
 
       <h2 className="group-title">العرض</h2>
       <div className="group">
-        <ThemeField {...p} />
-        <FontField {...p} />
-        <FontSizeField {...p} />
-        {p.hasColors && <ColorsField {...p} />}
+        <button className="check-row" onClick={p.onLook}>
+          <span className="list-main">
+            المظهر والخط
+            <small className="muted">الألوان، الخط وحجمه، تباعد الأسطر وترتيب الشطرين، مع معاينة مباشرة</small>
+          </span>
+          <ChevronLeft size={18} className="chev" />
+        </button>
         <label className="field-row">
           <span>متابعة البيت المقروء</span>
           <input type="checkbox" className="switch" checked={s.autoScroll} onChange={(e) => setSettings((x) => ({ ...x, autoScroll: e.target.checked }))} />
         </label>
+      </div>
+
+      <h2 className="group-title">مزايا إضافية</h2>
+      <div className="group">
+        {EXTRAS.map(([key, label, hint]) => (
+          <label key={key} className="field-row">
+            <span className="list-main">
+              {label}
+              <small className="muted">{hint}</small>
+            </span>
+            <input type="checkbox" className="switch" checked={s[key]} onChange={(e) => setSettings((x) => ({ ...x, [key]: e.target.checked }))} />
+          </label>
+        ))}
       </div>
 
       {p.reciter && (

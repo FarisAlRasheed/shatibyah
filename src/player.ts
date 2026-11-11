@@ -5,6 +5,29 @@ export interface PlayOptions {
   rangeTimes: number // 0 = endless
   pause: number // seconds between repeats
   speed: number
+  /** Pause as long as the verse just played (so the listener can repeat it), instead of `pause`. */
+  echo?: boolean
+}
+
+/**
+ * One stage of a playback programme: queue positions `from`…`to`, each verse `verseTimes`,
+ * the stage `rangeTimes`. Plain repeats are a single stage; cumulative repeat is many.
+ */
+export interface Stage {
+  from: number
+  to: number
+  verseTimes: number // 0 = endless
+  rangeTimes: number // 0 = endless
+}
+
+/** Cumulative repeat over `count` verses: 1 ×n, 2 ×n, 1–2 ×m, 3 ×n, 1–3 ×m, … */
+export function cumulativeStages(count: number, verseTimes: number, groupTimes: number): Stage[] {
+  const stages: Stage[] = []
+  for (let i = 0; i < count; i++) {
+    stages.push({ from: i, to: i, verseTimes, rangeTimes: 1 })
+    if (i > 0) stages.push({ from: 0, to: i, verseTimes: 1, rangeTimes: groupTimes })
+  }
+  return stages
 }
 
 export interface PlayState {
@@ -16,6 +39,9 @@ export interface PlayState {
   verseTimes: number
   rangeRound: number
   rangeTimes: number
+  /** Stage of the programme, 0-based, and how many there are (1 unless cumulative). */
+  stage: number
+  stages: number
   error?: string
 }
 
@@ -34,9 +60,12 @@ export const idleState: PlayState = {
   verseTimes: 1,
   rangeRound: 1,
   rangeTimes: 1,
+  stage: 0,
+  stages: 1,
 }
 
-// Plays a queue of verses, each repeated `verseTimes`, the whole queue repeated `rangeTimes`.
+// Plays a queue of verses, each repeated `verseTimes`, the whole queue repeated `rangeTimes`
+// (or, for cumulative repeat, a list of such stages over parts of the queue).
 // One <audio> element; verse ends are enforced with a timer plus timeupdate, so it keeps
 // working while the phone is locked (requestAnimationFrame would stop there).
 // During the pause between repeats a second element loops silence, so iOS keeps the
@@ -49,6 +78,7 @@ export class RepeatPlayer {
   private keepAlive = new Audio(silentWav())
   private meta: (verse: number) => VerseMeta = () => ({ album: '', artist: 'متن الشاطبية' })
   private queue: VerseTiming[] = []
+  private stages: Stage[] = []
   private opts: PlayOptions = { verseTimes: 1, rangeTimes: 1, pause: 0, speed: 1 }
   private state: PlayState = idleState
   private endTimer = 0
@@ -96,28 +126,34 @@ export class RepeatPlayer {
     return this.bounds.get(key(t)) ?? { from: t.start, to: t.end }
   }
 
-  start(queue: VerseTiming[], opts: PlayOptions, startIndex = 0) {
+  /** `stages` (cumulative repeat) replaces the single stage that `opts` describes; it starts at its first stage. */
+  start(queue: VerseTiming[], opts: PlayOptions, startIndex = 0, stages?: Stage[]) {
     this.stop()
     if (!queue.length) return
     this.primeKeepAlive()
     this.queue = queue
     this.opts = opts
+    this.stages = stages?.length ? stages : [{ from: 0, to: queue.length - 1, verseTimes: opts.verseTimes, rangeTimes: opts.rangeTimes }]
+    const first = this.stages[0]
+    const index = stages?.length ? first.from : startIndex
     this.audio.playbackRate = opts.speed
     this.set({
       status: 'loading',
-      verse: queue[startIndex].n,
-      index: startIndex,
+      verse: queue[index].n,
+      index,
       total: queue.length,
       verseRound: 1,
-      verseTimes: opts.verseTimes,
+      verseTimes: first.verseTimes,
       rangeRound: 1,
-      rangeTimes: opts.rangeTimes,
+      rangeTimes: first.rangeTimes,
+      stage: 0,
+      stages: this.stages.length,
     })
     void this.playCurrent(true)
   }
 
   /** Change speed or pause length while playing. */
-  update(opts: Pick<PlayOptions, 'pause' | 'speed'>) {
+  update(opts: Pick<PlayOptions, 'pause' | 'speed' | 'echo'>) {
     this.opts = { ...this.opts, ...opts }
     this.audio.playbackRate = opts.speed
   }
@@ -158,13 +194,24 @@ export class RepeatPlayer {
     else if (this.state.status !== 'idle') this.pause()
   }
 
-  /** Jump to the next/previous verse in the queue, resetting that verse's count. */
+  /**
+   * Jump to the next/previous verse in the queue, resetting that verse's count.
+   * In a programme of several stages it moves between stages instead: forward to the next
+   * stage, back to the start of this one (or of the one before, when already there).
+   */
   step(delta: 1 | -1) {
     if (this.state.status === 'idle') return
-    const index = Math.min(this.queue.length - 1, Math.max(0, this.state.index + delta))
     this.token++
     this.clearTimers()
-    this.set({ index, verse: this.queue[index].n, verseRound: 1 })
+    if (this.stages.length > 1) {
+      const atStart = this.state.index === this.stages[this.state.stage].from && this.state.rangeRound === 1
+      const stage = Math.min(this.stages.length - 1, Math.max(0, this.state.stage + (delta > 0 ? 1 : atStart ? -1 : 0)))
+      const s = this.stages[stage]
+      this.set({ stage, index: s.from, verse: this.queue[s.from].n, verseRound: 1, rangeRound: 1, verseTimes: s.verseTimes, rangeTimes: s.rangeTimes })
+    } else {
+      const index = Math.min(this.queue.length - 1, Math.max(0, this.state.index + delta))
+      this.set({ index, verse: this.queue[index].n, verseRound: 1 })
+    }
     void this.playCurrent(true)
   }
 
@@ -242,29 +289,33 @@ export class RepeatPlayer {
 
   /** What comes after the current verse: the next queue position and counts, or null at the end. */
   private advance() {
-    const { verseTimes, rangeTimes } = this.opts
-    let { index, verseRound, rangeRound } = this.state
-    if (verseTimes === 0 || verseRound < verseTimes) {
+    let { index, verseRound, rangeRound, stage } = this.state
+    const s = this.stages[stage]
+    if (!s) return null
+    if (s.verseTimes === 0 || verseRound < s.verseTimes) {
       verseRound++
     } else {
       verseRound = 1
       index++
-      if (index >= this.queue.length) {
-        if (rangeTimes === 0 || rangeRound < rangeTimes) {
-          index = 0
+      if (index > s.to) {
+        if (s.rangeTimes === 0 || rangeRound < s.rangeTimes) {
+          index = s.from
           rangeRound++
         } else {
-          return null
+          stage++
+          if (stage >= this.stages.length) return null
+          index = this.stages[stage].from
+          rangeRound = 1
         }
       }
     }
-    return { index, verseRound, rangeRound }
+    return { index, verseRound, rangeRound, stage }
   }
 
   /** The next verse follows this one in the same file with no pause, so the audio just runs on. */
   private flowsInto(next: VerseTiming | undefined) {
     const cur = this.current()
-    return !!next && this.opts.pause === 0 && next.file === cur.file && next.n === cur.n + 1
+    return !!next && this.opts.pause === 0 && !this.opts.echo && next.file === cur.file && next.n === cur.n + 1
   }
 
   /** Where the current verse hands over: its own end when the audio runs on, else its padded end. */
@@ -283,11 +334,14 @@ export class RepeatPlayer {
       this.set({ ...idleState })
       return
     }
-    const { index, verseRound, rangeRound } = step
+    const { index, verseRound, rangeRound, stage } = step
     const next = this.queue[index]
     const flows = this.flowsInto(next)
-    const { pause } = this.opts
-    this.set({ index, verse: next.n, verseRound, rangeRound })
+    const played = this.current()
+    // Echo: silence as long as the verse just heard took at this speed.
+    const pause = this.opts.echo ? (played.end - played.start) / (this.opts.speed || 1) : this.opts.pause
+    const { verseTimes, rangeTimes } = this.stages[stage]
+    this.set({ index, verse: next.n, verseRound, rangeRound, stage, verseTimes, rangeTimes })
     if (flows) {
       this.updateMediaMetadata()
       this.scheduleEnd()

@@ -45,6 +45,8 @@ export type Mastered = Record<number, number>
 export type Theme = 'auto' | 'light' | 'sepia' | 'dark'
 export type VerseFont = 'amiri' | 'scheherazade' | 'naskh'
 export type HideMode = 'none' | 'b' | 'all'
+/** Half-lines side by side, stacked, or whichever fits the screen. */
+export type VerseLayout = 'auto' | 'side' | 'stack'
 
 export interface Settings {
   editionId: string
@@ -57,6 +59,19 @@ export interface Settings {
   hide: HideMode
   colors: boolean // show the printed colours (red codes, green Quranic words) in the reader
   memorizeColors: boolean // …and in memorization mode
+  lineHeight: number // line height of the verse text
+  layout: VerseLayout
+  kashida: boolean // equal half-line widths, short ones stretched with tatweel (display only)
+  numberStyle: 'circle' | 'plain'
+  // Optional extras (الإعدادات ← مزايا إضافية)
+  immersive: boolean // hide the bars while reading
+  rail: boolean // fast-scroll rail
+  backPill: boolean // «رجوع» after a jump
+  curtain: boolean // show the recitation-curtain button
+  twins: boolean // same-ending verses
+  wirdStrip: boolean // today's wird at the top of the reader
+  pageMarks: boolean // printed page markers
+  sidePanel: boolean // verse details beside the text on wide screens
 }
 
 export interface RepeatSettings {
@@ -68,4 +83,11 @@ export interface RepeatSettings {
   rangeTimes: number // 0 = endless
   pause: number // seconds
   speed: number
+  cumulative: boolean // 1, 2, 1–2, 3, 1–3 … over a range
+  echo: boolean // pause as long as the verse just played, instead of `pause` seconds
+  fade: boolean // hide more of the verse with each repetition
+  recent: [number, number][] // last ranges repeated, newest first
 }
+
+/** Verses the user marked «لم أتقنه»: how many times, and when last (ms since epoch). */
+export type Weak = Record<number, { count: number; at: number }>

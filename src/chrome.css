@@ -1,0 +1,110 @@
+/* Reader chrome: search in the top bar, index drawer, appearance panel, fast-scroll rail,
+   back pill, immersive reading, and the repeat chip in the mini-player. */
+
+/* Top bar and bottom dock slide away while reading (immersive), and come back on scroll up. */
+.topbar, .bottom-dock { transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1); }
+.app.immersed .topbar { transform: translateY(-100%); }
+.app.immersed .bottom-dock { transform: translateY(100%); }
+@media (prefers-reduced-motion: reduce) { .topbar, .bottom-dock { transition: none; } }
+
+/* The «أ» tab: a letter where the others have an icon. */
+.tab-glyph { font-family: var(--verse-font); font-size: 25px; line-height: 23px; height: 23px; display: block; }
+
+/* Search in the top bar */
+.find-bar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; }
+.find-bar .search-box { flex: 1; min-width: 0; height: 40px; }
+.find-bar .search-box input { min-width: 0; width: 100%; }
+.find-bar .icon-btn { min-width: 38px; padding: 0; }
+.find-count { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.find-layer {
+  position: fixed; inset: 0; z-index: 9; background: rgb(0 0 0 / 0.18);
+  padding-top: calc(env(safe-area-inset-top) + 58px); animation: fade 0.15s;
+}
+.find-list {
+  max-width: 640px; margin: 0 auto; max-height: min(64dvh, 560px); overflow-y: auto;
+  display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 14px;
+  background: var(--bg); border-radius: 0 0 18px 18px; border: 0.5px solid var(--line); border-top: 0;
+  box-shadow: 0 14px 30px rgb(0 0 0 / 0.12);
+}
+.find-list .group-title { margin: 6px 4px 0; }
+.find-list .empty { padding: 22px 16px; }
+.result.current { border-color: var(--accent); background: var(--accent-soft); }
+
+/* Index drawer: a tall sheet on a phone, a side drawer on a wide screen */
+.drawer {
+  position: relative; width: 100%; max-width: 640px; height: 92dvh; display: flex; flex-direction: column;
+  background: var(--bg); border-radius: 22px 22px 0 0; animation: rise 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.drawer-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+.drawer .screen { padding: 4px 16px calc(env(safe-area-inset-bottom) + 28px); }
+.drawer-close { position: absolute; top: 10px; inset-inline-end: 10px; z-index: 1; color: var(--muted); }
+@media (min-width: 760px) {
+  .overlay.drawer-overlay { align-items: stretch; justify-content: flex-end; }
+  .drawer { width: 420px; height: auto; border-radius: 0; animation: slide-in 0.26s cubic-bezier(0.2, 0.9, 0.3, 1); border-inline-end: 0.5px solid var(--line); }
+  .drawer .grabber { display: none; }
+}
+@keyframes slide-in { from { transform: translateX(-40px); opacity: 0; } }
+
+/* Appearance panel */
+.overlay.clear { background: none; }
+.overlay.clear .sheet { box-shadow: 0 -8px 30px rgb(0 0 0 / 0.16); border: 0.5px solid var(--line); }
+.look-sample { flex: none; margin: 0 12px; border-radius: 14px; background: var(--bg); border: 0.5px solid var(--line); overflow: hidden; }
+.reader.sample { max-width: none; margin: 0; padding: 4px 10px; pointer-events: none; }
+.field-note { margin: 0; padding: 8px 14px; font-size: 12.5px; color: var(--muted); }
+.field-row .list-main { gap: 3px; }
+.field-row .list-main small { font-size: 12.5px; line-height: 1.5; }
+.stepper svg { display: block; margin: auto; }
+@media (min-width: 760px) {
+  .overlay.clear { align-items: stretch; justify-content: flex-start; padding: 70px 16px 150px; pointer-events: none; }
+  .overlay.clear .sheet { width: 380px; max-height: none; border-radius: 22px; pointer-events: auto; }
+}
+
+/* Fast-scroll rail (physical left edge: the far side from the verse numbers) */
+.rail {
+  position: fixed; left: 0; z-index: 8; width: 26px; pointer-events: none;
+  top: calc(env(safe-area-inset-top) + 64px); bottom: calc(var(--dock-h) + var(--player-h) + env(safe-area-inset-bottom) + 22px);
+  opacity: 0; transition: opacity 0.3s, bottom 0.28s, top 0.28s;
+}
+.app.immersed .rail { top: calc(env(safe-area-inset-top) + 12px); bottom: calc(env(safe-area-inset-bottom) + 12px); }
+.rail.shown { opacity: 1; }
+.rail-thumb { position: absolute; left: 0; width: 26px; touch-action: none; cursor: grab; }
+.rail.shown .rail-thumb { pointer-events: auto; }
+.rail-thumb::before {
+  content: ''; position: absolute; left: 4px; top: 0; bottom: 0; width: 5px; border-radius: 3px;
+  background: var(--ornament); transition: width 0.15s, background-color 0.15s;
+}
+.rail.dragging .rail-thumb::before { width: 7px; background: var(--accent); }
+.rail-bubble {
+  position: absolute; left: 30px; top: 50%; transform: translateY(-50%); white-space: nowrap;
+  padding: 6px 14px; border-radius: 999px; background: var(--accent); color: var(--on-accent);
+  font-size: 13px; font-variant-numeric: tabular-nums; box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
+}
+.rail-bubble .verse-text { font-size: 17px; }
+
+/* «رجوع» after a jump */
+.back-pill {
+  position: fixed; z-index: 9; left: 50%; transform: translateX(-50%);
+  top: calc(env(safe-area-inset-top) + 66px);
+  display: inline-flex; align-items: center; padding: 0 6px; border-radius: 999px; white-space: nowrap;
+  border: 0.5px solid var(--line); background: var(--raised); color: var(--accent); font-size: 13.5px; font-weight: 600;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.14); animation: pill-down 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+  transition: top 0.28s;
+}
+.app.immersed .back-pill { top: calc(env(safe-area-inset-top) + 12px); }
+.back-pill button { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 8px; border: 0; background: none; color: inherit; font: inherit; }
+.back-pill .x { color: var(--muted); }
+@keyframes pill-down { from { opacity: 0; transform: translate(-50%, -10px); } }
+
+/* Repeat chip in the mini-player */
+.repeat-chip {
+  flex: none; display: inline-flex; align-items: center; gap: 5px; min-height: 36px; padding: 0 11px;
+  border: 0; border-radius: 999px; background: var(--accent-soft); color: var(--accent);
+  font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* A tall sheet scrolls its body; its groups keep their height instead of being squeezed. */
+.sheet-body > * { flex: none; }
+/* Wide screens: the page moves over so the appearance panel covers none of the verses. */
+@media (min-width: 1100px) { .app.look-open main.reader { margin-right: 412px; margin-left: auto; } }
+.mem-tools button.on { color: var(--accent); }
+.mem-tools button { min-width: 56px; }

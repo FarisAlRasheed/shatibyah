@@ -5,10 +5,12 @@ import {
   AlarmClock,
   CalendarCheck,
   Check,
+  ChevronDown,
   ChevronLeft,
   Coffee,
   Flame,
   GraduationCap,
+  Grid3x3,
   Pencil,
   Play,
   RotateCcw,
@@ -17,14 +19,17 @@ import {
 } from 'lucide-react'
 import { toArabicDigits, toLatinDigits } from './arabic'
 import { verseRange } from './data'
+import MemMap from './MemMap'
 import * as P from './plan'
-import { useStored, type Mastered } from './store'
+import { useStored, type Mastered, type Weak } from './store'
 import type { Edition, Range } from './types'
 import './plan.css'
 
 export interface PlanScreenProps {
   edition: Edition
   mastered: Mastered
+  /** Verses marked «لم أتقنه» (for the memorization map). */
+  weak?: Weak
   /** Open memorization mode on verses from..to (repeat set to that range). */
   onStartSession: (from: number, to: number) => void
   /** Open memorization mode on the current verse, without a plan. */
@@ -100,6 +105,8 @@ export default function PlanScreen(p: PlanScreenProps) {
           {dayLong(today)} · {hijri(today)}
         </small>
       </header>
+
+      {!plan && <MapCard {...p} inProgress={NO_RANGES} />}
 
       {!plan || editing ? (
         <Builder
@@ -190,6 +197,8 @@ function PlanView(
       </div>
 
       <Heatmap plan={plan} today={today} />
+
+      <MapCard {...p} inProgress={plan.log} />
 
       {next.length > 0 && (
         <>
@@ -401,6 +410,28 @@ function Heatmap({ plan, today }: { plan: P.Plan; today: string }) {
             <i className="hm-day off" /> راحة
           </span>
         </div>
+      </div>
+    </>
+  )
+}
+
+const NO_RANGES: Range[] = []
+const NO_WEAK: Weak = {}
+
+/** Collapsible «خريطة الحفظ» card; open or closed is remembered on the device. */
+function MapCard(p: PlanScreenProps & { inProgress: Range[] }) {
+  const [ui, setUi] = useStored<{ open: boolean }>('memmap', { open: true })
+  return (
+    <>
+      <h2 className="group-title">خريطة الحفظ</h2>
+      <div className="group map-card">
+        <button className="field-row map-toggle" aria-expanded={ui.open} onClick={() => setUi({ open: !ui.open })}>
+          <span>
+            <Grid3x3 size={18} /> {ui.open ? 'إخفاء الخريطة' : 'عرض الخريطة'}
+          </span>
+          <ChevronDown size={18} className={`chev${ui.open ? ' open' : ''}`} />
+        </button>
+        {ui.open && <MemMap edition={p.edition} mastered={p.mastered} weak={p.weak ?? NO_WEAK} inProgress={p.inProgress} onJump={p.onJump} />}
       </div>
     </>
   )

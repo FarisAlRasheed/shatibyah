@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { toArabicDigits } from './arabic'
+import { withTatweel } from './kashida'
 import type { ColorMark, EditionColors } from './types'
 
 export const SURAHS = [
@@ -27,48 +28,103 @@ export interface OpenMark {
 }
 
 /**
- * One verse half with its printed colours. Each word holding a coloured piece is a tap
- * target as a whole, so a single coloured letter is still easy to hit.
+ * One verse half as shown: the edition's text with its printed colours, the tatweels that fit
+ * it to the shared width (`ins`, see kashida.ts), search highlights (`hits`) and veiled words.
+ * All positions are offsets in `text`. Each word holding a coloured piece is a tap target as a
+ * whole, so a single coloured letter is still easy to hit.
  */
-export function ColoredHalf(p: { text: string; marks: ColorMark[]; onMark: (m: OpenMark) => void }) {
-  const { text, marks } = p
-  if (!marks.length) return <>{text}</>
+export function HalfText(p: {
+  text: string
+  marks: ColorMark[]
+  onMark: (m: OpenMark) => void
+  ins?: number[]
+  hits?: [number, number][]
+  /** Words (by index) drawn as a blank bar of the same width. */
+  veil?: (word: number) => boolean
+}) {
+  const { text, marks, ins, hits, veil } = p
+  if (!marks.length && !hits?.length && !veil) return <>{withTatweel(text, ins)}</>
   const out: ReactNode[] = []
   let last = 0
+  let wi = -1
   for (const w of text.matchAll(/\S+/g)) {
-    const ws = w.index!, we = ws + w[0].length
+    wi++
+    const ws = w.index, we = ws + w[0].length
     const inWord = marks.filter((m) => m.s < we && m.e > ws)
-    if (!inWord.length) continue
-    if (ws > last) out.push(text.slice(last, ws))
-    // Cut the word at every mark edge inside it, colouring the pieces a mark covers.
-    const cuts = [...new Set([ws, we, ...inWord.flatMap((m) => [m.s, m.e]).filter((x) => x > ws && x < we)])].sort((a, b) => a - b)
+    const inHits = hits?.filter(([s, e]) => s < we && e > ws) ?? []
+    const veiled = veil?.(wi) ?? false
+    if (!inWord.length && !inHits.length && !veiled) continue
+    if (ws > last) out.push(withTatweel(text, ins, last, ws))
+    last = we
+    if (veiled) {
+      out.push(
+        <span key={ws} className="veil">
+          {withTatweel(text, ins, ws, we)}
+        </span>,
+      )
+      continue
+    }
+    // Cut the word at every mark and highlight edge inside it.
+    const edges = [...inWord.flatMap((m) => [m.s, m.e]), ...inHits.flat()].filter((x) => x > ws && x < we)
+    const cuts = [...new Set([ws, we, ...edges])].sort((a, b) => a - b)
+    const pieces = cuts.slice(0, -1).map((a, i) => {
+      const b = cuts[i + 1]
+      const m = inWord.find((x) => x.s <= a && x.e >= b)
+      const hit = inHits.some(([s, e]) => s <= a && e >= b)
+      const t = withTatweel(text, ins, a, b)
+      const inner = hit ? <mark>{t}</mark> : t
+      return m ? (
+        <span key={a} className={m.k === 'r' ? 'c-red' : 'c-green'}>
+          {inner}
+        </span>
+      ) : (
+        <Fragment key={a}>{inner}</Fragment>
+      )
+    })
     const target = inWord[0]
     out.push(
-      <span
-        key={ws}
-        className="cw"
-        onClick={(e) => {
-          e.stopPropagation()
-          p.onMark({ mark: target, text: target.w ?? text.slice(target.s, target.e), rect: e.currentTarget.getBoundingClientRect() })
-        }}
-      >
-        {cuts.slice(0, -1).map((a, i) => {
-          const b = cuts[i + 1]
-          const m = inWord.find((x) => x.s <= a && x.e >= b)
-          return m ? (
-            <span key={a} className={m.k === 'r' ? 'c-red' : 'c-green'}>
-              {text.slice(a, b)}
-            </span>
-          ) : (
-            <Fragment key={a}>{text.slice(a, b)}</Fragment>
-          )
-        })}
-      </span>,
+      target ? (
+        <span
+          key={ws}
+          className="cw"
+          onClick={(e) => {
+            e.stopPropagation()
+            p.onMark({ mark: target, text: target.w ?? text.slice(target.s, target.e), rect: e.currentTarget.getBoundingClientRect() })
+          }}
+        >
+          {pieces}
+        </span>
+      ) : (
+        <Fragment key={ws}>{pieces}</Fragment>
+      ),
     )
-    last = we
   }
-  if (last < text.length) out.push(text.slice(last))
+  if (last < text.length) out.push(withTatweel(text, ins, last, text.length))
   return <>{out}</>
+}
+
+/**
+ * Which words of a half-line to veil when `share` (0…1) of them should be hidden.
+ * Every second word goes first and the opening word last, so there is always a cue to start from.
+ */
+export function veilFor(text: string, share: number): ((word: number) => boolean) | undefined {
+  const n = text.trim().split(/\s+/).length
+  const hide = Math.round(Math.min(1, Math.max(0, share)) * n)
+  if (!hide) return undefined
+  const evens = Math.ceil(n / 2)
+  const rank = (i: number) => (i % 2 ? (i - 1) / 2 : Math.floor(n / 2) + (evens - 1 - i / 2))
+  return (i) => rank(i) < hide
+}
+
+/**
+ * How much of a verse to hide on this repetition when «إخفاء تدريجي» is on: nothing the first
+ * time, everything the last. Follows the verse's own count, or the rounds when each verse plays once.
+ */
+export function fadeShare(s: { verseRound: number; verseTimes: number; rangeRound: number; rangeTimes: number }) {
+  const [round, times] = s.verseTimes !== 1 ? [s.verseRound, s.verseTimes] : [s.rangeRound, s.rangeTimes]
+  if (times === 1) return 0
+  if (times === 0) return [0, 0.5, 1][(round - 1) % 3] // endless: a cycle of three
+  return (round - 1) / (times - 1)
 }
 
 /** The small card beside a tapped colour: whom a code stands for, or where a Quranic word is. */

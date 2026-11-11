@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Check, ChevronDown, Eye, EyeOff, Hourglass, Loader2, Pause, Play, Repeat, RotateCcw, SkipBack, SkipForward, Square, X } from 'lucide-react'
+import { Check, ChevronDown, Eraser, Eye, EyeOff, Hourglass, Loader2, Pause, Play, Repeat, RotateCcw, SkipBack, SkipForward, Square, X } from 'lucide-react'
 import { toArabicDigits } from './arabic'
 import { useSwipe } from './gestures'
 import { sectionOf } from './data'
 import type { PlayState } from './player'
 import type { HideMode, Mastered, RepeatSettings } from './store'
-import { ColoredHalf, type OpenMark } from './colors'
+import { fadeShare, HalfText, veilFor, type OpenMark } from './colors'
 import type { Edition, EditionColors } from './types'
 
 const SPEEDS = [0.75, 0.9, 1, 1.1, 1.25, 1.5]
@@ -34,6 +34,8 @@ interface Props {
   onReplay: () => void
   onOpenRepeat: () => void
   onSpeed: (s: number) => void
+  /** Toggle «إخفاء تدريجي». */
+  onFade: () => void
   onMastered: (n: number, yes: boolean) => void
 }
 
@@ -44,7 +46,7 @@ export default function Memorize(p: Props) {
   const v = p.edition.verses.find((x) => x.n === p.verse)
   const section = sectionOf(p.edition, p.verse)
   const [revealed, setRevealed] = useState(false)
-  useEffect(() => setRevealed(false), [p.verse, p.hide])
+  useEffect(() => setRevealed(false), [p.verse, p.hide, s.verseRound, s.rangeRound])
 
   // Pull down to close; swipe sideways to change verse (RTL: finger moving right = next, like turning a page).
   const [slide, setSlide] = useState<'' | 'slide-next' | 'slide-prev'>('')
@@ -67,7 +69,11 @@ export default function Memorize(p: Props) {
   const hideB = p.hide !== 'none' && !revealed
   const testing = p.hide !== 'none'
   const marks = p.colors?.verses[p.verse] ?? []
-  const half = (h: 'a' | 'b') => <ColoredHalf text={v?.[h] ?? ''} marks={marks.filter((m) => m.h === h)} onMark={p.onMark} />
+  // «إخفاء تدريجي»: with each repetition more of the verse is veiled; a tap shows it again.
+  const share = !testing && p.repeat.fade && active ? fadeShare(s) : 0
+  const half = (h: 'a' | 'b') => (
+    <HalfText text={v?.[h] ?? ''} marks={marks.filter((m) => m.h === h)} onMark={p.onMark} veil={revealed ? undefined : veilFor(v?.[h] ?? '', share)} />
+  )
   const nextSpeed = SPEEDS[(SPEEDS.indexOf(p.repeat.speed) + 1) % SPEEDS.length] ?? 1
 
   return (
@@ -104,7 +110,7 @@ export default function Memorize(p: Props) {
         key={p.verse}
         className={`mem-verse verse-text ${slide}`}
         onAnimationEnd={() => setSlide('')}
-        onClick={() => testing && setRevealed(true)}
+        onClick={() => (testing || share > 0) && setRevealed(true)}
       >
         {hideA ? <HiddenHalf label="اضغط لإظهار الصدر" /> : <p>{half('a')}</p>}
         {hideB ? <HiddenHalf label={hideA ? 'والعجز' : 'اضغط لإظهار العجز'} /> : <p>{half('b')}</p>}
@@ -143,7 +149,7 @@ export default function Memorize(p: Props) {
               <span>الدورة</span>
             </div>
           )}
-          {active && s.total > 1 && (
+          {active && s.total > 1 && s.stages === 1 && (
             <div>
               <strong>
                 {toArabicDigits(s.index + 1)}
@@ -152,12 +158,21 @@ export default function Memorize(p: Props) {
               <span>البيت</span>
             </div>
           )}
+          {active && s.stages > 1 && (
+            <div>
+              <strong>
+                {toArabicDigits(s.stage + 1)}
+                <small>/{toArabicDigits(s.stages)}</small>
+              </strong>
+              <span>المرحلة</span>
+            </div>
+          )}
         </div>
       )}
 
       {active && s.total > 1 && (
         <div className="mem-progress">
-          <div style={{ width: `${((s.index + 1) / s.total) * 100}%` }} />
+          <div style={{ width: `${(s.stages > 1 ? (s.stage + 1) / s.stages : (s.index + 1) / s.total) * 100}%` }} />
         </div>
       )}
       {s.error && <p className="err center">{s.error}</p>}
@@ -185,7 +200,11 @@ export default function Memorize(p: Props) {
         </button>
         <button onClick={p.onOpenRepeat}>
           <Hourglass size={18} />
-          <span>مهلة {toArabicDigits(p.repeat.pause)}ث</span>
+          <span>{p.repeat.echo ? 'مهلة البيت' : `مهلة ${toArabicDigits(p.repeat.pause)}ث`}</span>
+        </button>
+        <button onClick={p.onFade} className={p.repeat.fade ? 'on' : ''} aria-pressed={p.repeat.fade}>
+          <Eraser size={18} />
+          <span>تدريجي</span>
         </button>
         <button onClick={p.onStop} disabled={!active}>
           {active ? <Square size={18} /> : <X size={18} />}

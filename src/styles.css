@@ -57,6 +57,8 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--ui-font); }
+/* The page never zooms: pinching changes the verse size instead (zoom.ts). */
+html { touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { transition: background-color 0.25s; }
 button, select, input, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
@@ -122,24 +124,33 @@ a { color: var(--accent); }
 .vnum-col { flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .vnum {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 30px; height: 30px; border-radius: 50%;
+  font-size: calc(var(--verse-size) * 0.5); width: 2.72em; height: 2.72em; border-radius: 50%;
   border: 1px solid var(--ornament); outline: 0.5px solid var(--ornament); outline-offset: 2px;
-  font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums;
+  color: var(--accent); font-variant-numeric: tabular-nums;
 }
 .vnum.small { width: 26px; height: 26px; outline: 0; font-size: 10px; flex: none; }
 .verse.playing .vnum { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.plain-numbers .vnum { border: 0; outline: 0; font-size: calc(var(--verse-size) * 0.6); width: 2.27em; }
+.plain-numbers .verse.playing .vnum { border-radius: 8px; }
 .marks { display: flex; gap: 2px; color: var(--accent); }
+/* Half-lines. Stacked: the first half at the start of the row, the second at its end (staggered,
+   as printed on narrow pages). Side by side when both fit: Reader sets data-layout from the room. */
 .halves {
-  flex: 1; display: grid; gap: 0 32px;
-  font-size: var(--verse-size); line-height: 1.95;
+  flex: 1; min-width: 0; display: grid; gap: 0;
+  font-size: var(--verse-size); line-height: var(--verse-lh, 1.95);
 }
-.half.b { text-align: end; } /* staggered, as printed on narrow pages */
-@media (min-width: 760px) {
-  /* Fixed-width halves (most are 8–11em) so wide screens don't stretch the words apart. */
-  .verse-body { justify-content: center; }
-  .halves { flex: none; grid-template-columns: repeat(2, minmax(11em, auto)); column-gap: 3em; }
-  .half { text-align: justify; text-align-last: justify; }
-}
+.half.b { justify-self: end; text-align: end; }
+.reader[data-layout='side'] .verse-body { justify-content: center; }
+.reader[data-layout='side'] .halves { flex: none; grid-template-columns: repeat(2, minmax(11em, auto)); column-gap: 2.6em; }
+.reader[data-layout='side'] .half { text-align: justify; text-align-last: justify; }
+/* Equal widths (kashida.ts): every half is exactly --half-w wide; the words and their tatweels
+   fill it, and word spacing takes up what is left. */
+.reader[data-even='1'] .half { width: min(var(--half-w), 100%); white-space: nowrap; text-align: justify; text-align-last: justify; }
+.reader[data-even='1'][data-layout='side'] .halves { grid-template-columns: var(--half-w) var(--half-w); }
+.fit { display: block; transform-origin: 100% 50%; }
+/* A word hidden for recitation: same width, no letters. */
+.veil { color: transparent; background: var(--line); border-radius: 0.3em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.veil * { color: transparent !important; }
 
 /* Screens */
 .screen {

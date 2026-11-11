@@ -4,14 +4,17 @@ import { toArabicDigits } from './arabic'
 import { useSwipe } from './gestures'
 import { APP_VERSION, OWNER_EMAIL, OWNER_WHATSAPP } from './config'
 import { sectionOf, verseRange } from './data'
-import type { PlayState } from './player'
-import type { Notes, RepeatSettings, Settings } from './store'
+import { cumulativeStages, type PlayState, type Stage } from './player'
+import type { Notes, RepeatSettings } from './store'
 import type { Edition, Reciter, VerseTiming } from './types'
-import { ColorsField, FontSizeField, FontField, ThemeField } from './screens'
 
 export type SetState<T> = (next: T | ((prev: T) => T)) => void
 
-export function Sheet({ title, onClose, children }: { title?: string; onClose: () => void; children: ReactNode }) {
+/**
+ * A bottom sheet. `clear` leaves the page behind it undimmed (the appearance panel, where the
+ * page is what the user is looking at); `pinned` stays above the sheet's scrolling part.
+ */
+export function Sheet({ title, onClose, children, clear, pinned }: { title?: string; onClose: () => void; children: ReactNode; clear?: boolean; pinned?: ReactNode }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
@@ -19,7 +22,7 @@ export function Sheet({ title, onClose, children }: { title?: string; onClose: (
   }, [onClose])
   const swipeRef = useSwipe<HTMLElement>({ onDismiss: onClose })
   return (
-    <div className="overlay" onClick={onClose}>
+    <div className={`overlay${clear ? ' clear' : ''}`} onClick={onClose}>
       <section className="sheet" role="dialog" aria-label={title} onClick={(e) => e.stopPropagation()} ref={swipeRef}>
         <div className="grabber" />
         {title && (
@@ -30,7 +33,29 @@ export function Sheet({ title, onClose, children }: { title?: string; onClose: (
             </button>
           </header>
         )}
+        {pinned}
         <div className="sheet-body">{children}</div>
+      </section>
+    </div>
+  )
+}
+
+/** A whole screen shown over the reader: a tall sheet on a phone, a side drawer on a wide screen. */
+export function Drawer({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+  const swipeRef = useSwipe<HTMLElement>({ onDismiss: onClose })
+  return (
+    <div className="overlay drawer-overlay" onClick={onClose}>
+      <section className="drawer" role="dialog" aria-label={label} onClick={(e) => e.stopPropagation()} ref={swipeRef}>
+        <div className="grabber" />
+        <button className="icon-btn drawer-close" onClick={onClose} aria-label="إغلاق">
+          <X size={20} />
+        </button>
+        <div className="drawer-body">{children}</div>
       </section>
     </div>
   )
@@ -238,29 +263,40 @@ function duration(sec: number) {
 function repeatSummary(verses: number[], r: RepeatSettings, single: boolean, timings?: Map<number, VerseTiming>) {
   const queue = timings ? verses.filter((n) => timings.has(n)) : verses
   if (!queue.length) return 'لا توجد قراءة لهذه الأبيات.'
-  const v = r.verseTimes
-  const rounds = single ? 1 : r.rangeTimes
+  const cumulative = r.cumulative && !single && queue.length > 1
+  const v = cumulative ? Math.max(1, r.verseTimes) : r.verseTimes
+  const rounds = single ? 1 : cumulative ? Math.max(1, r.rangeTimes) : r.rangeTimes
   const endless = v === 0 || rounds === 0
+  // The same stages the player will run; each verse of a stage plays verseTimes × rangeTimes.
+  const stages: Stage[] = cumulative ? cumulativeStages(queue.length, v, rounds) : [{ from: 0, to: queue.length - 1, verseTimes: v, rangeTimes: rounds }]
+  let plays = 0
+  let sec = 0
+  for (const st of stages) {
+    const times = st.verseTimes * st.rangeTimes
+    plays += (st.to - st.from + 1) * times
+    if (timings) for (let i = st.from; i <= st.to; i++) sec += (timings.get(queue[i])!.end - timings.get(queue[i])!.start) * times
+  }
   let text: string
   if (single) text = endless ? 'البيت' : `البيت ${plural(v, TIMES)}`
+  else if (cumulative) text = `${plural(queue.length, VERSES)} تراكميًّا = ${plural(plays, TIMES)}`
   else {
     const parts = [plural(queue.length, VERSES)]
     if (v !== 1) parts.push(v === 0 ? '∞' : toArabicDigits(v))
     if (rounds !== 1) parts.push(rounds === 0 ? '∞ جولات' : plural(rounds, ROUNDS))
     text = parts.join(' × ')
-    if (!endless && parts.length > 1) text += ` = ${plural(queue.length * v * rounds, TIMES)}`
+    if (!endless && parts.length > 1) text += ` = ${plural(plays, TIMES)}`
   }
   if (endless) return `${text} · يتكرر حتى تُوقفه`
-  const plays = queue.length * v * rounds
   if (timings) {
-    const once = queue.reduce((s, n) => s + (timings.get(n)!.end - timings.get(n)!.start), 0)
-    const sec = (once * v * rounds) / (r.speed || 1) + (plays - 1) * r.pause
-    text += ` · نحو ${duration(sec)}`
+    // Echo adds a silence as long as each play; otherwise a fixed pause between plays.
+    const heard = sec / (r.speed || 1)
+    text += ` · نحو ${duration(r.echo ? heard * 2 : heard + (plays - 1) * r.pause)}`
   }
   return text
 }
 
-function Count({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+function Count({ label, value, onChange, finite }: { label: string; value: number; onChange: (v: number) => void; finite?: boolean }) {
+  if (finite && value === 0) value = 1 // cumulative repeat has no endless count
   const endless = value === 0
   return (
     <div className="field-row">
@@ -269,9 +305,11 @@ function Count({ label, value, onChange }: { label: string; value: number; onCha
         <button disabled={endless || value <= 1} onClick={() => onChange(value - 1)} aria-label="أقل">−</button>
         <output>{endless ? '∞' : toArabicDigits(value)}</output>
         <button disabled={endless} onClick={() => onChange(value + 1)} aria-label="أكثر">+</button>
-        <button className={`chip${endless ? ' on' : ''}`} onClick={() => onChange(endless ? 1 : 0)}>
-          ∞
-        </button>
+        {!finite && (
+          <button className={`chip${endless ? ' on' : ''}`} onClick={() => onChange(endless ? 1 : 0)}>
+            ∞
+          </button>
+        )}
       </div>
     </div>
   )
@@ -310,6 +348,7 @@ export function RepeatSheet(p: {
   }
   const verses = p.edition.verses.filter((v) => v.n >= from && v.n <= to).map((v) => v.n)
   const summary = repeatSummary(verses, r, r.scope === 'verse', p.timings)
+  const cumulative = r.cumulative && r.scope !== 'verse'
 
   return (
     <Sheet title="التكرار" onClose={p.onClose}>
@@ -348,15 +387,57 @@ export function RepeatSheet(p: {
           ))}
         </select>
       )}
+      {r.scope !== 'verse' && (
+        <div className="group">
+          <label className="field-row">
+            <span className="list-main">
+              تكرار تراكمي
+              <small className="muted">البيت الأول، ثم الثاني، ثم الاثنان معًا، ثم الثالث، ثم الثلاثة معًا… وهكذا</small>
+            </span>
+            <input type="checkbox" className="switch" checked={r.cumulative} onChange={(e) => set({ cumulative: e.target.checked })} />
+          </label>
+        </div>
+      )}
       <div className="group">
-        <Count label="تكرار كل بيت" value={r.verseTimes} onChange={(v) => set({ verseTimes: v })} />
-        {r.scope !== 'verse' && <Count label="تكرار النطاق كله" value={r.rangeTimes} onChange={(v) => set({ rangeTimes: v })} />}
+        <Count label={cumulative ? 'تكرار كل بيت جديد' : 'تكرار كل بيت'} value={r.verseTimes} onChange={(v) => set({ verseTimes: v })} finite={cumulative} />
+        {r.scope !== 'verse' && (
+          <Count
+            label={cumulative ? 'تكرار الأبيات مجتمعة' : 'تكرار النطاق كله'}
+            value={r.rangeTimes}
+            onChange={(v) => set({ rangeTimes: v })}
+            finite={cumulative}
+          />
+        )}
+      </div>
+      <div className="group">
+        <div className="field-col">
+          <span>المهلة بعد كل مرة</span>
+          <div className="seg">
+            <button className={r.echo ? '' : 'on'} onClick={() => set({ echo: false })}>
+              ثوانٍ محدّدة
+            </button>
+            <button className={r.echo ? 'on' : ''} onClick={() => set({ echo: true })}>
+              بطول البيت
+            </button>
+          </div>
+        </div>
+        {r.echo ? (
+          <p className="field-note">بعد كل مرة يسكت القارئ مدّة البيت نفسه، لتردّده بصوتك.</p>
+        ) : (
+          <label className="field-row">
+            <span>مدّة المهلة</span>
+            <span className="slider">
+              <input type="range" min={0} max={15} step={1} value={r.pause} onChange={(e) => set({ pause: +e.target.value })} />
+              <output>{toArabicDigits(r.pause)} ث</output>
+            </span>
+          </label>
+        )}
         <label className="field-row">
-          <span>مهلة بين التكرارات</span>
-          <span className="slider">
-            <input type="range" min={0} max={15} step={1} value={r.pause} onChange={(e) => set({ pause: +e.target.value })} />
-            <output>{toArabicDigits(r.pause)} ث</output>
+          <span className="list-main">
+            إخفاء تدريجي
+            <small className="muted">يظهر البيت كاملًا أول مرة، ثم تختفي كلماته شيئًا فشيئًا مع التكرار</small>
           </span>
+          <input type="checkbox" className="switch" checked={r.fade} onChange={(e) => set({ fade: e.target.checked })} />
         </label>
       </div>
       <p className="repeat-summary" aria-live="polite">
@@ -373,20 +454,6 @@ export function RepeatSheet(p: {
       >
         <Play size={18} /> ابدأ
       </button>
-    </Sheet>
-  )
-}
-
-/** Quick display options from the reader's Aa button. */
-export function DisplaySheet(p: { settings: Settings; setSettings: SetState<Settings>; hasColors: boolean; onClose: () => void }) {
-  return (
-    <Sheet title="العرض" onClose={p.onClose}>
-      <div className="group">
-        <ThemeField {...p} />
-        <FontField {...p} />
-        <FontSizeField {...p} />
-        {p.hasColors && <ColorsField {...p} />}
-      </div>
     </Sheet>
   )
 }

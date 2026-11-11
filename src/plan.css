@@ -109,3 +109,10 @@
 .plan-preview strong { font-size: 20px; color: var(--accent); }
 .plan-preview small { font-size: 12px; color: var(--muted); }
 .plan-preview > span { grid-column: 1 / -1; font-size: 14px; }
+
+/* Memorization map card (the map itself is styled in memmap.css) */
+.map-toggle { width: 100%; border: 0; background: none; color: var(--accent); text-align: right; min-height: 44px; }
+.map-toggle > span { display: inline-flex; align-items: center; gap: 8px; }
+.map-toggle .chev { transition: transform 0.2s; }
+.map-toggle .chev.open { transform: rotate(180deg); }
+.map-card.group > .memmap { border-top: 0.5px solid var(--line); }

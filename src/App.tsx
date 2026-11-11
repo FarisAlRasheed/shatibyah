@@ -1,36 +1,53 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { BookOpen, GraduationCap, List, LocateFixed, Repeat, Search, Settings as SettingsIcon, Type } from 'lucide-react'
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { BookOpen, GraduationCap, List, LocateFixed, Search, Settings as SettingsIcon, Undo2, X } from 'lucide-react'
 import { audioUrl, loadColors, loadEdition, loadManifest, loadReciter, sectionOf, verseRange } from './data'
-import { ColorCard, type OpenMark } from './colors'
+import { ColorCard, fadeShare, type OpenMark } from './colors'
 import { DEFAULT_EDITION } from './config'
 import { toArabicDigits } from './arabic'
-import { idleState, RepeatPlayer, type PlayState } from './player'
-import { useStored, type Bookmarks, type Mastered, type Notes, type RepeatSettings, type Settings } from './store'
+import { cumulativeStages, idleState, RepeatPlayer, type PlayState } from './player'
+import { useFits } from './kashida'
+import { DEFAULT_SIZE } from './zoom'
+import { useStored, type Bookmarks, type Mastered, type Notes, type RepeatSettings, type Settings, type Weak } from './store'
 import type { Edition, EditionColors, Manifest, Reciter, Section, VerseTiming } from './types'
 import Reader from './Reader'
 import MiniPlayer from './MiniPlayer'
 import Memorize from './Memorize'
 import './flow.css'
-import { DisplaySheet, FlagSheet, NoteSheet, RepeatSheet, VerseSheet } from './sheets'
-import { IndexScreen, SearchScreen, SettingsScreen } from './screens'
+import './chrome.css'
+import { Drawer, FlagSheet, NoteSheet, RepeatSheet, VerseSheet } from './sheets'
+import { IndexScreen, SettingsScreen } from './screens'
 import PlanScreen from './PlanScreen'
+import { FindBar, FindList, useFind, type FindState } from './Find'
+import LookPanel from './Look'
+import Rail from './Rail'
 
-type Tab = 'read' | 'index' | 'plan' | 'search' | 'settings'
+type Tab = 'read' | 'plan' | 'settings'
 export type Panel =
   | null
   | { type: 'repeat'; n: number }
-  | 'display'
+  | 'look' // the «أ» appearance panel
+  | 'index' // الفهرس, over the reader
   | { type: 'verse'; n: number }
   | { type: 'note'; n: number }
   | { type: 'flag'; n: number }
 
+// The tab bar. «أ» (المظهر) sits between the first two: it opens a panel over the reader, not a screen.
 const TABS: [Tab, string, typeof BookOpen][] = [
   ['read', 'القراءة', BookOpen],
-  ['index', 'الفهرس', List],
   ['plan', 'الحفظ', GraduationCap],
-  ['search', 'البحث', Search],
   ['settings', 'الإعدادات', SettingsIcon],
 ]
+
+/** The verse at the middle of the screen, looking through anything shown over the reader. */
+function verseAtCentre(): number | null {
+  for (const dy of [0, -40, 40, -90, 90]) {
+    for (const el of document.elementsFromPoint(innerWidth / 2, innerHeight / 2 + dy)) {
+      const v = el.closest('main.reader .verse')
+      if (v) return +v.id.slice(2)
+    }
+  }
+  return null
+}
 
 const FONT_FAMILY: Record<Settings['font'], string> = {
   amiri: "'Amiri', serif",
@@ -41,7 +58,7 @@ const FONT_FAMILY: Record<Settings['font'], string> = {
 const defaultSettings: Settings = {
   editionId: DEFAULT_EDITION,
   reciterId: '',
-  fontSize: 22,
+  fontSize: DEFAULT_SIZE,
   autoScroll: true,
   lastVerse: 0,
   theme: 'auto',
@@ -49,6 +66,18 @@ const defaultSettings: Settings = {
   hide: 'none',
   colors: true,
   memorizeColors: false,
+  lineHeight: 1.95,
+  layout: 'auto',
+  kashida: true,
+  numberStyle: 'circle',
+  immersive: true,
+  rail: true,
+  backPill: true,
+  curtain: false,
+  twins: true,
+  wirdStrip: true,
+  pageMarks: false,
+  sidePanel: true,
 }
 const defaultRepeat: RepeatSettings = {
   scope: 'verse',
@@ -59,9 +88,13 @@ const defaultRepeat: RepeatSettings = {
   rangeTimes: 1,
   pause: 0,
   speed: 1,
+  cumulative: false,
+  echo: false,
+  fade: false,
+  recent: [],
 }
 
-const SCOPE_LABEL: Record<RepeatSettings['scope'], string> = { verse: 'بيت', range: 'نطاق', section: 'باب', all: 'الكل' }
+const SCOPE_LABEL: Record<RepeatSettings['scope'], string> = { verse: 'تكرار البيت', range: 'تكرار النطاق', section: 'تكرار الباب', all: 'تكرار المتن' }
 
 // A single player for the whole app (module scope, so React dev double-renders can't duplicate it).
 const current: { reciter: Reciter | null; onState: (s: PlayState) => void } = { reciter: null, onState: () => {} }
@@ -88,7 +121,8 @@ function useTheme(theme: Settings['theme']) {
 export default function App() {
   const [manifest, setManifest] = useState<Manifest | null>(null)
   const [edition, setEdition] = useState<Edition | null>(null)
-  const [colors, setColors] = useState<EditionColors | null>(null)
+  // undefined while loading, null when the edition has no colours file
+  const [colors, setColors] = useState<EditionColors | null | undefined>(undefined)
   const [openMark, setOpenMark] = useState<OpenMark | null>(null)
   const [reciter, setReciter] = useState<Reciter | null>(null)
   const [error, setError] = useState('')
@@ -97,6 +131,11 @@ export default function App() {
   const [notes, setNotes] = useStored<Notes>('notes', {})
   const [bookmarks, setBookmarks] = useStored<Bookmarks>('bookmarks', {})
   const [mastered, setMastered] = useStored<Mastered>('mastered', {})
+  const [weak, setWeak] = useStored<Weak>('weak', {})
+  const [find, setFind] = useState<FindState | null>(null)
+  // Where the reader was before a jump, for the «رجوع» pill.
+  const [back, setBack] = useState<number | null>(null)
+  const [immersed, setImmersed] = useState(false)
   const [tab, setTab] = useState<Tab>('read')
   const [panel, setPanel] = useState<Panel>(null)
   const [memorize, setMemorize] = useState(false)
@@ -128,7 +167,7 @@ export default function App() {
   useEffect(() => {
     if (!editionId) return
     setEdition(null)
-    setColors(null)
+    setColors(undefined)
     loadEdition(editionId).then(setEdition, (e) => setError(String(e)))
     loadColors(editionId).then(setColors)
   }, [editionId])
@@ -150,11 +189,13 @@ export default function App() {
     if (reciter && edition) player.setMeta((n) => ({ artist: reciter.name, album: sectionOf(edition, n)?.title ?? '' }))
   }, [reciter, edition])
 
+  const fits = useFits(settings.kashida ? edition : null, colors, settings.font, FONT_FAMILY[settings.font], true, settings.lastVerse)
+
   const timings = useMemo(() => new Map<number, VerseTiming>(reciter?.verses.map((v) => [v.n, v]) ?? []), [reciter])
   useEffect(() => player.setTimings(reciter?.verses ?? []), [reciter])
 
   const startQueue = useCallback(
-    (from: number, to: number, startAt: number, opts: Pick<RepeatSettings, 'verseTimes' | 'rangeTimes'>) => {
+    (from: number, to: number, startAt: number, opts: Pick<RepeatSettings, 'verseTimes' | 'rangeTimes'>, cumulative = false) => {
       const queue: VerseTiming[] = []
       for (let n = from; n <= to; n++) {
         const t = timings.get(n)
@@ -162,9 +203,11 @@ export default function App() {
       }
       const startIndex = Math.max(0, queue.findIndex((t) => t.n >= startAt))
       setFollowing(true)
-      player.start(queue, { ...opts, pause: repeat.pause, speed: repeat.speed }, startIndex)
+      const stages =
+        cumulative && queue.length > 1 ? cumulativeStages(queue.length, Math.max(1, opts.verseTimes), Math.max(1, opts.rangeTimes)) : undefined
+      player.start(queue, { ...opts, pause: repeat.pause, speed: repeat.speed, echo: repeat.echo }, startIndex, stages)
     },
-    [timings, repeat.pause, repeat.speed],
+    [timings, repeat.pause, repeat.speed, repeat.echo],
   )
 
   /** Start the configured repeat. */
@@ -183,9 +226,12 @@ export default function App() {
         if (s) [from, to] = [s.start, s.end]
       }
       // A single verse has no range to repeat; its rounds count is hidden in the repeat sheet.
-      startQueue(from, to, from, r.scope === 'verse' ? { ...r, rangeTimes: 1 } : r)
+      startQueue(from, to, from, r.scope === 'verse' ? { ...r, rangeTimes: 1 } : r, r.cumulative && r.scope !== 'verse')
+      // Remember the last few ranges, for the repeat sheet's shortcuts.
+      if (r.scope === 'range')
+        setRepeat((x) => ({ ...x, recent: [[from, to] as [number, number], ...(x.recent ?? []).filter(([a, b]) => a !== from || b !== to)].slice(0, 3) }))
     },
-    [edition, repeat, selected, startQueue],
+    [edition, repeat, selected, startQueue, setRepeat],
   )
 
   /** Play continuously from verse n to the end. */
@@ -198,7 +244,7 @@ export default function App() {
     [edition, startQueue],
   )
 
-  useEffect(() => player.update({ pause: repeat.pause, speed: repeat.speed }), [repeat.pause, repeat.speed])
+  useEffect(() => player.update({ pause: repeat.pause, speed: repeat.speed, echo: repeat.echo }), [repeat.pause, repeat.speed, repeat.echo])
 
   useEffect(() => {
     if (selected) setSettings((s) => ({ ...s, lastVerse: selected }))
@@ -220,13 +266,79 @@ export default function App() {
     pendingRestore.current = tab !== 'read'
   }, [tab])
 
-  const jumpTo = useCallback((n: number) => {
+  const place = useRef({ tab, selected })
+  place.current = { tab, selected }
+  /** Go to verse n. `keepBack` leaves an existing «رجوع» place alone (stepping through search matches). */
+  const jumpTo = useCallback((n: number, keepBack = false) => {
+    const here = place.current.tab === 'read' ? verseAtCentre() : place.current.selected
+    if (here && Math.abs(here - n) > 6) setBack((b) => (keepBack && b != null ? b : here))
     pendingRestore.current = false
     setFollowing(false)
     setSelected(n)
     setTab('read')
     setScrollTarget({ n, key: Date.now() })
     setPanel(null)
+  }, [])
+
+  // The «رجوع» place is dropped once the reader has moved well away from where the jump landed.
+  useEffect(() => {
+    if (back == null) return
+    let base: number | null = null
+    const settle = window.setTimeout(() => (base = scrollY), 1500)
+    const onScroll = () => base != null && Math.abs(scrollY - base) > 3 * innerHeight && setBack(null)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.clearTimeout(settle)
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [back])
+
+  // Immersive reading: the bars slide away when the reader scrolls down by hand, and return on scrolling up.
+  useEffect(() => {
+    setImmersed(false)
+    if (!settings.immersive || tab !== 'read') return
+    let last = scrollY
+    let byHand = 0
+    const hand = () => (byHand = Date.now())
+    const onScroll = () => {
+      const dy = scrollY - last
+      if (Math.abs(dy) < 6) return
+      last = scrollY
+      if (dy < 0 || scrollY < 80) setImmersed(false)
+      else if (Date.now() - byHand < 900) setImmersed(true)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('touchmove', hand, { passive: true })
+    window.addEventListener('wheel', hand, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('touchmove', hand)
+      window.removeEventListener('wheel', hand)
+    }
+  }, [settings.immersive, tab])
+
+  const results = useFind(edition, find?.q ?? '')
+
+  // Keyboard shortcuts (a Mac or any keyboard). By key position, so they work on an Arabic layout.
+  const keys = useRef({ play: () => {}, step: (_d: 1 | -1) => {}, find: () => {}, repeat: () => {}, closeFind: () => {}, busy: true })
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const k = keys.current
+      const el = e.target as HTMLElement
+      if ((e.metaKey || e.ctrlKey) && e.code === 'KeyF') {
+        e.preventDefault()
+        return k.find()
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey || k.busy || el.closest?.('input, textarea, select')) return
+      if (e.code === 'Space' && !el.closest?.('button, a')) (e.preventDefault(), k.play())
+      else if (e.key === 'ArrowDown') (e.preventDefault(), k.step(1))
+      else if (e.key === 'ArrowUp') (e.preventDefault(), k.step(-1))
+      else if (e.code === 'Slash') (e.preventDefault(), k.find())
+      else if (e.code === 'KeyR') k.repeat()
+      else if (e.key === 'Escape') k.closeFind()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
   // Follow the verse being recited.
@@ -288,11 +400,43 @@ export default function App() {
     setMemorize(true)
     if (hasAudio) startRepeat(r)
   }
+  const openFind = () => {
+    goTab('read')
+    setPanel(null)
+    setFind((f) => (f ? { ...f, list: true } : { q: '', list: true, at: -1 }))
+  }
+  const findJump = (n: number, at: number) => {
+    ;(document.activeElement as HTMLElement | null)?.blur?.()
+    setFind((f) => f && { ...f, list: false, at })
+    jumpTo(n, true)
+  }
+  const findStep = (d: 1 | -1) => {
+    const count = results.verses.length
+    if (!find || !count) return
+    const at = find.at < 0 ? (d > 0 ? 0 : count - 1) : (find.at + d + count) % count
+    findJump(results.verses[at], at)
+  }
+  const openLook = () => {
+    goTab('read')
+    setPanel((x) => (x === 'look' ? null : 'look'))
+  }
+  keys.current = {
+    play: () => hasAudio && togglePlay(),
+    step,
+    find: openFind,
+    repeat: () => hasAudio && setPanel({ type: 'repeat', n: focusVerse }),
+    closeFind: () => setFind(null),
+    busy: tab !== 'read' || !!panel || memorize,
+  }
   const times = (n: number) => (n === 0 ? '∞' : toArabicDigits(n))
   // What the mini-player says: the running playback if any, else what ▶ would start.
   const summary = !active
-    ? `${SCOPE_LABEL[repeat.scope]} ×${times(repeat.verseTimes)}`
-    : play.total === 1
+    ? repeat.verseTimes === 1 && (repeat.scope === 'verse' || repeat.rangeTimes === 1)
+      ? { verse: 'قراءة البيت', range: 'قراءة النطاق', section: 'قراءة الباب', all: 'قراءة المتن' }[repeat.scope]
+      : `${SCOPE_LABEL[repeat.scope]} ×${times(repeat.verseTimes)}`
+    : play.stages > 1
+      ? `تكرار تراكمي · المرحلة ${toArabicDigits(play.stage + 1)} من ${toArabicDigits(play.stages)}`
+      : play.total === 1
       ? play.verseTimes === 1 && play.rangeTimes === 1
         ? 'قراءة البيت'
         : `تكرار البيت ×${times(play.verseTimes)}`
@@ -302,7 +446,22 @@ export default function App() {
 
   const panelEl = (() => {
     const close = () => setPanel(null)
-    if (panel === 'display') return <DisplaySheet settings={settings} setSettings={setSettings} hasColors={!!colors} onClose={close} />
+    if (panel === 'look')
+      return <LookPanel settings={settings} setSettings={setSettings} edition={edition} colors={colors ?? null} fits={fits} verse={focusVerse} onClose={close} />
+    if (panel === 'index')
+      return (
+        <Drawer label="الفهرس" onClose={close}>
+          <IndexScreen
+            edition={edition}
+            current={focusVerse}
+            notes={notes}
+            bookmarks={bookmarks}
+            mastered={mastered}
+            setBookmarks={setBookmarks}
+            onJump={jumpTo}
+          />
+        </Drawer>
+      )
     if (panel?.type === 'repeat')
       return (
         <RepeatSheet
@@ -360,31 +519,77 @@ export default function App() {
     return null
   })()
 
+  const hideBars = immersed && tab === 'read' && !panel && !find && !memorize
   const sectionTitle = topSection?.title ?? sectionOf(edition, focusVerse)?.title ?? ''
   const titleSection = topSection ?? sectionOf(edition, focusVerse)
 
   return (
     <div
-      className={`app${reciters.length ? ' has-player' : ''}`}
-      style={{ ['--verse-size' as string]: `${settings.fontSize}px`, ['--verse-font' as string]: FONT_FAMILY[settings.font] }}
+      className={`app${reciters.length ? ' has-player' : ''}${settings.numberStyle === 'plain' ? ' plain-numbers' : ''}${hideBars ? ' immersed' : ''}${panel === 'look' ? ' look-open' : ''}`}
+      style={{
+        ['--verse-size' as string]: `${settings.fontSize}px`,
+        ['--verse-font' as string]: FONT_FAMILY[settings.font],
+        ['--verse-lh' as string]: settings.lineHeight,
+      }}
     >
       {tab === 'read' && (
         <header className="topbar">
-          <button className="icon-btn" onClick={() => setPanel({ type: 'repeat', n: focusVerse })} aria-label="التكرار" disabled={!hasAudio}>
-            <Repeat size={21} />
-          </button>
-          <button className="topbar-title" onClick={() => goTab('index')}>
-            <strong>{sectionTitle}</strong>
-            {titleSection && (
-              <small>
-                {toArabicDigits(titleSection.start)}–{toArabicDigits(titleSection.end)}
-              </small>
-            )}
-          </button>
-          <button className="icon-btn" onClick={() => setPanel('display')} aria-label="العرض">
-            <Type size={21} />
-          </button>
+          {find ? (
+            <FindBar
+              find={find}
+              results={results}
+              onChange={(q) => setFind({ q, list: true, at: -1 })}
+              onStep={findStep}
+              onEnter={() => (results.verse != null ? findJump(results.verse, -1) : findStep(1))}
+              onFocus={() => setFind((f) => f && { ...f, list: true })}
+              onClose={() => setFind(null)}
+            />
+          ) : (
+            <>
+              <button className="icon-btn" onClick={openFind} aria-label="البحث">
+                <Search size={21} />
+              </button>
+              <button className="topbar-title" onClick={() => setPanel('index')}>
+                <strong>{sectionTitle}</strong>
+                {titleSection && (
+                  <small>
+                    {toArabicDigits(titleSection.start)}–{toArabicDigits(titleSection.end)}
+                  </small>
+                )}
+              </button>
+              <button className="icon-btn" onClick={() => setPanel('index')} aria-label="الفهرس">
+                <List size={22} />
+              </button>
+            </>
+          )}
         </header>
+      )}
+      {tab === 'read' && find?.list && (
+        <FindList
+          edition={edition}
+          find={find}
+          results={results}
+          onJump={findJump}
+          onDismiss={() => setFind((f) => (f?.q.trim() ? { ...f, list: false } : null))}
+        />
+      )}
+      {tab === 'read' && settings.rail && !panel && !memorize && <Rail edition={edition} />}
+      {tab === 'read' && settings.backPill && back != null && !find?.list && (
+        <span className="back-pill">
+          <button
+            className="back-go"
+            onClick={() => {
+              setFollowing(false)
+              setScrollTarget({ n: back, key: Date.now() })
+              setBack(null)
+            }}
+          >
+            <Undo2 size={15} /> رجوع إلى البيت {toArabicDigits(back)}
+          </button>
+          <button className="x" onClick={() => setBack(null)} aria-label="إخفاء">
+            <X size={15} />
+          </button>
+        </span>
       )}
 
       <div hidden={tab !== 'read'}>
@@ -396,36 +601,34 @@ export default function App() {
           bookmarks={bookmarks}
           mastered={mastered}
           scrollTarget={scrollTarget}
-          colors={settings.colors ? colors : null}
+          colors={settings.colors ? (colors ?? null) : null}
+          fits={fits}
+          fontSize={settings.fontSize}
+          layout={settings.layout}
+          hits={find ? results.hits : null}
+          veil={repeat.fade && active && play.verse != null ? { n: play.verse, share: fadeShare(play) } : null}
+          active={tab === 'read' && !panel && !memorize && !find?.list}
+          onBackgroundTap={() => setImmersed(false)}
+          onFontSize={(fontSize) => setSettings((x) => ({ ...x, fontSize }))}
           onTap={onTap}
           onMark={setOpenMark}
           onSectionChange={setTopSection}
         />
       </div>
-      {tab === 'index' && (
-        <IndexScreen
-          edition={edition}
-          current={focusVerse}
-          notes={notes}
-          bookmarks={bookmarks}
-          mastered={mastered}
-          setBookmarks={setBookmarks}
-          onJump={jumpTo}
-        />
-      )}
       {tab === 'plan' && (
         <PlanScreen
           edition={edition}
           mastered={mastered}
+          weak={weak}
           onStartSession={startSession}
           onFreeSession={() => setMemorize(true)}
           onJump={jumpTo}
         />
       )}
-      {tab === 'search' && <SearchScreen edition={edition} onJump={jumpTo} />}
       {tab === 'settings' && (
         <SettingsScreen
           hasColors={!!colors}
+          onLook={openLook}
           settings={settings}
           setSettings={setSettings}
           manifest={manifest}
@@ -457,19 +660,31 @@ export default function App() {
             reciterName={reciters.find((r) => r.id === reciterId)?.name ?? ''}
             ready={hasAudio}
             summary={summary}
+            repeatLabel={`×${times(active ? play.verseTimes : repeat.verseTimes)}`}
             onOpen={() => setMemorize(true)}
             onPlay={togglePlay}
-            onNext={() => player.step(1)}
+            onRepeat={() => setPanel({ type: 'repeat', n: focusVerse })}
+            onStop={() => player.stop()}
           />
         ) : (
           <div className="no-audio">لا توجد قراءة مسجّلة لهذه النسخة بعد.</div>
         )}
         <nav className="tabbar">
-          {TABS.map(([id, label, Icon]) => (
-            <button key={id} className={tab === id ? 'on' : ''} onClick={() => goTab(id)} aria-current={tab === id ? 'page' : undefined}>
-              <Icon size={23} strokeWidth={tab === id ? 2.2 : 1.7} />
-              <span>{label}</span>
-            </button>
+          {TABS.map(([id, label, Icon], i) => (
+            <Fragment key={id}>
+              <button className={tab === id ? 'on' : ''} onClick={() => goTab(id)} aria-current={tab === id ? 'page' : undefined}>
+                <Icon size={23} strokeWidth={tab === id ? 2.2 : 1.7} />
+                <span>{label}</span>
+              </button>
+              {i === 0 && (
+                <button className={panel === 'look' ? 'on' : ''} onClick={openLook} aria-label="المظهر والخط">
+                  <span className="tab-glyph" aria-hidden="true">
+                    أ
+                  </span>
+                  <span>المظهر</span>
+                </button>
+              )}
+            </Fragment>
           ))}
         </nav>
       </div>
@@ -482,7 +697,7 @@ export default function App() {
           repeat={repeat}
           hide={settings.hide}
           mastered={mastered}
-          colors={settings.memorizeColors ? colors : null}
+          colors={settings.memorizeColors ? (colors ?? null) : null}
           onMark={setOpenMark}
           canPlay={hasAudio}
           onHide={(hide) => setSettings((s) => ({ ...s, hide }))}
@@ -493,6 +708,7 @@ export default function App() {
           onReplay={() => (active ? player.replay() : hasAudio && startQueue(focusVerse, focusVerse, focusVerse, { verseTimes: 1, rangeTimes: 1 }))}
           onOpenRepeat={() => setPanel({ type: 'repeat', n: focusVerse })}
           onSpeed={(speed) => setRepeat((r) => ({ ...r, speed }))}
+          onFade={() => setRepeat((r) => ({ ...r, fade: !r.fade }))}
           onMastered={(n, yes) => {
             setMastered((m) => {
               const next = { ...m }
@@ -500,6 +716,8 @@ export default function App() {
               else delete next[n]
               return next
             })
+            // «لم أتقنه» marks the verse as weak, for the memorization map.
+            if (!yes) setWeak((w) => ({ ...w, [n]: { count: (w[n]?.count ?? 0) + 1, at: Date.now() } }))
             if (yes) step(1)
           }}
         />
