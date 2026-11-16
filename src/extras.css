@@ -165,3 +165,10 @@
   border: 0; border-radius: 10px; background: none; color: inherit; text-align: right; font-size: 17px; line-height: 1.6;
 }
 .sp-twins button:hover { background: var(--surface); }
+
+/* الإعدادات ← النسخ الاحتياطي */
+.backup-info { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.backup-info p { margin: 0; line-height: 1.7; }
+.backup-info .btn { flex: 1; justify-content: center; }
+.backup-due { color: var(--danger); font-size: 14px; }
+.backup-list { margin: 0; padding: 0 18px 0 0; line-height: 1.8; }

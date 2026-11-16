@@ -1,0 +1,21 @@
+/* Test-yourself (اختبر نفسك). Builds on the overlay of listener.css. */
+.quiz .check-row:disabled { opacity: 0.45; }
+.quiz .check-row .list-main small::before, .listener .check-row .list-main small::before { content: none; }
+.quiz-order { justify-content: flex-start; }
+.quiz-bar { height: 4px; background: var(--line); }
+.listener > .quiz-bar { max-width: none; }
+.quiz-bar > div { height: 100%; background: var(--accent); transition: width 0.3s; }
+
+.quiz-body { justify-content: center; align-items: center; text-align: center; gap: 16px; }
+.quiz-kicker { margin: 0; font-size: 14px; color: var(--muted); }
+.quiz-cue { color: var(--muted); font-size: clamp(19px, 5vw, 24px); line-height: 1.9; }
+.quiz-cue p, .quiz-verse p { margin: 0; }
+.quiz-verse {
+  width: 100%; padding: 18px 14px; border-radius: 16px;
+  background: var(--raised); border: 0.5px solid var(--line);
+  font-size: clamp(22px, 6vw, 30px); line-height: 2;
+}
+.quiz-verse .hidden-half { font-family: inherit; }
+.quiz-twins { display: flex; flex-direction: column; gap: 4px; font-size: 19px; }
+.quiz-twins p { margin: 0; }
+.quiz-line { font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

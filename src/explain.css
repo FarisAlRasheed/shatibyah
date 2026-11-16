@@ -94,3 +94,40 @@
 
 /* The verse bar has one more button: on a phone the buttons share the width. */
 @media (max-width: 420px) { .verse-bar button { min-width: 0; padding-inline: 2px; } }
+
+/* The explanation's own appearance controls */
+.ex-look { display: flex; flex-direction: column; gap: 6px; padding: 8px 2px 4px; cursor: auto; touch-action: auto; }
+.ex-look-row { display: flex; align-items: center; gap: 6px; }
+.ex-look-row button {
+  flex: 1; min-height: 38px; padding: 4px 8px; border: 0.5px solid var(--line); border-radius: 10px;
+  background: var(--surface); color: var(--text); font-size: 15px;
+}
+.ex-look-row button.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.ex-look-row button:disabled { opacity: 0.4; }
+.ex-look-row span { min-width: 30px; text-align: center; font-size: 14px; color: var(--muted); }
+.ex-look-row i { width: 0.5px; height: 22px; background: var(--line); margin: 0 2px; }
+.ex-close.on { background: var(--accent-soft); color: var(--accent); }
+
+/* Highlights */
+.ex-body { -webkit-user-select: text; user-select: text; }
+.ex-hl {
+  background: color-mix(in srgb, var(--hl) 42%, transparent); color: inherit; border-radius: 3px; cursor: pointer;
+  box-decoration-break: clone; -webkit-box-decoration-break: clone;
+}
+.ex-hl.noted { box-shadow: inset 0 -2px 0 var(--hl); }
+.ex-hl.open { background: color-mix(in srgb, var(--hl) 70%, transparent); }
+.ex-hlbar {
+  flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 8px 12px; border-top: 0.5px solid var(--line); background: var(--surface);
+}
+.ex-hlbar-label { font-size: 13px; color: var(--muted); margin-inline-end: 2px; }
+.ex-hlbar i { width: 0.5px; height: 22px; background: var(--line); }
+.ex-hl-dot { width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid var(--raised); background: var(--hl); box-shadow: 0 0 0 0.5px var(--line); }
+.ex-hl-dot.on { box-shadow: 0 0 0 2px var(--text); }
+.ex-hl-btn { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; background: none; color: var(--text); }
+.ex-hl-btn.on { background: var(--accent-soft); color: var(--accent); }
+.ex-hl-note {
+  flex: 1 0 100%; padding: 8px 10px; font: inherit; font-size: 15px; color: var(--text); resize: vertical;
+  border: 0.5px solid var(--line); border-radius: 10px; background: var(--raised);
+}
+.hl-quote { display: block; padding: 2px 6px; border-radius: 4px; background: color-mix(in srgb, var(--hl) 38%, transparent); line-height: 1.8; }

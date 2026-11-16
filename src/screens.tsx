@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { BookOpen, Bookmark, Check, ChevronLeft, Download, FileText, GraduationCap, NotebookPen, Trash2 } from 'lucide-react'
 import { toArabicDigits, toLatinDigits } from './arabic'
 import { APP_VERSION } from './config'
@@ -8,6 +8,9 @@ import type { Bookmarks, Mastered, Notes, Settings, Theme, VerseFont } from './s
 import { matchRanges } from './search'
 import type { Edition, Manifest, PrintedPage, Reciter, Verse } from './types'
 import { VersePreview, type SetState } from './sheets'
+import BackupGroup from './BackupGroup'
+import { MARK_COLORS, markName, markSlot } from './marks'
+import { HL_COLORS, type Highlight } from './highlights'
 
 function Screen({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -27,7 +30,7 @@ function PilotNote({ edition }: { edition: Edition }) {
   )
 }
 
-type IndexView = 'sections' | 'bookmarks' | 'notes' | 'mastered'
+type IndexView = 'sections' | 'bookmarks' | 'notes' | 'highlights' | 'mastered'
 
 /** الفهرس: chapters plus the user's bookmarks, notes and mastered verses. */
 export function IndexScreen(p: {
@@ -37,6 +40,13 @@ export function IndexScreen(p: {
   bookmarks: Bookmarks
   mastered: Mastered
   setBookmarks: SetState<Bookmarks>
+  markNames: string[]
+  /** Verses that carry a sketch note (listed with the text notes). */
+  sketched: number[]
+  /** Highlights in the explanations; tapping one opens its book on its verses. */
+  highlights: Highlight[]
+  bookNames: { id: string; name: string }[]
+  onHighlight: (h: Highlight) => void
   onJump: (n: number) => void
   /** Printed pages, for «الانتقال إلى صفحة»; null hides it. */
   pages?: PrintedPage[] | null
@@ -44,13 +54,14 @@ export function IndexScreen(p: {
   const [view, setView] = useState<IndexView>('sections')
   const counts = {
     bookmarks: Object.keys(p.bookmarks).length,
-    notes: Object.values(p.notes).filter((t) => t.trim()).length,
+    notes: new Set([...Object.entries(p.notes).filter(([, t]) => t.trim()).map(([n]) => +n), ...p.sketched]).size,
     mastered: Object.keys(p.mastered).length,
   }
   const views: [IndexView, string, number?][] = [
     ['sections', 'الأبواب'],
     ['bookmarks', 'العلامات', counts.bookmarks],
     ['notes', 'الملاحظات', counts.notes],
+    ...(p.highlights.length ? [['highlights', 'التظليل', p.highlights.length] as [IndexView, string, number]] : []),
     ['mastered', 'المتقَن', counts.mastered],
   ]
   const here = p.current != null ? sectionOf(p.edition, p.current) : undefined
@@ -237,11 +248,19 @@ function SavedLists(p: {
   bookmarks: Bookmarks
   mastered: Mastered
   setBookmarks: SetState<Bookmarks>
+  markNames: string[]
+  sketched: number[]
+  highlights: Highlight[]
+  bookNames: { id: string; name: string }[]
+  onHighlight: (h: Highlight) => void
   onJump: (n: number) => void
 }) {
   const tab = p.view
   const marks = Object.entries(p.bookmarks).sort((a, b) => +a[0] - +b[0])
-  const notes = Object.entries(p.notes).filter(([, t]) => t.trim()).sort((a, b) => +a[0] - +b[0])
+  // Text notes and sketch notes together: a verse with either is listed once.
+  const notes = [...new Set([...Object.entries(p.notes).filter(([, t]) => t.trim()).map(([n]) => +n), ...p.sketched])]
+    .sort((a, b) => a - b)
+    .map((n) => [n, p.notes[n]?.trim() ? p.notes[n] : ''] as const)
   const done = Object.keys(p.mastered).map(Number).sort((a, b) => a - b)
   const { from, to } = verseRange(p.edition)
   const total = to - from + 1
@@ -255,6 +274,9 @@ function SavedLists(p: {
               <button className="result" onClick={() => p.onJump(+n)}>
                 <VersePreview edition={p.edition} n={+n} />
               </button>
+              <span className="mark-tag">
+                <i className="mark-dot" style={{ background: MARK_COLORS[markSlot(b.color)] }} /> {markName(p.markNames, markSlot(b.color))}
+              </span>
               <input
                 placeholder="عنوان (اختياري)"
                 value={b.label}
@@ -270,12 +292,27 @@ function SavedLists(p: {
           notes.map(([n, t]) => (
             <button key={n} className="result" onClick={() => p.onJump(+n)}>
               <VersePreview edition={p.edition} n={+n} />
-              <p className="note-text">{t}</p>
+              {t && <p className="note-text">{t}</p>}
+              {p.sketched.includes(+n) && <small className="muted">رسم على البيت</small>}
             </button>
           ))
         ) : (
           <Empty icon={<NotebookPen size={26} />}>لا توجد ملاحظات بعد. اضغط على بيت ثم «ملاحظة».</Empty>
         ))}
+      {tab === 'highlights' &&
+        [...p.highlights]
+          .sort((a, b) => a.n - b.n || a.id - b.id)
+          .map((h) => (
+            <button key={h.id} className="result" onClick={() => p.onHighlight(h)}>
+              <span className="hl-quote" style={{ '--hl': HL_COLORS[h.color] ?? HL_COLORS[0] } as CSSProperties}>
+                {h.quote}
+              </span>
+              {h.note && <p className="note-text">{h.note}</p>}
+              <small className="muted">
+                {p.bookNames.find((b) => b.id === h.book)?.name.split(' في ')[0] ?? h.book} · شرح البيت {toArabicDigits(h.n)}
+              </small>
+            </button>
+          ))}
       {tab === 'mastered' && (
         <>
           <div className="progress-card">
@@ -449,7 +486,8 @@ export function ColorsField({ settings, setSettings }: FieldProps) {
  * Optional extras the user can switch off (الإعدادات ← مزايا إضافية).
  * Add a line here when a new optional feature is built; `settings[key]` is its switch.
  */
-export const EXTRAS: [keyof Settings & ('immersive' | 'rail' | 'backPill' | 'curtain' | 'twins' | 'wirdStrip' | 'pageMarks' | 'sidePanel'), string, string][] = [
+export const EXTRAS: [keyof Settings & ('immersive' | 'rail' | 'backPill' | 'curtain' | 'twins' | 'wirdStrip' | 'pageMarks' | 'sidePanel' | 'sketches'), string, string][] = [
+  ['sketches', 'إظهار الرسوم على الأبيات', 'ما رسمته بيدك على الأبيات يظهر فوقها في صفحة القراءة'],
   ['immersive', 'إخفاء الأشرطة أثناء القراءة', 'تختفي عند النزول في الصفحة وتعود عند الصعود أو اللمس'],
   ['rail', 'شريط التنقل السريع', 'اسحبه على حافة الصفحة للانتقال في المتن كله'],
   ['backPill', 'زر الرجوع بعد الانتقال', 'يعيدك إلى موضعك بعد الانتقال من البحث أو الفهرس'],
@@ -459,6 +497,30 @@ export const EXTRAS: [keyof Settings & ('immersive' | 'rail' | 'backPill' | 'cur
   ['pageMarks', 'أرقام صفحات المطبوع', 'خط خفيف حيث تبدأ كل صفحة من الطبعة الورقية، والانتقال إلى صفحة من الفهرس'],
   ['sidePanel', 'اللوحة الجانبية على الشاشات الواسعة', 'تفاصيل البيت المختار بجانب النص: الرموز والكلمات القرآنية والملاحظة'],
 ]
+
+/** الإعدادات ← أسماء العلامات: the user's own name for each of the five mark colours. */
+export function MarkNamesSettings({ names, setNames }: { names: string[]; setNames: (list: string[]) => void }) {
+  return (
+    <>
+      <h2 className="group-title">أسماء العلامات</h2>
+      <div className="group">
+        {MARK_COLORS.map((c, slot) => (
+          <label key={c} className="lis-type-row">
+            <i className="mark-dot big" style={{ background: c }} />
+            <input
+              type="text"
+              value={names[slot] ?? ''}
+              placeholder={markName([], slot)}
+              maxLength={20}
+              aria-label={`اسم العلامة ${toArabicDigits(slot + 1)}`}
+              onChange={(e) => setNames(MARK_COLORS.map((_, i) => (i === slot ? e.target.value : (names[i] ?? ''))))}
+            />
+          </label>
+        ))}
+      </div>
+    </>
+  )
+}
 
 export function SettingsScreen(p: FieldProps & {
   hasColors: boolean
@@ -470,6 +532,8 @@ export function SettingsScreen(p: FieldProps & {
   reciters: { id: string; name: string }[]
   edition: Edition
   reciter: Reciter | null
+  /** The listener-mode groups (slip marks and slip types). */
+  listener?: ReactNode
 }) {
   const { settings: s, setSettings } = p
   return (
@@ -531,12 +595,16 @@ export function SettingsScreen(p: FieldProps & {
         ))}
       </div>
 
+      {p.listener}
+
       {p.reciter && (
         <>
           <h2 className="group-title">الاستماع دون اتصال</h2>
           <Downloads edition={p.edition} reciter={p.reciter} />
         </>
       )}
+
+      <BackupGroup />
 
       <h2 className="group-title">عن التطبيق</h2>
       <div className="group about">
@@ -550,7 +618,7 @@ export function SettingsScreen(p: FieldProps & {
           </p>
         )}
         <PilotNote edition={p.edition} />
-        <p className="muted">الإصدار {APP_VERSION}. الملاحظات والعلامات تُحفظ على هذا الجهاز فقط.</p>
+        <p className="muted">الإصدار {APP_VERSION}. الملاحظات والعلامات تُحفظ على هذا الجهاز فقط؛ احفظ نسخة احتياطية منها من الأعلى.</p>
       </div>
     </Screen>
   )

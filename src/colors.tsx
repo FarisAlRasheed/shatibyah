@@ -1,7 +1,8 @@
-import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { toArabicDigits } from './arabic'
 import { withTatweel } from './kashida'
 import type { ColorMark, EditionColors } from './types'
+import type { SlipType } from './slips'
 
 export const SURAHS = [
   'الفاتحة', 'البقرة', 'آل عمران', 'النساء', 'المائدة', 'الأنعام', 'الأعراف', 'الأنفال', 'التوبة', 'يونس',
@@ -41,9 +42,20 @@ export function HalfText(p: {
   hits?: [number, number][]
   /** Words (by index) drawn as a blank bar of the same width. */
   veil?: (word: number) => boolean
+  /** Words (by index) the listener marked as slipped, with the slip's type. */
+  slips?: Map<number, SlipType>
 }) {
-  const { text, marks, ins, hits, veil } = p
-  if (!marks.length && !hits?.length && !veil) return <>{withTatweel(text, ins)}</>
+  const { text, marks, ins, hits, veil, slips } = p
+  if (!marks.length && !hits?.length && !veil && !slips?.size) return <>{withTatweel(text, ins)}</>
+  /** Wraps a finished word in its slip mark, if it has one. */
+  const marked = (key: number, slip: SlipType | undefined, node: ReactNode) =>
+    slip ? (
+      <span key={key} className="slip-mark" style={{ '--slip': slip.color } as CSSProperties} title={slip.name}>
+        {node}
+      </span>
+    ) : (
+      node
+    )
   const out: ReactNode[] = []
   let last = 0
   let wi = -1
@@ -53,7 +65,8 @@ export function HalfText(p: {
     const inWord = marks.filter((m) => m.s < we && m.e > ws)
     const inHits = hits?.filter(([s, e]) => s < we && e > ws) ?? []
     const veiled = veil?.(wi) ?? false
-    if (!inWord.length && !inHits.length && !veiled) continue
+    const slip = veiled ? undefined : slips?.get(wi)
+    if (!inWord.length && !inHits.length && !veiled && !slip) continue
     if (ws > last) out.push(withTatweel(text, ins, last, ws))
     last = we
     if (veiled) {
@@ -83,7 +96,7 @@ export function HalfText(p: {
     })
     const target = inWord[0]
     out.push(
-      target ? (
+      marked(ws, slip, target ? (
         <span
           key={ws}
           className="cw"
@@ -96,7 +109,7 @@ export function HalfText(p: {
         </span>
       ) : (
         <Fragment key={ws}>{pieces}</Fragment>
-      ),
+      )),
     )
   }
   if (last < text.length) out.push(withTatweel(text, ins, last, text.length))

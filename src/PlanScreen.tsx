@@ -1,6 +1,6 @@
 // الحفظ tab: memorization plan builder, today's wird and progress. Track D owns this file (see SWEEP-PLAN.md).
 // Schedule logic lives in plan.ts; this file is the UI only.
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   AlarmClock,
   CalendarCheck,
@@ -35,6 +35,8 @@ export interface PlanScreenProps {
   /** Open memorization mode on the current verse, without a plan. */
   onFreeSession: () => void
   onJump: (n: number) => void
+  /** Drawn under the title (the listener-mode entry). */
+  extra?: ReactNode
 }
 
 // ---- Arabic wording ----
@@ -112,6 +114,8 @@ export default function PlanScreen(p: PlanScreenProps & { plan: P.Plan | null; s
           {dayLong(today)} · {hijri(today)}
         </small>
       </header>
+
+      {p.extra}
 
       {!plan && <MapCard {...p} inProgress={NO_RANGES} />}
 

@@ -1,7 +1,9 @@
 // The explanation (الشرح) panel, EXPLANATION-PLAN A: a bottom sheet with three heights on a phone that
 // leaves the poem above it usable, or the side panel on a wide screen.
-import { Fragment, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
+import { ChevronDown, ChevronLeft, ChevronRight, MessageSquareText, Trash2, Type, X } from 'lucide-react'
+import { HL_COLORS, coverOf, selectionPlace, type Highlight } from './highlights'
+import type { SetState } from './sheets'
 import { toArabicDigits } from './arabic'
 import { locate, paragraphs, type ExplainGroup, type Located } from './commentary'
 import type { CommentaryNote, Edition, Range } from './types'
@@ -11,6 +13,28 @@ export interface ExplainTarget {
   n: number
   opened: number | null
   key: number
+}
+
+/** How the explanation text looks: its own font, size and line spacing, apart from the poem's. */
+export interface ExplainLook {
+  font: 'ui' | 'amiri' | 'scheherazade' | 'naskh'
+  size: number
+  line: number
+}
+const EX_FONTS: [ExplainLook['font'], string, string][] = [
+  ['ui', 'حديث', 'var(--ui-font)'],
+  ['naskh', 'نسخ', "'Noto Naskh Arabic', serif"],
+  ['amiri', 'أميري', "'Amiri', serif"],
+  ['scheherazade', 'شهرزاد', "'Scheherazade New', serif"],
+]
+const EX_SIZE = { min: 13, max: 26 }
+const EX_LINE = { min: 1.5, max: 2.6 }
+
+/** Highlights of the shown book, and what a tap on one or a new selection does. */
+interface HlCtx {
+  list: Highlight[]
+  open: number | null
+  onOpen: (id: number) => void
 }
 
 /** Sheet heights, as shares of the window. */
@@ -67,7 +91,35 @@ function useWindowHeight() {
   return h
 }
 
-function Paragraphs({ text, breaks, hit }: { text: string[]; breaks: number[]; hit?: Set<number> }) {
+/** One piece of the text, cut where the user's highlights start and end. */
+function Piece({ text, i, hit, hl }: { text: string; i: number; hit: boolean; hl?: HlCtx & { block: string } }) {
+  const mine = hl ? hl.list.filter((h) => h.block === hl.block) : []
+  const cover = mine.length ? coverOf(mine, i, text.length) : []
+  let last = 0
+  const out: ReactNode[] = []
+  for (const [s, e, h] of cover) {
+    if (s > last) out.push(text.slice(last, s))
+    out.push(
+      <mark
+        key={`${h.id}:${s}`}
+        className={`ex-hl${hl!.open === h.id ? ' open' : ''}${h.note ? ' noted' : ''}`}
+        style={{ '--hl': HL_COLORS[h.color] ?? HL_COLORS[0] } as CSSProperties}
+        onClick={() => hl!.onOpen(h.id)}
+      >
+        {text.slice(s, e)}
+      </mark>,
+    )
+    last = e
+  }
+  if (last < text.length) out.push(text.slice(last))
+  return (
+    <span data-piece={i} className={hit ? 'ex-hit' : undefined}>
+      {out}
+    </span>
+  )
+}
+
+function Paragraphs({ text, breaks, hit, hl }: { text: string[]; breaks: number[]; hit?: Set<number>; hl?: HlCtx & { block: string } }) {
   return (
     <>
       {paragraphs(text, breaks).map((para) => (
@@ -75,7 +127,7 @@ function Paragraphs({ text, breaks, hit }: { text: string[]; breaks: number[]; h
           {para.map((i, k) => (
             <Fragment key={i}>
               {k > 0 && ' '}
-              {hit?.has(i) ? <span className="ex-hit">{text[i]}</span> : text[i]}
+              <Piece text={text[i]} i={i} hit={!!hit?.has(i)} hl={hl} />
             </Fragment>
           ))}
         </p>
@@ -97,7 +149,7 @@ function Notes({ notes }: { notes?: CommentaryNote[] }) {
   )
 }
 
-function GroupText({ group, opened }: { group: ExplainGroup; opened: number | null }) {
+function GroupText({ group, opened, hl }: { group: ExplainGroup; opened: number | null; hl: HlCtx }) {
   const [introOpen, setIntroOpen] = useState(false)
   return (
     <>
@@ -108,18 +160,18 @@ function GroupText({ group, opened }: { group: ExplainGroup; opened: number | nu
           </button>
           {introOpen &&
             group.intros.map((b) => (
-              <section key={b.id}>
+              <section key={b.id} data-block={b.id}>
                 {b.title && <h4>{b.title}</h4>}
-                <Paragraphs text={b.text} breaks={b.breaks} />
+                <Paragraphs text={b.text} breaks={b.breaks} hl={{ ...hl, block: b.id }} />
                 <Notes notes={b.notes} />
               </section>
             ))}
         </div>
       )}
       {group.blocks.map((b) => (
-        <section key={b.id} className="ex-block">
+        <section key={b.id} className="ex-block" data-block={b.id}>
           {group.blocks.length > 1 && <h4>شرح {verses(b.from, b.to)}</h4>}
-          <Paragraphs text={b.text} breaks={b.breaks} hit={opened != null ? new Set(b.parts?.[opened] ?? []) : undefined} />
+          <Paragraphs text={b.text} breaks={b.breaks} hit={opened != null ? new Set(b.parts?.[opened] ?? []) : undefined} hl={{ ...hl, block: b.id }} />
           <Notes notes={b.notes} />
         </section>
       ))}
@@ -140,6 +192,10 @@ export default function ExplainPanel(p: {
   /** Show the group that starts at verse n (previous / next). */
   onGo: (n: number) => void
   onClose: () => void
+  look: ExplainLook
+  onLook: (patch: Partial<ExplainLook>) => void
+  highlights: Highlight[]
+  setHighlights: SetState<{ list: Highlight[] }>
 }) {
   const { edition, bookId, target, side, onGroup, onClose } = p
   const [found, setFound] = useState<{ key: string; at: Located } | null>(null)
@@ -250,6 +306,46 @@ export default function ExplainPanel(p: {
     addEventListener('pointercancel', end)
   }
 
+  // ---- Appearance and highlights ----
+  const [tools, setTools] = useState(false)
+  const [sel, setSel] = useState<ReturnType<typeof selectionPlace>>(null)
+  const [openHl, setOpenHl] = useState<number | null>(null)
+  const [noting, setNoting] = useState(false)
+  const mine = p.highlights.filter((h) => h.book === bookId)
+  const opened = mine.find((h) => h.id === openHl) ?? null
+  useEffect(() => {
+    setOpenHl(null)
+    setNoting(false)
+  }, [groupKey])
+  // The selection inside the explanation text; it lingers a moment after it collapses, so a tap on a colour still finds it.
+  useEffect(() => {
+    let timer = 0
+    const onSel = () => {
+      clearTimeout(timer)
+      const place = selectionPlace()
+      const inside = place && body.current?.contains(getSelection()!.anchorNode)
+      if (inside) {
+        setSel(place)
+        setOpenHl(null)
+      } else timer = window.setTimeout(() => setSel(null), 250)
+    }
+    document.addEventListener('selectionchange', onSel)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('selectionchange', onSel)
+    }
+  }, [])
+  const addHighlight = (color: number) => {
+    if (!sel || !group) return
+    p.setHighlights((s) => ({ list: [...s.list, { id: Date.now(), book: bookId, n: group.from, ...sel, color, note: '' }] }))
+    getSelection()?.removeAllRanges()
+    setSel(null)
+  }
+  const editHighlight = (id: number, patch: Partial<Highlight>) => p.setHighlights((s) => ({ list: s.list.map((h) => (h.id === id ? { ...h, ...patch } : h)) }))
+  const size = (d: number) => p.onLook({ size: Math.max(EX_SIZE.min, Math.min(EX_SIZE.max, p.look.size + d)) })
+  const line = (d: number) => p.onLook({ line: Math.max(EX_LINE.min, Math.min(EX_LINE.max, Math.round((p.look.line + d) * 100) / 100)) })
+  const keep = (e: ReactPointerEvent) => e.preventDefault() // a tap on the bar must not drop the selection
+
   const pages = group ? [...new Set(group.blocks.map((b) => b.page))] : []
   const head = (
     <header
@@ -280,18 +376,53 @@ export default function ExplainPanel(p: {
             </button>
           ))}
         </div>
+        <button className={`icon-btn ex-close${tools ? ' on' : ''}`} onClick={() => setTools((x) => !x)} aria-label="مظهر الشرح" aria-expanded={tools}>
+          <Type size={19} />
+        </button>
         <button className="icon-btn ex-close" onClick={onClose} aria-label="إغلاق الشرح">
           <X size={20} />
         </button>
       </div>
       <p className="ex-title">{group ? `شرح ${verses(group.from, group.to)}` : at ? `البيت ${toArabicDigits(target.n)}` : ' '}</p>
+      {tools && (
+        <div className="ex-look" onPointerDown={(e) => e.stopPropagation()}>
+          <div className="ex-look-row">
+            <button onClick={() => size(-1)} disabled={p.look.size <= EX_SIZE.min} aria-label="تصغير الخط">
+              أ−
+            </button>
+            <span>{toArabicDigits(p.look.size)}</span>
+            <button onClick={() => size(1)} disabled={p.look.size >= EX_SIZE.max} aria-label="تكبير الخط">
+              أ+
+            </button>
+            <i />
+            <button onClick={() => line(-0.15)} disabled={p.look.line <= EX_LINE.min} aria-label="تقريب الأسطر">
+              ≡−
+            </button>
+            <button onClick={() => line(0.15)} disabled={p.look.line >= EX_LINE.max} aria-label="تبعيد الأسطر">
+              ≡+
+            </button>
+          </div>
+          <div className="ex-look-row">
+            {EX_FONTS.map(([id, label, family]) => (
+              <button key={id} className={p.look.font === id ? 'on' : ''} style={{ fontFamily: family }} aria-pressed={p.look.font === id} onClick={() => p.onLook({ font: id })}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </header>
   )
 
   const content = (
     <>
       {head}
-      <div className="ex-body" dir="rtl" ref={body}>
+      <div
+        className="ex-body"
+        dir="rtl"
+        ref={body}
+        style={{ fontFamily: EX_FONTS.find((f) => f[0] === p.look.font)?.[2], fontSize: p.look.size, lineHeight: p.look.line }}
+      >
         {failed ? (
           <p className="muted">تعذّر تحميل الشرح.</p>
         ) : !at ? (
@@ -299,9 +430,54 @@ export default function ExplainPanel(p: {
         ) : !group ? (
           <p className="muted">لا يوجد شرح لهذا البيت في هذا الكتاب.</p>
         ) : (
-          <GroupText key={groupKey} group={group} opened={target.opened} />
+          <GroupText key={groupKey} group={group} opened={target.opened} hl={{ list: mine, open: openHl, onOpen: (id) => { if (!selectionPlace()) { setOpenHl(id); setNoting(false) } } }} />
         )}
       </div>
+      {(sel || opened) && (
+        <div className="ex-hlbar" onPointerDown={keep}>
+          <span className="ex-hlbar-label">{opened ? 'التظليل' : 'تظليل'}</span>
+          {HL_COLORS.map((c, i) => (
+            <button
+              key={c}
+              className={`ex-hl-dot${opened?.color === i ? ' on' : ''}`}
+              style={{ '--hl': c } as CSSProperties}
+              aria-label={`لون ${toArabicDigits(i + 1)}`}
+              onClick={() => (opened ? editHighlight(opened.id, { color: i }) : addHighlight(i))}
+            />
+          ))}
+          {opened && (
+            <>
+              <i />
+              <button className={`ex-hl-btn${noting || opened.note ? ' on' : ''}`} onClick={() => setNoting((x) => !x)} aria-label="ملاحظة على التظليل" aria-expanded={noting}>
+                <MessageSquareText size={19} />
+              </button>
+              <button
+                className="ex-hl-btn"
+                aria-label="حذف التظليل"
+                onClick={() => {
+                  p.setHighlights((s) => ({ list: s.list.filter((h) => h.id !== opened.id) }))
+                  setOpenHl(null)
+                }}
+              >
+                <Trash2 size={19} />
+              </button>
+              <button className="ex-hl-btn" aria-label="إغلاق" onClick={() => setOpenHl(null)}>
+                <X size={19} />
+              </button>
+            </>
+          )}
+          {opened && (noting || opened.note) && (
+            <textarea
+              className="ex-hl-note"
+              placeholder="ملاحظة على هذا التظليل"
+              value={opened.note}
+              rows={2}
+              onPointerDown={(e) => e.stopPropagation()}
+              onChange={(e) => editHighlight(opened.id, { note: e.target.value })}
+            />
+          )}
+        </div>
+      )}
       <footer className="ex-foot">
         <button disabled={ends?.prev == null} onClick={() => ends?.prev != null && p.onGo(ends.prev)}>
           <ChevronRight size={18} /> السابق

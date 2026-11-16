@@ -49,7 +49,7 @@
   color-scheme: dark;
 }
 :root {
-  --ui-font: -apple-system, 'SF Arabic', 'Segoe UI', Tahoma, sans-serif;
+  --ui-font: 'IBM Plex Sans Arabic', -apple-system, 'SF Arabic', 'Segoe UI', Tahoma, sans-serif;
   --dock-h: 64px;
   --player-h: 0px;
 }

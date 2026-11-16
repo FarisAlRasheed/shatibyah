@@ -35,6 +35,8 @@ export function useStored<T extends object>(key: string, fallback: T) {
 export interface Bookmark {
   label: string
   at: number
+  /** Colour slot 0–4 (see marks.ts); absent on bookmarks saved before colours, which count as 0. */
+  color?: number
 }
 
 export type Notes = Record<number, string>
@@ -72,6 +74,11 @@ export interface Settings {
   wirdStrip: boolean // today's wird at the top of the reader
   pageMarks: boolean // printed page markers
   sidePanel: boolean // verse details beside the text on wide screens
+  sketches: boolean // draw the user's sketch notes over the verses
+  slipMarks: boolean // draw listener-mode slips on the words in the reader
+  exFont: 'ui' | VerseFont // the explanation text's own font, size and line spacing
+  exSize: number
+  exLine: number
   commentary: string // last commentary book chosen in the explanation panel
 }
 

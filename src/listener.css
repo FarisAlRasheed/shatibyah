@@ -1,0 +1,106 @@
+/* Listener mode (التسميع على مستمع) */
+.listener {
+  position: fixed; inset: 0; z-index: 30;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+  animation: rise 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.listener > * { width: 100%; max-width: 640px; margin-inline: auto; }
+.lis-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: calc(env(safe-area-inset-top) + 8px) 14px 8px;
+}
+.lis-top .btn { padding: 9px 16px; }
+.lis-title { display: flex; flex-direction: column; align-items: center; font-weight: 600; text-align: center; }
+.listener.run .lis-title { align-items: flex-start; }
+.lis-title small { font-weight: 400; font-size: 13px; color: var(--muted); }
+.lis-spacer { width: 40px; }
+.lis-body { flex: 1; overflow-y: auto; padding: 4px 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+.lis-hint { line-height: 1.7; margin: 0; }
+.lis-icon { color: var(--accent); flex: none; }
+
+/* Setup */
+.lis-range { display: flex; gap: 12px; padding: 12px 14px; }
+.lis-field { flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+.lis-field input {
+  width: 100%; padding: 10px; font-size: 20px; text-align: center; color: var(--text);
+  border: 0.5px solid var(--line); border-radius: 10px; background: var(--surface);
+}
+.listener .btn:disabled { opacity: 0.45; }
+.lis-bad { color: var(--danger); }
+.lis-good { color: var(--accent); }
+
+/* Verses with tappable words */
+.lis-verse {
+  display: flex; gap: 4px; align-items: flex-start;
+  padding: 10px 8px 12px; background: var(--raised); border: 0.5px solid var(--line); border-radius: 14px;
+}
+.lis-num { flex: none; min-width: 26px; padding-top: 12px; font-size: 13px; color: var(--muted); text-align: center; }
+.lis-text { flex: 1; display: flex; flex-direction: column; gap: 4px; font-size: clamp(20px, 5.6vw, 26px); line-height: 1.9; }
+.lis-half { display: flex; flex-wrap: wrap; gap: 2px 2px; }
+.lis-half.b { justify-content: flex-end; }
+.lis-word {
+  font: inherit; color: inherit; background: none; border: 0; margin: 0;
+  padding: 0 4px; border-radius: 9px; min-height: 44px; line-height: inherit;
+}
+button.lis-word:active { background: var(--surface); }
+.lis-word.slip {
+  background: color-mix(in srgb, var(--slip) 26%, transparent);
+  box-shadow: inset 0 -3px 0 var(--slip);
+}
+span.lis-word { min-height: 0; padding: 0 5px; }
+
+/* Slip types bar */
+.lis-types {
+  display: flex; gap: 8px; overflow-x: auto;
+  padding: 10px 14px calc(env(safe-area-inset-bottom) + 12px);
+  border-top: 0.5px solid var(--line); background: var(--raised);
+}
+.listener > .lis-types, .listener > .lis-actions { max-width: none; }
+.lis-types { justify-content: safe center; }
+.lis-type {
+  flex: none; display: inline-flex; align-items: center; gap: 8px;
+  min-height: 46px; padding: 8px 12px; border-radius: 999px;
+  border: 1.5px solid var(--line); background: none; color: var(--text); font-size: 14px;
+}
+.lis-type.on { border-color: var(--slip); background: color-mix(in srgb, var(--slip) 16%, transparent); font-weight: 600; }
+.lis-type i, .lis-counts i { width: 14px; height: 14px; border-radius: 50%; background: var(--slip); flex: none; }
+
+/* Report */
+.lis-summary { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 0 2px; color: var(--muted); }
+.lis-summary strong { font-size: 26px; color: var(--text); }
+.lis-counts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.lis-counts li {
+  display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px;
+  background: var(--raised); border: 0.5px solid var(--line); font-size: 14px;
+}
+.lis-actions {
+  display: flex; gap: 10px; justify-content: center;
+  padding: 10px 14px calc(env(safe-area-inset-bottom) + 12px); border-top: 0.5px solid var(--line); background: var(--raised);
+}
+.lis-actions .btn { flex: 1; max-width: 300px; }
+.lis-confirm {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 14px;
+  background: var(--raised); border: 0.5px solid var(--line); border-radius: 14px;
+}
+.lis-confirm span { flex: 1; min-width: 160px; }
+.lis-confirm .btn { padding: 8px 14px; font-size: 14px; }
+
+/* Settings: slip types */
+.lis-type-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; }
+.lis-type-row input[type=color] { flex: none; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: none; }
+.lis-type-row input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+.lis-type-row input[type=color]::-webkit-color-swatch { border: 0.5px solid var(--line); border-radius: 50%; }
+.lis-type-row input[type=text] {
+  flex: 1; min-width: 0; padding: 8px 10px; font-size: 16px; color: var(--text);
+  border: 0.5px solid var(--line); border-radius: 10px; background: var(--surface);
+}
+.lis-type-row .icon-btn:disabled { opacity: 0.3; }
+.lis-clear .list-main { color: var(--danger); }
+
+/* Slip marks in the reader */
+.verse .slip-mark {
+  background: color-mix(in srgb, var(--slip) 24%, transparent);
+  box-shadow: inset 0 -2px 0 var(--slip);
+  border-radius: 5px;
+}

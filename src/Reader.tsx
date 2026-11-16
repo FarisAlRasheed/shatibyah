@@ -1,5 +1,8 @@
+import type { SlipType, VerseSlips } from './slips'
 import { Fragment, memo, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
-import { Bookmark, Check, Pencil } from 'lucide-react'
+import { Bookmark, Check, Pencil, PenLine } from 'lucide-react'
+import { MARK_COLORS, markSlot } from './marks'
+import { SketchView, type Sketch, type Sketches } from './Sketch'
 import { toArabicDigits } from './arabic'
 import { HalfText, veilFor, type OpenMark } from './colors'
 import { DEFAULT_HALF_EM, type Fits, type HalfFit } from './kashida'
@@ -15,6 +18,11 @@ interface Props {
   playing: number | null
   notes: Notes
   bookmarks: Bookmarks
+  /** Sketch notes by verse, and whether they are drawn (the small pen icon shows either way). */
+  sketches?: Sketches
+  showSketches?: boolean
+  /** The verse being drawn on: its saved sketch is hidden while the editor shows the live one. */
+  drawing?: number | null
   mastered: Mastered
   scrollTarget: { n: number; key: number } | null
   colors: EditionColors | null // null hides the colours
@@ -29,6 +37,8 @@ interface Props {
   hits: Map<number, VerseHits> | null
   /** «إخفاء تدريجي»: the verse being repeated and the share of its words to hide now. */
   veil?: { n: number; share: number } | null
+  /** Listener-mode slips to draw on the words, by verse. */
+  slips?: Map<number, VerseSlips> | null
   /** The small action bar, drawn under verse `n`. */
   bar?: { n: number; el: ReactNode } | null
   /** Range being picked in the text: tinted from `from` to `to` (only `from` before the end is chosen). */
@@ -229,12 +239,16 @@ export default function Reader(p: Props) {
             isPlaying={p.playing === v.n}
             hasNote={!!p.notes[v.n]}
             hasBookmark={!!p.bookmarks[v.n]}
+            mark={p.bookmarks[v.n] ? markSlot(p.bookmarks[v.n].color) : undefined}
+            sketch={p.sketches?.[v.n]}
+            showSketch={!!p.showSketches && p.drawing !== v.n}
             isMastered={!!p.mastered[v.n]}
             marks={p.colors?.verses[v.n] ?? NO_MARKS}
             fitA={p.fits?.a[i]}
             fitB={p.fits?.b[i]}
             hits={p.hits?.get(v.n)}
             veil={p.veil?.n === v.n ? p.veil.share : 0}
+            slips={p.slips?.get(v.n)}
             curtain={!!p.curtain && !p.curtain.revealed.has(v.n)}
             pick={roleIn(p.pick, v.n, true)}
             run={roleIn(p.run, v.n, false)}
@@ -273,6 +287,10 @@ interface RowProps {
   isPlaying: boolean
   hasNote: boolean
   hasBookmark: boolean
+  /** Mark colour slot; the whole verse is tinted with it. */
+  mark?: number
+  sketch?: Sketch
+  showSketch?: boolean
   isMastered: boolean
   marks: ColorMark[]
   fitA?: HalfFit
@@ -280,6 +298,7 @@ interface RowProps {
   hits?: VerseHits
   /** Share of the words to veil (0 = none). */
   veil?: number
+  slips?: VerseSlips
   /** Second half veiled (recitation curtain). */
   curtain?: boolean
   /** Part of the range being picked. */
@@ -309,10 +328,11 @@ function Half(p: {
   hits?: [number, number][]
   veil?: number
   curtain?: boolean
+  slips?: Map<number, SlipType>
   onMark: (m: OpenMark) => void
 }) {
   const veil = p.curtain ? ALL_WORDS : p.veil ? veilFor(p.text, p.veil) : undefined
-  const body = <HalfText text={p.text} marks={p.marks.filter((m) => m.h === p.h)} onMark={p.onMark} ins={p.fit?.ins} hits={p.hits} veil={veil} />
+  const body = <HalfText text={p.text} marks={p.marks.filter((m) => m.h === p.h)} onMark={p.onMark} ins={p.fit?.ins} hits={p.hits} veil={veil} slips={p.slips} />
   const s = p.fit?.squeeze ?? 1
   return (
     <span className={`half ${p.h}`}>
@@ -342,22 +362,24 @@ function VerseNumber({ n, round, times }: { n: number; round?: number; times?: n
 const VerseRow = memo(function VerseRow(p: RowProps) {
   const cls = `verse${p.isSelected ? ' selected' : ''}${p.isPlaying ? ' playing' : ''}${p.pick ? ` pick pick-${p.pick}` : ''}${p.run ? ` run-${p.run}` : ''}${p.explain ? ` ex ex-${p.explain}${p.explainHere ? ' ex-here' : ''}` : ''}`
   return (
-    <article id={p.sample ? undefined : `v-${p.n}`} className={cls}>
+    <article id={p.sample ? undefined : `v-${p.n}`} className={`${cls}${p.mark != null ? ' marked' : ''}`} style={p.mark != null ? ({ '--mark': MARK_COLORS[p.mark] } as CSSProperties) : undefined}>
       <button className="verse-body" onClick={() => p.onTap(p.n)}>
         <span className="vnum-col">
           <VerseNumber n={p.n} round={p.round} times={p.times} />
-          {(p.hasBookmark || p.hasNote || p.isMastered) && (
+          {(p.hasBookmark || p.hasNote || p.isMastered || p.sketch) && (
             <span className="marks">
               {p.hasBookmark && <Bookmark size={12} aria-label="علامة" />}
               {p.hasNote && <Pencil size={12} aria-label="ملاحظة" />}
+              {p.sketch && <PenLine size={12} aria-label="رسم" />}
               {p.isMastered && <Check size={12} aria-label="متقَن" />}
             </span>
           )}
         </span>
         <span className="halves verse-text">
-          <Half h="a" text={p.a} marks={p.marks} fit={p.fitA} hits={p.hits?.a} veil={p.veil} onMark={p.onMark} />
-          <Half h="b" text={p.b} marks={p.marks} fit={p.fitB} hits={p.hits?.b} veil={p.veil} curtain={p.curtain} onMark={p.onMark} />
+          <Half h="a" text={p.a} marks={p.marks} fit={p.fitA} hits={p.hits?.a} veil={p.veil} slips={p.slips?.a} onMark={p.onMark} />
+          <Half h="b" text={p.b} marks={p.marks} fit={p.fitB} hits={p.hits?.b} veil={p.veil} curtain={p.curtain} slips={p.slips?.b} onMark={p.onMark} />
         </span>
+        {p.sketch && p.showSketch && <SketchView sketch={p.sketch} />}
       </button>
       {p.below}
     </article>

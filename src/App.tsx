@@ -15,7 +15,7 @@ import Memorize from './Memorize'
 import './flow.css'
 import './chrome.css'
 import { Drawer, FlagSheet, NoteSheet, RepeatSheet, VerseSheet } from './sheets'
-import { IndexScreen, SettingsScreen } from './screens'
+import { IndexScreen, MarkNamesSettings, SettingsScreen } from './screens'
 import PlanScreen, { usePlan, useToday } from './PlanScreen'
 import { todayState } from './plan'
 import { FindBar, FindList, useFind, type FindState } from './Find'
@@ -28,6 +28,14 @@ import { buildTwins } from './twins'
 import WirdStrip from './WirdStrip'
 import SidePanel, { useWide } from './SidePanel'
 import ExplainPanel, { type ExplainTarget } from './Explain'
+import Listener, { ListenerCard, ListenerSettings } from './Listener'
+import { DEFAULT_SLIP_TYPES, readerMarks, type SlipLog, type SlipTypesStore } from './slips'
+import Quiz, { PracticeGroup, QuizRow } from './Quiz'
+import { reviewDue } from './review'
+import { DEFAULT_MARK_NAMES, markSlot, type MarkNames } from './marks'
+import { SketchEditor, type Sketches } from './Sketch'
+import type { HighlightStore } from './highlights'
+import './listener.css'
 import './explain.css'
 import './extras.css'
 
@@ -89,6 +97,11 @@ const defaultSettings: Settings = {
   wirdStrip: true,
   pageMarks: false,
   sidePanel: true,
+  sketches: true,
+  slipMarks: true,
+  exFont: 'ui',
+  exSize: 16,
+  exLine: 1.95,
   commentary: '',
 }
 const defaultRepeat: RepeatSettings = {
@@ -146,6 +159,15 @@ export default function App() {
   const [bookmarks, setBookmarks] = useStored<Bookmarks>('bookmarks', {})
   const [mastered, setMastered] = useStored<Mastered>('mastered', {})
   const [weak, setWeak] = useStored<Weak>('weak', {})
+  const [slipTypes, setSlipTypes] = useStored<SlipTypesStore>('slipTypes', { list: DEFAULT_SLIP_TYPES })
+  const [slipLog, setSlipLog] = useStored<SlipLog>('slipLog', { sessions: [] })
+  const [listening, setListening] = useState(false)
+  const [markNames, setMarkNames] = useStored<MarkNames>('markNames', { list: DEFAULT_MARK_NAMES })
+  const [sketches, setSketches] = useStored<Sketches>('sketches', {})
+  const [highlights, setHighlights] = useStored<HighlightStore>('highlights', { list: [] })
+  /** The verse being drawn on (sketch note). */
+  const [drawing, setDrawing] = useState<number | null>(null)
+  const [quizzing, setQuizzing] = useState(false)
   const [find, setFind] = useState<FindState | null>(null)
   // Where the reader was before a jump, for the «رجوع» pill.
   const [back, setBack] = useState<number | null>(null)
@@ -412,6 +434,12 @@ export default function App() {
   const tap = useRef((_n: number) => {})
   const onTap = useCallback((n: number) => tap.current(n), [])
 
+  // Listener mode: the slips drawn on the reader's words.
+  const slipMarks = useMemo(
+    () => (settings.slipMarks && edition ? readerMarks(slipLog.sessions, slipTypes.list, edition.id) : null),
+    [settings.slipMarks, slipLog, slipTypes, edition],
+  )
+
   if (error) return <div className="center-msg">تعذّر تحميل البيانات: {error}</div>
   if (!manifest || !edition) return <div className="center-msg">جارٍ التحميل…</div>
 
@@ -421,6 +449,40 @@ export default function App() {
   const hasAudio = !!reciter
 
   const togglePlay = () => (active ? player.toggle() : startRepeat())
+
+  /** «أتقنته» / «لم أتقنه» for a verse, from memorization mode or a test. */
+  const grade = (n: number, yes: boolean) => {
+    setMastered((m) => {
+      const next = { ...m }
+      if (yes) next[n] = Date.now()
+      else delete next[n]
+      return next
+    })
+    // «لم أتقنه» marks the verse as weak, for the memorization map and the review list.
+    if (!yes) setWeak((w) => ({ ...w, [n]: { count: (w[n]?.count ?? 0) + 1, at: Date.now() } }))
+  }
+  const span0 = verseRange(edition)
+  const dueCount = reviewDue(weak, mastered, (n) => n >= span0.from && n <= span0.to).length
+  // Listener mode: repeating only the slipped verses.
+  const markedSessions = edition ? slipLog.sessions.filter((s) => s.shown && s.editionId === edition.id && s.slips.length > 0).length : 0
+  const repeatVerses = (verses: number[]) => {
+    const queue = verses.map((n) => timings.get(n)).filter((t): t is VerseTiming => !!t)
+    if (!queue.length) return
+    setListening(false)
+    goTab('read')
+    setSelected(queue[0].n)
+    setFollowing(true)
+    setRun(null)
+    player.start(queue, { verseTimes: Math.max(1, repeat.verseTimes), rangeTimes: 1, pause: repeat.pause, speed: repeat.speed, echo: repeat.echo }, 0)
+  }
+  /** Mark verse n with a colour slot, or clear its mark; the mark's title is kept when only the colour changes. */
+  const setMark = (n: number, slot: number | null) =>
+    setBookmarks((b) => {
+      const next = { ...b }
+      if (slot == null) delete next[n]
+      else next[n] = { label: next[n]?.label ?? '', at: next[n]?.at ?? Date.now(), color: slot }
+      return next
+    })
   const toggleBookmark = (n: number) =>
     setBookmarks((b) => {
       const next = { ...b }
@@ -528,6 +590,15 @@ export default function App() {
             bookmarks={bookmarks}
             mastered={mastered}
             setBookmarks={setBookmarks}
+            markNames={markNames.list}
+            sketched={Object.keys(sketches).map(Number)}
+            highlights={highlights.list}
+            bookNames={books}
+            onHighlight={(h) => {
+              setSettings((s) => ({ ...s, commentary: h.book }))
+              jumpTo(h.n)
+              setExplain({ n: h.n, opened: null, key: Date.now() })
+            }}
             onJump={jumpTo}
             pages={settings.pageMarks ? pages : null}
           />
@@ -591,13 +662,34 @@ export default function App() {
     return null
   })()
 
+  // Sketch note: the drawing tools sit under the verse, where the action bar was.
+  const sketchEl =
+    drawing != null && tab === 'read' && !panel && !memorize ? (
+      <SketchEditor
+        key={drawing}
+        sketch={sketches[drawing]}
+        onCancel={() => setDrawing(null)}
+        onSave={(strokes) => {
+          setSketches((all) => {
+            const next = { ...all }
+            if (strokes.length) next[drawing] = { strokes, at: Date.now() }
+            else delete next[drawing]
+            return next
+          })
+          setDrawing(null)
+        }}
+      />
+    ) : null
+
   const barEl =
     bar != null && tab === 'read' && !panel && !pick && !memorize ? (
       <VerseBar
         key={bar}
         n={bar}
         canPlay={hasAudio && timings.has(bar)}
-        bookmarked={!!bookmarks[bar]}
+        mark={bookmarks[bar] ? markSlot(bookmarks[bar].color) : null}
+        markNames={markNames.list}
+        hasSketch={!!sketches[bar]}
         twins={settings.twins ? (twins.get(bar)?.length ?? 0) : 0}
         onPlayFrom={() => {
           setBar(null)
@@ -607,7 +699,11 @@ export default function App() {
           setBar(null)
           setPick({ anchor: bar, end: null })
         }}
-        onBookmark={() => toggleBookmark(bar)}
+        onMark={(slot) => setMark(bar, slot)}
+        onSketch={() => {
+          setBar(null)
+          setDrawing(bar)
+        }}
         onNote={() => {
           setBar(null)
           setPanel({ type: 'note', n: bar })
@@ -750,6 +846,9 @@ export default function App() {
           playing={active ? play.verse : null}
           notes={notes}
           bookmarks={bookmarks}
+          sketches={sketches}
+          showSketches={settings.sketches}
+          drawing={drawing}
           mastered={mastered}
           scrollTarget={scrollTarget}
           colors={settings.colors ? (colors ?? null) : null}
@@ -759,7 +858,8 @@ export default function App() {
           look={`${settings.lineHeight}|${settings.font}|${settings.numberStyle}|${settings.colors}|${settings.pageMarks}`}
           hits={find ? results.hits : null}
           veil={repeat.fade && active && play.verse != null ? { n: play.verse, share: fadeShare(play) } : null}
-          bar={barEl ? { n: bar!, el: barEl } : null}
+          slips={slipMarks}
+          bar={sketchEl ? { n: drawing!, el: sketchEl } : barEl ? { n: bar!, el: barEl } : null}
           pick={span}
           run={active ? run : null}
           count={active && play.verse != null && play.verseTimes !== 1 ? { n: play.verse, round: play.verseRound, times: play.verseTimes } : null}
@@ -784,6 +884,12 @@ export default function App() {
           onStartSession={startSession}
           onFreeSession={() => setMemorize(true)}
           onJump={jumpTo}
+          extra={
+            <PracticeGroup>
+              <QuizRow due={dueCount} onOpen={() => { if (active) player.stop(); setQuizzing(true) }} />
+              <ListenerCard sessions={slipLog.sessions.filter((s) => s.editionId === edition.id).length} onOpen={() => { if (active) player.stop(); setListening(true) }} />
+            </PracticeGroup>
+          }
         />
       )}
       {tab === 'settings' && (
@@ -798,6 +904,19 @@ export default function App() {
           reciters={reciters}
           edition={edition}
           reciter={reciter}
+          listener={
+            <>
+            <MarkNamesSettings names={markNames.list} setNames={(list) => setMarkNames({ list })} />
+            <ListenerSettings
+              types={slipTypes.list}
+              setTypes={(list) => setSlipTypes({ list })}
+              showMarks={settings.slipMarks}
+              setShowMarks={(slipMarks) => setSettings((x) => ({ ...x, slipMarks }))}
+              marked={markedSessions}
+              onClearMarks={() => setSlipLog((l) => ({ sessions: l.sessions.map((s) => ({ ...s, shown: false })) }))}
+            />
+            </>
+          }
         />
       )}
 
@@ -812,6 +931,10 @@ export default function App() {
           onGroup={setExplainGroup}
           onGo={(n) => setExplain({ n, opened: null, key: Date.now() })}
           onClose={closeExplain}
+          look={{ font: settings.exFont, size: settings.exSize, line: settings.exLine }}
+          onLook={(l) => setSettings((s) => ({ ...s, exFont: l.font ?? s.exFont, exSize: l.size ?? s.exSize, exLine: l.line ?? s.exLine }))}
+          highlights={highlights.list}
+          setHighlights={setHighlights}
         />
       )}
       {showSide && !explaining && (
@@ -897,16 +1020,45 @@ export default function App() {
           onSpeed={(speed) => setRepeat((r) => ({ ...r, speed }))}
           onFade={() => setRepeat((r) => ({ ...r, fade: !r.fade }))}
           onMastered={(n, yes) => {
-            setMastered((m) => {
-              const next = { ...m }
-              if (yes) next[n] = Date.now()
-              else delete next[n]
-              return next
-            })
-            // «لم أتقنه» marks the verse as weak, for the memorization map.
-            if (!yes) setWeak((w) => ({ ...w, [n]: { count: (w[n]?.count ?? 0) + 1, at: Date.now() } }))
+            grade(n, yes)
             if (yes) step(1)
           }}
+        />
+      )}
+
+      {quizzing && (
+        <Quiz
+          edition={edition}
+          mastered={mastered}
+          weak={weak}
+          twins={twins}
+          at={selected ?? verseRange(edition).from}
+          wird={wirdDue}
+          onGrade={grade}
+          onJump={jumpTo}
+          onClose={() => setQuizzing(false)}
+        />
+      )}
+
+      {listening && (
+        <Listener
+          edition={edition}
+          types={slipTypes.list}
+          log={slipLog}
+          setLog={setSlipLog}
+          at={selected ?? verseRange(edition).from}
+          wird={wirdDue}
+          hasAudio={hasAudio}
+          onFinish={(verses) =>
+            verses.length &&
+            setWeak((w) => {
+              const next = { ...w }
+              for (const n of verses) next[n] = { count: (next[n]?.count ?? 0) + 1, at: Date.now() }
+              return next
+            })
+          }
+          onRepeat={repeatVerses}
+          onClose={() => setListening(false)}
         />
       )}
 
