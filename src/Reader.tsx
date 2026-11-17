@@ -7,7 +7,7 @@ import { toArabicDigits } from './arabic'
 import { HalfText, veilFor, type OpenMark } from './colors'
 import { DEFAULT_HALF_EM, type Fits, type HalfFit } from './kashida'
 import type { Bookmarks, Mastered, Notes, VerseLayout } from './store'
-import { anchorAt, clampSize, holdAnchor, layoutFor, sizeLimits, usePinch, type Anchor } from './zoom'
+import { anchorAt, clampSize, GUESS, holdAnchor, layoutFor, measureRoom, sizeLimits, usePinch, type Anchor, type Room } from './zoom'
 import type { ColorMark, Edition, EditionColors, Section } from './types'
 
 const NO_MARKS: ColorMark[] = []
@@ -68,19 +68,75 @@ export interface VerseHits {
   b: [number, number][]
 }
 
-/** The room a verse list has: its text width, the shared half-line width, and the size limits that follow. */
-function useVerseBox(ref: RefObject<HTMLElement | null>, fits: Fits | null, pref: VerseLayout) {
-  const [width, setWidth] = useState(0)
+/** The room a verse list has: its text width, the shared half-line width, and the size limits that follow.
+ *  Measured from the page (zoom.ts `measureRoom`) on resize and whenever `look` changes. */
+function useVerseBox(ref: RefObject<HTMLElement | null>, fits: Fits | null, pref: VerseLayout, look: string, isReader: boolean) {
+  const [room, setRoom] = useState<Room | null>(null)
+  const read = useRef(() => {})
+  read.current = () => {
+    const el = ref.current
+    const r = el && measureRoom(el, isReader)
+    if (r) setRoom((prev) => (prev && sameRoom(prev, r) ? prev : r))
+  }
   useLayoutEffect(() => {
-    const el = ref.current!
-    const read = () => el.clientWidth > 40 && setWidth(el.clientWidth - 20) // 20 = the list's side padding
-    const ro = new ResizeObserver(read)
-    ro.observe(el)
-    read()
+    const ro = new ResizeObserver(() => read.current())
+    ro.observe(ref.current!)
+    read.current()
     return () => ro.disconnect()
   }, [ref])
+  useLayoutEffect(() => read.current(), [look])
   const half = fits?.width ?? DEFAULT_HALF_EM
-  return { width, half, limits: sizeLimits(width, half, pref) }
+  const width = room?.width ?? 0
+  const g = room?.g ?? GUESS
+  return { width, half, g, limits: sizeLimits(width, half, pref, g) }
+}
+const sameRoom = (a: Room, b: Room) =>
+  Math.abs(a.width - b.width) < 0.5 && Math.abs(a.g.numEm - b.g.numEm) < 0.02 && Math.abs(a.g.gapEm - b.g.gapEm) < 0.01 && Math.abs(a.g.chrome - b.g.chrome) < 0.5
+
+/**
+ * The check after layout: every half-line whose drawn text is wider than its box is squeezed into
+ * it (`--fix` on the half, used by `.fit` in styles.css). The kashida work is measured in a canvas,
+ * and the page can still differ (font hinting, a font that loaded late, a narrow row), so the page
+ * itself has the last word: nothing is cut off and nothing spills out.
+ */
+export function fitHalves(root: ParentNode) {
+  const halves = [...root.querySelectorAll<HTMLElement>('.half')]
+  for (const h of halves) if (h.style.getPropertyValue('--fix')) h.style.removeProperty('--fix')
+  const range = document.createRange()
+  const fix: [HTMLElement, number][] = []
+  for (const h of halves) {
+    const box = h.getBoundingClientRect().width
+    if (!box) continue
+    range.selectNodeContents(h)
+    const drawn = range.getBoundingClientRect().width
+    if (drawn > box + 0.5) fix.push([h, box / drawn])
+  }
+  for (const [h, f] of fix) h.style.setProperty('--fix', (Math.floor(f * 1000) / 1000).toString())
+  return fix.length
+}
+
+/** Runs `fitHalves` over a verse list after each change of `key`, on resize and when a font loads. */
+function useFitCheck(ref: RefObject<HTMLElement | null>, key: string) {
+  const frame = useRef(0)
+  const schedule = useRef(() => {})
+  schedule.current = () => {
+    cancelAnimationFrame(frame.current)
+    frame.current = requestAnimationFrame(() => ref.current && fitHalves(ref.current))
+  }
+  useLayoutEffect(() => {
+    if (ref.current) fitHalves(ref.current)
+  }, [ref, key])
+  useEffect(() => {
+    const again = () => schedule.current()
+    const ro = new ResizeObserver(again)
+    ro.observe(ref.current!)
+    document.fonts?.addEventListener('loadingdone', again)
+    return () => {
+      ro.disconnect()
+      document.fonts?.removeEventListener('loadingdone', again)
+      cancelAnimationFrame(frame.current)
+    }
+  }, [ref])
 }
 
 /** A few real verses drawn exactly as the reader draws them, for the appearance panel. */
@@ -94,14 +150,16 @@ export function VerseSample(p: {
   layout: VerseLayout
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const { width, half, limits } = useVerseBox(ref, p.fits, p.layout)
+  const { width, half, g, limits } = useVerseBox(ref, p.fits, p.layout, '', false)
   const size = width ? clampSize(p.fontSize, limits) : p.fontSize
+  const layout = width ? layoutFor(size, width, half, p.layout, g) : 'stack'
+  useFitCheck(ref, `${size}|${layout}|${half}|${p.fits ? 1 : 0}|${p.from}`)
   const start = Math.max(0, Math.min(p.edition.verses.length - p.count, p.edition.verses.findIndex((v) => v.n >= p.from)))
   return (
     <div
       className="reader sample"
       ref={ref}
-      data-layout={width ? layoutFor(size, width, half, p.layout) : 'stack'}
+      data-layout={layout}
       data-even={p.fits ? 1 : 0}
       style={{ ['--verse-size' as string]: `${size}px`, ['--half-w' as string]: `${half}em` }}
     >
@@ -136,22 +194,38 @@ export default function Reader(p: Props) {
   const ref = useRef<HTMLElement>(null)
 
   // Verse size and layout follow the room there is.
-  const { width, half, limits } = useVerseBox(ref, p.fits, p.layout)
-  const pinched = useRef<number | null>(null) // size shown during a pinch, before it is saved
+  const { width, half, g, limits } = useVerseBox(ref, p.fits, p.layout, p.look, true)
+  const pinched = useRef<number | null>(null) // size laid out after a pinch, before it is saved
+  const zoomBase = useRef(1) // size the text is laid out at while a pinch scales it
   useEffect(() => {
     pinched.current = null
   }, [p.fontSize])
   const size = pinched.current ?? (width ? clampSize(p.fontSize, limits) : p.fontSize)
-  const layout = width ? layoutFor(size, width, half, p.layout) : 'stack'
+  const layout = width ? layoutFor(size, width, half, p.layout, g) : 'stack'
   usePinch(ref, {
     active: p.active,
     size: () => size,
     limits: () => limits,
+    start: (y) => {
+      const el = ref.current!
+      const r = el.getBoundingClientRect()
+      zoomBase.current = size
+      // The scaled page reaches past the screen edges: clip it while the gesture runs.
+      document.documentElement.classList.add('pinching')
+      el.style.transformOrigin = `${r.width / 2}px ${y - r.top}px`
+      el.style.willChange = 'transform'
+    },
     preview: (px) => {
+      ref.current!.style.transform = `scale(${px / zoomBase.current})`
+    },
+    settle: (px) => {
       pinched.current = px
       const el = ref.current!
+      el.style.transform = el.style.transformOrigin = el.style.willChange = ''
+      document.documentElement.classList.remove('pinching')
       el.style.setProperty('--verse-size', `${px}px`)
-      el.dataset.layout = layoutFor(px, width, half, p.layout)
+      el.dataset.layout = layoutFor(px, width, half, p.layout, g)
+      fitHalves(el)
     },
     commit: p.onFontSize,
   })
@@ -169,6 +243,7 @@ export default function Reader(p: Props) {
     if (lookAnchor.current) holdAnchor(lookAnchor.current)
     lookAnchor.current = null
   }, [lookKey])
+  useFitCheck(ref, lookKey)
 
   useEffect(() => {
     if (!scrollTarget) return
@@ -334,15 +409,12 @@ function Half(p: {
   const veil = p.curtain ? ALL_WORDS : p.veil ? veilFor(p.text, p.veil) : undefined
   const body = <HalfText text={p.text} marks={p.marks.filter((m) => m.h === p.h)} onMark={p.onMark} ins={p.fit?.ins} hits={p.hits} veil={veil} slips={p.slips} />
   const s = p.fit?.squeeze ?? 1
+  // `.fit` carries the squeeze: the kashida's (`--sq`) and the after-layout check's (`--fix`).
   return (
     <span className={`half ${p.h}`}>
-      {s < 1 ? (
-        <span className="fit" style={{ width: `${100 / s}%`, transform: `scaleX(${s})` }}>
-          {body}
-        </span>
-      ) : (
-        body
-      )}
+      <span className="fit" style={s < 1 ? ({ '--sq': s } as CSSProperties) : undefined}>
+        {body}
+      </span>
     </span>
   )
 }

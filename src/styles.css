@@ -67,6 +67,8 @@ button:disabled { opacity: 0.35; cursor: default; }
 a { color: var(--accent); }
 
 .app { min-height: 100dvh; }
+/* While a pinch runs the reader is scaled past the screen edges (Reader.tsx): that must not widen the page. */
+html.pinching .app { overflow-x: clip; }
 .center-msg { padding: 48px 16px; text-align: center; color: var(--muted); }
 .verse-text { font-family: var(--verse-font); }
 .icon-btn {
@@ -115,16 +117,6 @@ a { color: var(--accent); }
 .banner.bab span { font-size: calc(var(--verse-size) * 1.2); }
 
 .verse { border-radius: 14px; margin: 2px 0; scroll-margin: 90px 0 calc(var(--dock-h) + var(--player-h) + 40px); transition: background-color 0.25s; }
-/* Rows off screen skip layout and paint: a size change then only lays out the rows in view.
-   Every row is the same height, so the estimate is exact and the scroll length stays true.
-   The selected row is left out: its action bar hangs below it and must not be clipped. */
-.reader > .verse:not(.selected) {
-  content-visibility: auto;
-  contain-intrinsic-size: calc(var(--verse-size) * var(--verse-lh, 1.95) + 16px);
-}
-.reader[data-layout='stack'] > .verse:not(.selected) {
-  contain-intrinsic-size: calc(var(--verse-size) * var(--verse-lh, 1.95) * 2 + 16px);
-}
 .verse.selected { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); }
 .verse.playing { background: var(--playing); }
 .verse-body {
@@ -146,18 +138,26 @@ a { color: var(--accent); }
 /* Half-lines. Stacked: the first half at the start of the row, the second at its end (staggered,
    as printed on narrow pages). Side by side when both fit: Reader sets data-layout from the room. */
 .halves {
-  flex: 1; min-width: 0; display: grid; gap: 0;
+  /* One column no wider than the row: a column sized by its text would push the second half
+     (aligned to the end) past the screen edge. */
+  flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0;
   font-size: var(--verse-size); line-height: var(--verse-lh, 1.95);
 }
 .half.b { justify-self: end; text-align: end; }
 .reader[data-layout='side'] .verse-body { justify-content: center; }
-.reader[data-layout='side'] .halves { flex: none; grid-template-columns: repeat(2, minmax(11em, auto)); column-gap: 2.6em; }
+/* --halves-gap is also read by zoom.ts (measureRoom) to decide when the halves fit side by side. */
+.reader { --halves-gap: 2.6em; }
+.reader[data-layout='side'] .halves { flex: none; grid-template-columns: repeat(2, minmax(11em, auto)); column-gap: var(--halves-gap); }
 .reader[data-layout='side'] .half { text-align: justify; text-align-last: justify; }
 /* Equal widths (kashida.ts): every half is exactly --half-w wide; the words and their tatweels
    fill it, and word spacing takes up what is left. */
 .reader[data-even='1'] .half { width: min(var(--half-w), 100%); white-space: nowrap; text-align: justify; text-align-last: justify; }
 .reader[data-even='1'][data-layout='side'] .halves { grid-template-columns: var(--half-w) var(--half-w); }
-.fit { display: block; transform-origin: 100% 50%; }
+/* Squeeze of a half: the kashida's (--sq, kashida.ts) times the after-layout check's (--fix, Reader.tsx). */
+.fit {
+  --k: calc(var(--sq, 1) * var(--fix, 1));
+  display: block; width: calc(100% / var(--k)); transform: scaleX(var(--k)); transform-origin: 100% 50%;
+}
 /* A word hidden for recitation: same width, no letters. */
 .veil { color: transparent; background: var(--line); border-radius: 0.3em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 .veil * { color: transparent !important; }
@@ -428,6 +428,10 @@ mark { background: color-mix(in srgb, var(--ornament) 38%, transparent); color: 
 :root[data-theme='dark'] { --code-red: #ff6fb7; --quran-green: #63c995; }
 .c-red { color: var(--code-red); }
 .c-green { color: var(--quran-green); }
+/* The same colours painted over whole words (colors.tsx HalfText), so a word is never cut. */
+::highlight(c-red) { color: var(--code-red); }
+::highlight(c-green) { color: var(--quran-green); }
+::highlight(hit) { background-color: color-mix(in srgb, var(--ornament) 38%, transparent); }
 .cw { cursor: pointer; border-radius: 6px; }
 .cw:active { background: var(--accent-soft); }
 .color-card {
@@ -447,3 +451,27 @@ mark { background: color-mix(in srgb, var(--ornament) 38%, transparent); color: 
 .cc-sub { margin: 4px 0 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
 .cc-places { list-style: none; margin: 4px 0 0; padding: 0; font-size: 15px; font-weight: 600; line-height: 1.8; }
 .cc-ayah { margin: 6px 0 0; font-size: 19px; line-height: 1.7; }
+
+/* In the app: behave like an app, not a web page. A long press does not select text or open the
+   copy bubble (except where text is meant to be copied or typed), and a field never zooms the page
+   when it takes focus (iOS does that below 16px). */
+html.native body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+html.native input, html.native textarea, html.native .ex-body { -webkit-user-select: text; user-select: text; }
+/* WebKit paints no ::highlight() on text that cannot be selected: verse text stays selectable to
+   the engine. In the reader it sits in a button, where a long press selects nothing; elsewhere
+   colors.tsx clears a selection that starts in it. */
+html.native .ht { -webkit-user-select: text; user-select: text; }
+html.native input:not([type=checkbox]):not([type=range]):not([type=color]), html.native textarea, html.native select { font-size: max(16px, 1em); }
+
+/* Settings: app icon picker (iOS app only, AppIconGroup.tsx) */
+.icon-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 4px; padding: 10px; }
+.icon-choice {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 4px; border: 0; border-radius: 12px;
+  background: none; color: inherit; font-size: 13px; line-height: 1.3; text-align: center;
+}
+.icon-choice[aria-checked='true'] { background: var(--accent-soft); }
+.icon-choice .check { margin-top: -2px; }
+.icon-thumb { position: relative; width: 60px; height: 60px; border-radius: 14px; overflow: hidden; box-shadow: 0 0 0 0.5px var(--line); }
+.icon-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.icon-thumb.auto img + img { clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+.group-note { font-size: 13px; margin: 6px 4px 0; }

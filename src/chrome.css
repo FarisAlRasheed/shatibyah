@@ -65,7 +65,7 @@
   top: calc(env(safe-area-inset-top) + 64px); bottom: calc(var(--dock-h) + var(--player-h) + env(safe-area-inset-bottom) + 22px);
   opacity: 0; transition: opacity 0.3s, bottom 0.28s, top 0.28s;
 }
-.app.immersed .rail { top: calc(env(safe-area-inset-top) + 12px); bottom: calc(env(safe-area-inset-bottom) + 12px); }
+.app.immersed .rail:not(.dragging) { top: calc(env(safe-area-inset-top) + 12px); bottom: calc(env(safe-area-inset-bottom) + 12px); }
 .rail.shown { opacity: 1; }
 .rail-thumb { position: absolute; left: 0; width: 26px; touch-action: none; cursor: grab; }
 .rail.shown .rail-thumb { pointer-events: auto; }

@@ -1,5 +1,6 @@
 node_modules
 dist
+dist-app
 data/reciters/*/_source
 .DS_Store
 
@@ -7,3 +8,6 @@ sources/
 tools/colors/_spans.json
 
 tools/text-review/pages/
+
+# Audio slices and page images rebuilt by content-review/_scripts
+content-review/_ref/

@@ -4,20 +4,66 @@ import { useEffect, useRef, type RefObject } from 'react'
 import type { VerseLayout } from './store'
 
 export const DEFAULT_SIZE = 22
-const GAP_EM = 2.6 // between the two halves when side by side (matches .halves column-gap)
-const NUM_EM = 1.36 // the verse number circle (matches .vnum)
-const CHROME = 22 // px beside the text that do not scale: gap after the number, row padding
 const FLOOR = 11
 const CEILING = 56
 
-/** Largest font size (px) at which both halves fit side by side in `width` px. */
-export const sideMax = (width: number, half: number) => (width - CHROME) / (2 * half + GAP_EM + NUM_EM)
-/** Largest font size at which one half-line fits the row. */
-export const stackMax = (width: number, half: number) => (width - CHROME) / (half + NUM_EM)
+/**
+ * The room around the verse text, measured from the page (Reader.tsx `measureGeometry`), so the
+ * size limits and the side-by-side choice follow the CSS instead of copied numbers.
+ */
+export interface Geometry {
+  /** The verse number column, in em of the verse size. */
+  numEm: number
+  /** Between the two halves when side by side, in em. */
+  gapEm: number
+  /** Px beside the text that do not scale: row padding and the gap after the number. */
+  chrome: number
+}
+/** Used until the page has been measured once. */
+export const GUESS: Geometry = { numEm: 1.36, gapEm: 2.6, chrome: 22 }
 
-export function sizeLimits(width: number, half: number, pref: VerseLayout) {
-  const side = sideMax(width, half)
-  const stack = stackMax(width, half)
+/** The room of a verse list: its text width (inside its padding) and the geometry of its rows. */
+export interface Room {
+  width: number
+  g: Geometry
+}
+
+let lastRoom: Room | null = null
+/** The reader's room as last measured (the appearance panel works its limits out from it). */
+export const readerRoom = (): Room => lastRoom ?? { width: innerWidth - 20, g: GUESS }
+
+/**
+ * Measure a verse list as laid out now: its padding, a row's padding and gap, the number
+ * circle and the gap between halves (`--halves-gap` in styles.css).
+ */
+export function measureRoom(list: HTMLElement, isReader: boolean): Room | null {
+  const cs = getComputedStyle(list)
+  const size = parseFloat(cs.getPropertyValue('--verse-size'))
+  const width = list.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+  if (width < 40) return null
+  const g = { ...GUESS }
+  const body = list.querySelector<HTMLElement>('.verse-body')
+  if (body) {
+    const b = getComputedStyle(body)
+    g.chrome = parseFloat(b.paddingLeft) + parseFloat(b.paddingRight) + (parseFloat(b.columnGap) || 0)
+  }
+  const num = list.querySelector<HTMLElement>('.vnum:not(.counting)')
+  if (num && size > 0) g.numEm = num.offsetWidth / size
+  const gap = parseFloat(cs.getPropertyValue('--halves-gap'))
+  if (gap > 0) g.gapEm = gap
+  const room = { width, g }
+  if (isReader) lastRoom = room
+  return room
+}
+
+/** Largest font size (px) at which both halves fit side by side in `width` px. */
+export const sideMax = (width: number, half: number, g: Geometry) => (width - g.chrome) / (2 * half + g.gapEm + g.numEm)
+/** Largest font size at which one half-line fits the row. */
+export const stackMax = (width: number, half: number, g: Geometry) => (width - g.chrome) / (half + g.numEm)
+
+export function sizeLimits(width: number, half: number, pref: VerseLayout, g: Geometry) {
+  const side = sideMax(width, half, g)
+  const stack = stackMax(width, half, g)
   // Zooming out stops where the two halves sit side by side (a phone) or at a readable size.
   const min = Math.max(FLOOR, Math.min(16, Math.floor(side * 2) / 2))
   const max = Math.max(min, Math.min(CEILING, Math.floor((pref === 'side' ? side : stack) * 2) / 2))
@@ -26,9 +72,9 @@ export function sizeLimits(width: number, half: number, pref: VerseLayout) {
 
 export const clampSize = (size: number, l: { min: number; max: number }) => Math.min(l.max, Math.max(l.min, size))
 
-export function layoutFor(size: number, width: number, half: number, pref: VerseLayout): 'side' | 'stack' {
+export function layoutFor(size: number, width: number, half: number, pref: VerseLayout, g: Geometry): 'side' | 'stack' {
   if (pref === 'stack') return 'stack'
-  return size <= sideMax(width, half) + 0.01 ? 'side' : 'stack'
+  return size <= sideMax(width, half, g) + 0.01 ? 'side' : 'stack'
 }
 
 interface PinchOptions {
@@ -36,16 +82,21 @@ interface PinchOptions {
   active: boolean
   size: () => number
   limits: () => { min: number; max: number }
-  /** Show a size right away (no React render); called on every frame of a gesture. */
+  /** A gesture begins around height `y` on screen. */
+  start: (y: number) => void
+  /** Show a size right away, cheaply (a scale, no layout); called on every frame of a gesture. */
   preview: (size: number) => void
-  /** The gesture ended: keep this size. */
+  /** The gesture ended: lay the text out at this size (no React render yet). */
+  settle: (size: number) => void
+  /** …and keep it. */
   commit: (size: number) => void
 }
 
 /**
- * Pinch (touch), trackpad pinch / Ctrl+wheel, and ⌘ + − 0 change the verse size, live: the text is
- * laid out at the new size on every frame (cheap, since rows off screen skip layout: styles.css),
- * and the verse under the fingers is held where it is.
+ * Pinch (touch), trackpad pinch / Ctrl+wheel, and ⌘ + − 0 change the verse size. While the gesture
+ * runs the page is only scaled, like a photo: no layout and no scrolling, so nothing can flicker.
+ * When it ends the text is laid out once at the new size, with the verse under the fingers held
+ * where it is.
  */
 export function usePinch(ref: RefObject<HTMLElement | null>, opts: PinchOptions) {
   const latest = useRef(opts)
@@ -62,11 +113,9 @@ export function usePinch(ref: RefObject<HTMLElement | null>, opts: PinchOptions)
     const begin = (y: number) => {
       size = latest.current.size()
       anchor = anchorAt(el, y)
+      latest.current.start(y)
     }
-    const show = (s: number) => {
-      latest.current.preview(s)
-      if (anchor) holdAnchor(anchor)
-    }
+    const show = (s: number) => latest.current.preview(s)
     const apply = (next: number) => {
       size = clamp(next)
       if (frame) return
@@ -86,7 +135,9 @@ export function usePinch(ref: RefObject<HTMLElement | null>, opts: PinchOptions)
       // A frame may still be waiting (or never come, in a background tab): settle now.
       cancelAnimationFrame(frame)
       frame = 0
-      show(final)
+      latest.current.settle(final)
+      if (anchor) holdAnchor(anchor)
+      anchor = null
       latest.current.commit(final)
     }
     /** Wheel and key steps have no "end" event: commit shortly after the last one. */

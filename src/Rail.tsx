@@ -45,10 +45,20 @@ export default function Rail({ edition }: { edition: Edition }) {
     }
   }, [edition])
 
+  // The track as it was when the drag began, and where on the thumb the finger took hold. Read once:
+  // the bars hide and return while the page moves, which resizes the track, and following that
+  // would feed the scroll back into itself (the page swinging up and down under a still finger).
+  const grip = useRef({ top: 0, height: 1, offset: 0 })
   const moveTo = (clientY: number) => {
-    const r = track.current!.getBoundingClientRect()
-    const f = Math.min(1, Math.max(0, (clientY - r.top - THUMB / 2) / (r.height - THUMB)))
+    const g = grip.current
+    const f = Math.min(1, Math.max(0, (clientY - g.offset - g.top) / (g.height - THUMB)))
     window.scrollTo(0, f * (document.documentElement.scrollHeight - innerHeight))
+  }
+  const stop = () => {
+    drag.current = false
+    delete document.documentElement.dataset.railDrag
+    setDragging(false)
+    setWhere(null)
   }
 
   return (
@@ -58,21 +68,16 @@ export default function Rail({ edition }: { edition: Edition }) {
         style={{ top: `calc(${frac} * (100% - ${THUMB}px))`, height: THUMB }}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId)
+          const r = track.current!.getBoundingClientRect()
+          // Taking hold moves nothing: the thumb stays under the finger where it was touched.
+          grip.current = { top: r.top, height: r.height, offset: e.clientY - e.currentTarget.getBoundingClientRect().top }
           drag.current = true
+          document.documentElement.dataset.railDrag = '1' // App: leave the bars as they are meanwhile
           setDragging(true)
-          moveTo(e.clientY)
         }}
         onPointerMove={(e) => drag.current && moveTo(e.clientY)}
-        onPointerUp={() => {
-          drag.current = false
-          setDragging(false)
-          setWhere(null)
-        }}
-        onPointerCancel={() => {
-          drag.current = false
-          setDragging(false)
-          setWhere(null)
-        }}
+        onPointerUp={stop}
+        onPointerCancel={stop}
       >
         {dragging && where && (
           <span className="rail-bubble">

@@ -1,6 +1,7 @@
-import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { toArabicDigits } from './arabic'
 import { withTatweel } from './kashida'
+import { drawnOffset, halfModel, joinedAt } from './verseText'
 import type { ColorMark, EditionColors } from './types'
 import type { SlipType } from './slips'
 
@@ -28,11 +29,51 @@ export interface OpenMark {
   rect: DOMRect
 }
 
+/** Whether this browser paints CSS Custom Highlights (`::highlight()`): Safari/iOS 17.2+, Chrome 105+. */
+const HIGHLIGHTS = typeof CSS !== 'undefined' && 'highlights' in CSS && typeof Highlight !== 'undefined'
+
+/** The page's shared highlights: red codes, green Quran words, search hits (styles.css `::highlight`). */
+type Paint = 'c-red' | 'c-green' | 'hit'
+let paints: Record<Paint, Highlight> | null = null
+function paint(name: Paint): Highlight {
+  if (!paints) {
+    paints = { 'c-red': new Highlight(), 'c-green': new Highlight(), hit: new Highlight() }
+    for (const k of Object.keys(paints) as Paint[]) CSS.highlights.set(k, paints[k])
+    paints.hit.priority = 1
+    // In the app, verse text is selectable to the engine only so that WebKit paints on it
+    // (styles.css): a long press outside a button must not leave a selection behind.
+    document.addEventListener('selectionchange', () => {
+      if (!document.documentElement.classList.contains('native')) return
+      const sel = getSelection()
+      const at = sel?.anchorNode
+      if (sel?.rangeCount && at && (at instanceof Element ? at : at.parentElement)?.closest('.ht')) sel.removeAllRanges()
+    })
+  }
+  return paints[name]
+}
+
+/** The text node and offset inside `root` at offset `x` of its whole text. */
+function pointAt(root: Node, x: number): [Text, number] | null {
+  const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  let seen = 0
+  for (let n = walk.nextNode() as Text | null; n; n = walk.nextNode() as Text | null) {
+    const len = n.data.length
+    if (x <= seen + len) return [n, x - seen]
+    seen += len
+  }
+  return null
+}
+
 /**
  * One verse half as shown: the edition's text with its printed colours, the tatweels that fit
  * it to the shared width (`ins`, see kashida.ts), search highlights (`hits`) and veiled words.
- * All positions are offsets in `text`. Each word holding a coloured piece is a tap target as a
- * whole, so a single coloured letter is still easy to hit.
+ * All positions are offsets in `text`.
+ *
+ * A word is never cut inside: in Safari each piece of a cut word is shaped on its own and loses
+ * its joined letters. Whole words are wrapped where a word needs it (the tap target of a coloured
+ * word, a veiled word, a listener slip); colour and hits inside a word are painted on top with the
+ * CSS Custom Highlight API, so the text stays one run and the font shapes it as printed.
+ * Browsers without that API get spans cut only between whole letter-clusters (verseText.ts).
  */
 export function HalfText(p: {
   text: string
@@ -45,8 +86,35 @@ export function HalfText(p: {
   /** Words (by index) the listener marked as slipped, with the slip's type. */
   slips?: Map<number, SlipType>
 }) {
-  const { text, marks, ins, hits, veil, slips } = p
-  if (!marks.length && !hits?.length && !veil && !slips?.size) return <>{withTatweel(text, ins)}</>
+  const { text, ins, veil, slips } = p
+  const model = useMemo(() => halfModel(text, p.marks, p.hits), [text, p.marks, p.hits])
+  const root = useRef<HTMLSpanElement>(null)
+  const veiled = (i: number) => veil?.(i) ?? false
+
+  // Paint the colours and hits over the drawn text. Ranges are in the drawn string (tatweels in),
+  // which is exactly the text of `root`.
+  useLayoutEffect(() => {
+    const el = root.current
+    if (!HIGHLIGHTS || !el) return
+    const added: [Highlight, Range][] = []
+    const add = (name: Paint, s: number, e: number) => {
+      const a = pointAt(el, drawnOffset(ins, s))
+      const b = pointAt(el, drawnOffset(ins, e))
+      if (!a || !b) return
+      const r = new Range()
+      r.setStart(a[0], a[1])
+      r.setEnd(b[0], b[1])
+      paint(name).add(r)
+      added.push([paint(name), r])
+    }
+    const hidden = (s: number, e: number) => model.words.some((w) => w.s < e && w.e > s && veiled(w.i))
+    for (const m of model.marks) if (!hidden(m.s, m.e)) add(m.mark.k === 'r' ? 'c-red' : 'c-green', m.s, m.e)
+    for (const h of model.hits) if (!hidden(h.s, h.e)) add('hit', h.s, h.e)
+    return () => {
+      for (const [hl, r] of added) hl.delete(r)
+    }
+  })
+
   /** Wraps a finished word in its slip mark, if it has one. */
   const marked = (key: number, slip: SlipType | undefined, node: ReactNode) =>
     slip ? (
@@ -56,64 +124,90 @@ export function HalfText(p: {
     ) : (
       node
     )
+
   const out: ReactNode[] = []
+  let plain = '' // text between wrapped words, kept as one text node
   let last = 0
-  let wi = -1
-  for (const w of text.matchAll(/\S+/g)) {
-    wi++
-    const ws = w.index, we = ws + w[0].length
-    const inWord = marks.filter((m) => m.s < we && m.e > ws)
-    const inHits = hits?.filter(([s, e]) => s < we && e > ws) ?? []
-    const veiled = veil?.(wi) ?? false
-    const slip = veiled ? undefined : slips?.get(wi)
-    if (!inWord.length && !inHits.length && !veiled && !slip) continue
-    if (ws > last) out.push(withTatweel(text, ins, last, ws))
-    last = we
-    if (veiled) {
+  const flush = () => {
+    if (plain) out.push(plain)
+    plain = ''
+  }
+  for (const w of model.words) {
+    const inWord = model.marks.filter((m) => m.s < w.e && m.e > w.s)
+    const inHits = HIGHLIGHTS ? [] : model.hits.filter((h) => h.s < w.e && h.e > w.s)
+    const hide = veiled(w.i)
+    const slip = hide ? undefined : slips?.get(w.i)
+    if (!inWord.length && !inHits.length && !hide && !slip) continue
+    plain += withTatweel(text, ins, last, w.s)
+    flush()
+    last = w.e
+    const word = withTatweel(text, ins, w.s, w.e)
+    if (hide) {
       out.push(
-        <span key={ws} className="veil">
-          {withTatweel(text, ins, ws, we)}
+        <span key={w.s} className="veil">
+          {word}
         </span>,
       )
       continue
     }
-    // Cut the word at every mark and highlight edge inside it.
-    const edges = [...inWord.flatMap((m) => [m.s, m.e]), ...inHits.flat()].filter((x) => x > ws && x < we)
-    const cuts = [...new Set([ws, we, ...edges])].sort((a, b) => a - b)
-    const pieces = cuts.slice(0, -1).map((a, i) => {
-      const b = cuts[i + 1]
-      const m = inWord.find((x) => x.s <= a && x.e >= b)
-      const hit = inHits.some(([s, e]) => s <= a && e >= b)
-      const t = withTatweel(text, ins, a, b)
-      const inner = hit ? <mark>{t}</mark> : t
-      return m ? (
-        <span key={a} className={m.k === 'r' ? 'c-red' : 'c-green'}>
-          {inner}
-        </span>
-      ) : (
-        <Fragment key={a}>{inner}</Fragment>
-      )
-    })
-    const target = inWord[0]
+    const body = HIGHLIGHTS ? word : cutWord(text, ins, model.edges, w.s, w.e, inWord, inHits)
+    const target = inWord[0]?.mark
     out.push(
-      marked(ws, slip, target ? (
+      marked(w.s, slip, target ? (
         <span
-          key={ws}
+          key={w.s}
           className="cw"
           onClick={(e) => {
             e.stopPropagation()
             p.onMark({ mark: target, text: target.w ?? text.slice(target.s, target.e), rect: e.currentTarget.getBoundingClientRect() })
           }}
         >
-          {pieces}
+          {body}
         </span>
       ) : (
-        <Fragment key={ws}>{pieces}</Fragment>
+        <Fragment key={w.s}>{body}</Fragment>
       )),
     )
   }
-  if (last < text.length) out.push(withTatweel(text, ins, last, text.length))
-  return <>{out}</>
+  plain += withTatweel(text, ins, last, text.length)
+  flush()
+  return (
+    <span className="ht" ref={root}>
+      {out}
+    </span>
+  )
+}
+
+/**
+ * Fallback for browsers without the Highlight API: a word cut into coloured pieces, only between
+ * whole letter-clusters, with a zero-width joiner on each side of a cut between joined letters.
+ */
+function cutWord(
+  text: string,
+  ins: number[] | undefined,
+  edges: number[],
+  ws: number,
+  we: number,
+  marks: { s: number; e: number; mark: ColorMark }[],
+  hits: { s: number; e: number }[],
+): ReactNode[] {
+  const ZWJ = '‍'
+  const inner = [...marks, ...hits].flatMap((r) => [r.s, r.e]).filter((x) => x > ws && x < we && edges.includes(x))
+  const cuts = [...new Set([ws, we, ...inner])].sort((a, b) => a - b)
+  return cuts.slice(0, -1).map((a, i) => {
+    const b = cuts[i + 1]
+    const m = marks.find((r) => r.s <= a && r.e >= b)?.mark
+    const hit = hits.some((r) => r.s <= a && r.e >= b)
+    const t = (i > 0 && joinedAt(text, a) ? ZWJ : '') + withTatweel(text, ins, a, b) + (i < cuts.length - 2 && joinedAt(text, b) ? ZWJ : '')
+    const body = hit ? <mark>{t}</mark> : t
+    return m ? (
+      <span key={a} className={m.k === 'r' ? 'c-red' : 'c-green'}>
+        {body}
+      </span>
+    ) : (
+      <Fragment key={a}>{body}</Fragment>
+    )
+  })
 }
 
 /**

@@ -3,12 +3,14 @@ import { BookOpen, Bookmark, Check, ChevronLeft, Download, FileText, GraduationC
 import { toArabicDigits, toLatinDigits } from './arabic'
 import { APP_VERSION } from './config'
 import { audioUrl, sectionOf, verseRange } from './data'
+import { NATIVE } from './native'
 import { download, formatMB, isDownloaded, offlineSupported, remove } from './offline'
 import type { Bookmarks, Mastered, Notes, Settings, Theme, VerseFont } from './store'
 import { matchRanges } from './search'
 import type { Edition, Manifest, PrintedPage, Reciter, Verse } from './types'
 import { VersePreview, type SetState } from './sheets'
 import BackupGroup from './BackupGroup'
+import AppIconGroup from './AppIconGroup'
 import { MARK_COLORS, markName, markSlot } from './marks'
 import { HL_COLORS, type Highlight } from './highlights'
 
@@ -582,6 +584,8 @@ export function SettingsScreen(p: FieldProps & {
         </label>
       </div>
 
+      <AppIconGroup />
+
       <h2 className="group-title">مزايا إضافية</h2>
       <div className="group">
         {EXTRAS.map(([key, label, hint]) => (
@@ -600,7 +604,11 @@ export function SettingsScreen(p: FieldProps & {
       {p.reciter && (
         <>
           <h2 className="group-title">الاستماع دون اتصال</h2>
-          <Downloads edition={p.edition} reciter={p.reciter} />
+          {NATIVE ? (
+            <p className="muted">التلاوة كاملةً مضمّنة في التطبيق، وتعمل دون اتصال.</p>
+          ) : (
+            <Downloads edition={p.edition} reciter={p.reciter} />
+          )}
         </>
       )}
 

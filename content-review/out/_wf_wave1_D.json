@@ -1,0 +1,62 @@
+[
+  {
+    "key": "D-c01-run1",
+    "status": "ok",
+    "summary": "Completed Track D review of chunk c01 (verses 1–94, all 69 Wafi blocks `i1` through `b93`).\n\nWrote:\n- `/Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/D/c01/run1/findings.jsonl` (85 findings)\n- `/Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/D/c01/run1/coverage.md` (`reached b93 of b93`)\n\nSummary of findings (22 high, 24 medium, 39 low):\n- `fidelity-source` (32): Body pieces `P0..Pn` match `sources/turath-38075/p0001.json`–`p0038.json` character-for-character, so textual errors originate in Turath itself—notably `i1b P68` (`بالضاد والطاء` for `والظاء` in 81:24), `b23 P4` (`وهشام بن ذكوان` for `وهشام وابن ذكوان`), `b47 P6` (`حلا علا` for `على علا` in v1092 + omitted `مع يحبون`), `b64 P8` (`حص)` for `حصن)`), `b68 P0` (`(رممت)` for `(رمت)`), and `b91 P8` (`وما حل مصدق` for `وماحل مصدّق`), plus typos in `i1b` (`P0`, `P23`), `b1 P5`, `b9 P1`, `b15 P10`, `b27 P0`, `b29 P10`, `b32 P4`, `b42 P2`, `b46 P3`, `b47 P10`, `b49` (`P3`, `P27`), `b56` (`P3`, `P4`), `b61 P2`, `b63 P3`, `b64 P18`, `b65 P4`, `b66 P4`, `b67 P0`, `b72 P9`, `b73 P3`, `b81 P2`, `b86 P10`, and `b88 P1`.\n- `contradiction-opinion` (2): `b49 P16` (`بما كسبت لا فا دعم` vs `sources/qasim.pdf` p154 v1019 `عَمَّ`, adding `د` = Ibn Kathir) and `b56 P5` (`يبشركم سما نعم` vs `sources/qasim.pdf` p89 v555 `يَبْشُرُ كَمْ سَمَا / نَعَمْ`, fusing `يبشر` and `كم` so `ك` disappears from the example).\n- `wrong-parts` (18): Severe misalignments in `b49` (`P8`, `P9`, `P13`, `P16`, `P17`, `P20`–`P27`) and `b91` (`P5`, `P6`, `P8`), plus minor gaps in `b34 P9` and `b57 P14`.\n- `wrong-block` (1) & footnote `garbage`: Footnote `(١) ما بين المعكوفتين إضافة من الناشر.` from `p0007.json` was placed in `b3` instead of `b1` (leaving `(١)` orphaned in `b1 P0`).\n- `garbage` (32): Orphaned `b1 P0` marker, stray `*` in `i1b P46`, standalone `\"...\"` piece `b64 P9`, stray periods/colons (`b15 P14`, `b48 P7`), and spurious mid-phrase `[BREAK]` splits after colons/line wraps across `i1b`, `b1`, `b5`–`b10`, `b14`, `b15`, `b24`, `b39`, `b41`, `b42`, `b57`, `b64`, `b67`, `b69`, `b71`–`b75`, `b80`, `b84`, `b86`, `b91`, `b93`."
+  },
+  {
+    "key": "D-c02-run1",
+    "status": "error",
+    "error": "failed to run agent \"86191365-cd14-4916-b5c3-7984d7e60425\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h56m32s."
+  },
+  {
+    "key": "D-c03-run1",
+    "status": "error",
+    "error": "failed to run agent \"957bb706-5cf2-4f56-88af-5bbcf3355aeb\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h59m5s."
+  },
+  {
+    "key": "D-c04-run1",
+    "status": "error",
+    "error": "failed to run agent \"a8dbb086-6fcf-40c3-8374-4bcc7c5fd749\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h57m2s."
+  },
+  {
+    "key": "D-c05-run1",
+    "status": "error",
+    "error": "failed to run agent \"d1e2af70-c1eb-4f7e-96d5-55d6ecb1b2c9\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h59m9s."
+  },
+  {
+    "key": "D-c06-run1",
+    "status": "error",
+    "error": "failed to run agent \"2a06ec55-580c-4efd-9d03-8dd4b41637d7\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h59m4s."
+  },
+  {
+    "key": "D-c07-run1",
+    "status": "error",
+    "error": "failed to run agent \"38ff8b79-43d3-4b0f-b1e0-30450825d9a1\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h56m31s."
+  },
+  {
+    "key": "D-c08-run1",
+    "status": "error",
+    "error": "failed to run agent \"97b050a7-769a-4492-9f2c-1b8689974259\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h56m31s."
+  },
+  {
+    "key": "D-c09-run1",
+    "status": "error",
+    "error": "failed to run agent \"93063c81-add4-44ba-9d97-8469bbb1a15e\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h56m31s."
+  },
+  {
+    "key": "D-c10-run1",
+    "status": "error",
+    "error": "failed to run agent \"3e47a514-c3d5-4883-8ea3-6859213a0a1a\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h56m31s."
+  },
+  {
+    "key": "D-c11-run1",
+    "status": "error",
+    "error": "failed to run agent \"caf01352-871c-4f4f-a05d-4b3231af29da\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h56m31s."
+  },
+  {
+    "key": "D-c12-run1",
+    "status": "error",
+    "error": "failed to run agent \"5956f513-b3ec-4c87-a683-bbd9b457eb3b\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h56m31s."
+  }
+]

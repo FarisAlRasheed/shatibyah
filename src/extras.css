@@ -18,6 +18,8 @@
   border: 0; border-radius: 12px; background: none; color: var(--accent);
   font-size: 11px; line-height: 1.2; text-align: center;
 }
+/* On a phone the buttons share the width (up to eight of them). Must come after the rule above. */
+@media (max-width: 420px) { .verse-bar button { min-width: 0; padding-inline: 2px; } }
 .verse-bar button span { color: var(--text); }
 .verse-bar button:active, .verse-bar button.on { background: var(--accent-soft); }
 @keyframes bar-in { from { opacity: 0; transform: translate(-50%, -4px); } }
@@ -114,7 +116,7 @@
 .app.has-strip .banner { scroll-margin-top: 122px; }
 .app.has-strip .verse { scroll-margin-top: 132px; }
 .app.immersed.has-strip .back-pill { top: calc(env(safe-area-inset-top) + 12px); }
-.app.immersed.has-strip .rail { top: calc(env(safe-area-inset-top) + 12px); }
+.app.immersed.has-strip .rail:not(.dragging) { top: calc(env(safe-area-inset-top) + 12px); }
 
 /* Printed page markers: a faint line with the page number at its end. */
 .page-mark { display: flex; align-items: center; gap: 10px; margin: 12px 8px 4px; color: var(--muted); font-size: 11.5px; opacity: 0.85; }

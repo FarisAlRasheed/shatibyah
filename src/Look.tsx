@@ -8,7 +8,7 @@ import { ColorsField, FontField, ThemeField } from './screens'
 import { Sheet, type SetState } from './sheets'
 import type { Settings, VerseLayout } from './store'
 import type { Edition, EditionColors } from './types'
-import { clampSize, DEFAULT_SIZE, sizeLimits } from './zoom'
+import { clampSize, DEFAULT_SIZE, readerRoom, sizeLimits } from './zoom'
 
 const LAYOUTS: [VerseLayout, string][] = [
   ['auto', 'تلقائي'],
@@ -47,8 +47,8 @@ export default function LookPanel(p: {
   const { settings: s, setSettings } = p
   const set = (patch: Partial<Settings>) => setSettings((x) => ({ ...x, ...patch }))
   // Same limits as the reader, from the reader's own width.
-  const room = (document.querySelector('main.reader')?.clientWidth ?? innerWidth) - 20
-  const limits = sizeLimits(room, p.fits?.width ?? DEFAULT_HALF_EM, s.layout)
+  const room = readerRoom()
+  const limits = sizeLimits(room.width, p.fits?.width ?? DEFAULT_HALF_EM, s.layout, room.g)
   const size = clampSize(s.fontSize, limits)
 
   return (

@@ -92,9 +92,6 @@
   .app.side-open.explain-side main.reader { margin-left: calc(436px + max(0px, (100% - 1416px) / 2)); }
 }
 
-/* The verse bar has one more button: on a phone the buttons share the width. */
-@media (max-width: 420px) { .verse-bar button { min-width: 0; padding-inline: 2px; } }
-
 /* The explanation's own appearance controls */
 .ex-look { display: flex; flex-direction: column; gap: 6px; padding: 8px 2px 4px; cursor: auto; touch-action: auto; }
 .ex-look-row { display: flex; align-items: center; gap: 6px; }

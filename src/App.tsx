@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BookOpen, Eye, EyeOff, GraduationCap, List, LocateFixed, Search, Settings as SettingsIcon, Undo2, X } from 'lucide-react'
+import { NATIVE } from './native'
 import { audioUrl, loadColors, loadEdition, loadManifest, loadPages, loadReciter, sectionOf, verseRange } from './data'
 import { ColorCard, fadeShare, type OpenMark } from './colors'
 import { DEFAULT_EDITION } from './config'
@@ -136,6 +137,12 @@ function useTheme(theme: Settings['theme']) {
       document.documentElement.dataset.theme = resolved
       const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg)
+      // In the iOS app the status bar text must follow the app's theme, not the phone's appearance.
+      if (NATIVE) {
+        import('@capacitor/status-bar').then(({ StatusBar, Style }) =>
+          StatusBar.setStyle({ style: resolved === 'dark' ? Style.Dark : Style.Light }).catch(() => {}),
+        )
+      }
     }
     apply()
     media.addEventListener('change', apply)
@@ -369,6 +376,7 @@ export default function App() {
       const dy = scrollY - last
       if (Math.abs(dy) < 6) return
       last = scrollY
+      if (document.documentElement.dataset.railDrag) return // the fast-scroll rail is held (Rail.tsx)
       if (dy < 0 || scrollY < 80) setImmersed(false)
       else if (Date.now() - byHand < 900) setImmersed(true)
     }

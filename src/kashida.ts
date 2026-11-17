@@ -23,7 +23,7 @@ export interface Fits {
 }
 
 export const DEFAULT_HALF_EM = 11.5
-const ALGO = 3 // bump to drop cached results when the rules below change
+const ALGO = 4 // bump to drop cached results when the rules below change
 const REF = 100 // px; widths scale with the font size, so everything is measured once in em
 const TATWEEL = 'ـ'
 const MARK = /[ؐ-ًؚ-ٰٟۖ-ۭ࣓-ࣿ]/
@@ -161,6 +161,7 @@ export function useFits(
   near: number,
 ): Fits | null {
   const [fits, setFits] = useState<Fits | null>(null)
+  const [fontTick, setFontTick] = useState(0) // bumped when the verse font arrives after a guess
 
   useEffect(() => {
     setFits(null)
@@ -181,6 +182,10 @@ export function useFits(
         /* measure with whatever is loaded */
       }
       if (!live) return
+      // The canvas must measure in the very font the page draws with. If it is not there yet the
+      // widths are a guess: use them for now, keep them out of the cache, and measure again once
+      // it loads (useFits runs again on `loadingdone`).
+      const exact = document.fonts.check(`${REF}px ${family}`, 'بـ')
       const ctx = document.createElement('canvas').getContext('2d')
       if (!ctx) return
       ctx.font = `${REF}px ${family}`
@@ -218,6 +223,15 @@ export function useFits(
         }
       }
       setFits(out)
+      if (!exact) {
+        const arrived = () => {
+          if (!document.fonts.check(`${REF}px ${family}`, 'بـ')) return
+          document.fonts.removeEventListener('loadingdone', arrived)
+          if (live) setFontTick((t) => t + 1)
+        }
+        document.fonts.addEventListener('loadingdone', arrived)
+        return
+      }
       try {
         localStorage.setItem(cacheKey, JSON.stringify(out))
       } catch {
@@ -228,7 +242,7 @@ export function useFits(
     return () => {
       live = false
     }
-  }, [edition, colors, fontKey, family, stretch]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [edition, colors, fontKey, family, stretch, fontTick]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return fits
 }

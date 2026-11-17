@@ -1,7 +1,10 @@
 node_modules
 dist
+dist-app
 data/reciters/*/_source
 prompts
 tools
 .claude
 sources
+ios
+android

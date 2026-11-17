@@ -3,13 +3,16 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import dataPlugin from './vite-data-plugin'
 
-export default defineConfig({
+// `--mode app` builds the copy that ships inside the iOS and Android apps (see capacitor.config.ts): no service
+// worker (it cannot run there) and no downloads, since the audio is part of the app itself.
+export default defineConfig(({ mode }) => ({
+  build: { outDir: mode === 'app' ? 'dist-app' : 'dist' },
   plugins: [
     react(),
     dataPlugin(),
-    VitePWA({
+    mode !== 'app' && VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['icon-192.png'],
       manifest: {
         name: 'متن الشاطبية',
         short_name: 'الشاطبية',
@@ -23,7 +26,6 @@ export default defineConfig({
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml' },
         ],
       },
       workbox: {
@@ -47,4 +49,4 @@ export default defineConfig({
       },
     }),
   ],
-})
+}))

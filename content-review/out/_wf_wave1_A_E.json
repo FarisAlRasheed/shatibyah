@@ -1,0 +1,67 @@
+[
+  {
+    "key": "A-c01-run1",
+    "status": "ok",
+    "summary": "Reviewed Track A Chunk c01 (verses 1–94, both halves a and b) in content-review/pack/A/c01.md against all 10 rendered PDF pages p017.png–p026.png (and checked weak-spots/c01.md). All 94 verses and verse numbers match the PDF (ignoring pure style/punctuation differences per Rule 3). Wrote 0 findings to content-review/out/A/c01/run1/findings.jsonl and full coverage (reached 94 of 94) to content-review/out/A/c01/run1/coverage.md."
+  },
+  {
+    "key": "A-c02-run1",
+    "status": "ok",
+    "summary": "Reviewed Track A (Verse Text & Numbering) for chunk c02 (verses 95–182) in content-review/pack/A/c02.md against all 12 PDF page images (p027.png–p038.png) and weak-spots/c02.md. Verified all 88 verses (176 half-verses), verse numbers, half-splits, letters, hamza forms, harakat, shadda, and tanwin. Wrote 4 findings (1 medium, 3 low) to content-review/out/A/c02/run1/findings.jsonl and full verse-by-verse coverage (reached 182 of 182) to content-review/out/A/c02/run1/coverage.md: A-108-b-1 (spurious space splitting لِقُنْبُلَا into لِ قُنْبُلَا), A-108-b-2 (U+06DC small high seen vs visually printed small low seen U+06E3 in صِۜرَٰطࣲ وَٱلصِّۜرَٰطِ), A-125-a-1 (dotted ي in green Qur'anic مَالِي vs dotless ى in p031.png and rule-ya), and A-131-a-1 (dotted ي in green Qur'anic ٱلَّـٰٓيِٕ vs dotless ى in p031.png and rule-ya)."
+  },
+  {
+    "key": "A-c03-run1",
+    "status": "ok",
+    "summary": "Reviewed Track A (Verse Text & Numbering) for chunk c03 (all 94 verses, 183–276) across PDF pages p039.png–p054.png against pack/A/c03.md and pack/weak-spots/c03.md. Wrote 5 findings to content-review/out/A/c03/run1/findings.jsonl (v185b missing أ in وَالُولَى vs وَالأُولَى; v185b dotless ى and ࣱ in جَمِىࣱّ vs جَمِيٌّ; v219a dotless ى in وَتُـٔۡوِى vs وَتُـْٔوِي; v223b missing hamza seat إِ in وَالاِبْدَالُ vs وَالإِبْدَالُ; v226a missing fatḥa on small high nūn ۨ in اۨخِرٍ vs اَۨخِرٍ) and recorded complete verse coverage (reached 276 of 276) in content-review/out/A/c03/run1/coverage.md."
+  },
+  {
+    "key": "A-c04-run1",
+    "status": "error",
+    "error": "failed to run agent \"a44e2779-1c49-4ec7-9bcb-5ea2c6a7d48c\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h58m36s."
+  },
+  {
+    "key": "A-c05-run1",
+    "status": "error",
+    "error": "failed to run agent \"a7e5797a-b028-472e-a552-de5ec7ce52e3\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h59m9s."
+  },
+  {
+    "key": "A-c06-run1",
+    "status": "ok",
+    "summary": "Reviewed all 101 verses (445–545) in Track A chunk c06 against PDF pages p077.png–p087.png (printed pp. 75–85) and wrote 10 findings across 7 verses to content-review/out/A/c06/run1/findings.jsonl and full coverage (445–545, reached 545 of 545) to content-review/out/A/c06/run1/coverage.md: 1 high-severity misplaced small yeh (ۦ) in 484a (وَوَجْهَانِۦ فِيهِ → وَوَجْهَانِ فِيهِۦ), 1 medium-severity missing space in 530b (وَبَعْدَلَا → وَبَعْدَ لَا), 5 medium-severity يٰ vs ىٰ mismatches in 486b (أَوۡصَيٰ, بِ:وَصَّيٰ), 506b (وَحَتَّيٰ), 529b (تَلَظَّيٰ،), and 533b (تَلَهَّيٰ), and 3 medium-severity ى vs ي mismatches in 545a/b (فَٱذۡكُرُونِى, وَبِى, وَإِنِّى). Note: PDF p.86 (v.542a/b) contains an apparent publisher misprint adding a shadda onto ة in تِجَٰرَةًّ and وَحَاضِرَةًّ, which the app text rightly omits."
+  },
+  {
+    "key": "A-c07-run1",
+    "status": "error",
+    "error": "failed to run agent \"7a933dbb-9f58-4f2a-b198-88f64c62b8de\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h59m1s."
+  },
+  {
+    "key": "A-c08-run1",
+    "status": "error",
+    "error": "failed to run agent \"bb66cd78-f2c9-4996-ab91-9fc19f2488b4\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h58m36s."
+  },
+  {
+    "key": "A-c09-run1",
+    "status": "error",
+    "error": "failed to run agent \"73beba3a-e0db-4ebb-9328-0040070048bf\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h58m36s."
+  },
+  {
+    "key": "A-c10-run1",
+    "status": "error",
+    "error": "failed to run agent \"1faf795f-2252-4712-860b-c7bbc9394d03\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h58m36s."
+  },
+  {
+    "key": "A-c11-run1",
+    "status": "error",
+    "error": "failed to run agent \"58cc2294-acfe-459b-984f-339e2de3a2ef\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h58m36s."
+  },
+  {
+    "key": "A-c12-run1",
+    "status": "error",
+    "error": "failed to run agent \"b4f9a667-3cf5-4b29-921f-6bfa4f35622d\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h58m35s."
+  },
+  {
+    "key": "E-all-run1",
+    "status": "error",
+    "error": "failed to run agent \"4880ffa7-6446-4c63-b4be-541698eb46cd\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h58m36s."
+  }
+]
