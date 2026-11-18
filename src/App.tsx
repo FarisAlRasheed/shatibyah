@@ -1,5 +1,5 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { BookOpen, Eye, EyeOff, GraduationCap, List, LocateFixed, Search, Settings as SettingsIcon, Undo2, X } from 'lucide-react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { BookOpen, ChevronDown, Eye, EyeOff, GraduationCap, ListTree, LocateFixed, Menu, Search, Settings as SettingsIcon, Undo2, X } from 'lucide-react'
 import { NATIVE } from './native'
 import { audioUrl, loadColors, loadEdition, loadManifest, loadPages, loadReciter, sectionOf, verseRange } from './data'
 import { ColorCard, fadeShare, type OpenMark } from './colors'
@@ -15,7 +15,8 @@ import MiniPlayer from './MiniPlayer'
 import Memorize from './Memorize'
 import './flow.css'
 import './chrome.css'
-import { Drawer, FlagSheet, NoteSheet, RepeatSheet, VerseSheet } from './sheets'
+import { Drawer, FlagSheet, NoteSheet, plural, RepeatSheet, VERSES, VerseSheet } from './sheets'
+import CodesSheet from './Codes'
 import { IndexScreen, MarkNamesSettings, SettingsScreen } from './screens'
 import PlanScreen, { usePlan, useToday } from './PlanScreen'
 import { todayState } from './plan'
@@ -39,6 +40,7 @@ import type { HighlightStore } from './highlights'
 import './listener.css'
 import './explain.css'
 import './extras.css'
+import './bars.css'
 
 type Tab = 'read' | 'plan' | 'settings'
 export type Panel =
@@ -46,12 +48,13 @@ export type Panel =
   | { type: 'repeat'; n: number }
   | 'look' // the «أ» appearance panel
   | 'index' // الفهرس, over the reader
+  | 'codes' // جدول الرموز, from the ☰ menu
   | { type: 'verse'; n: number }
   | { type: 'note'; n: number }
   | { type: 'flag'; n: number }
   | { type: 'twins'; n: number }
 
-// The tab bar. «أ» (المظهر) sits between the first two: it opens a panel over the reader, not a screen.
+// The tab bar. المظهر, the curtain and the codes legend live in the top bar's ☰ menu.
 const TABS: [Tab, string, typeof BookOpen][] = [
   ['read', 'القراءة', BookOpen],
   ['plan', 'الحفظ', GraduationCap],
@@ -90,6 +93,7 @@ const defaultSettings: Settings = {
   layout: 'auto',
   kashida: true,
   numberStyle: 'circle',
+  bothNumbers: true,
   immersive: true,
   rail: true,
   backPill: true,
@@ -120,6 +124,8 @@ const defaultRepeat: RepeatSettings = {
   recent: [],
 }
 
+// The repeat chip's quick counts (0 = endless); the full choice is in the repeat sheet («⋯»).
+const REPEAT_STEPS = [1, 3, 5, 10, 0]
 const SCOPE_LABEL: Record<RepeatSettings['scope'], string> = { verse: 'تكرار البيت', range: 'تكرار النطاق', section: 'تكرار الباب', all: 'تكرار المتن' }
 
 // A single player for the whole app (module scope, so React dev double-renders can't duplicate it).
@@ -198,6 +204,8 @@ export default function App() {
   const [run, setRun] = useState<{ from: number; to: number } | null>(null)
   // Recitation curtain: on for this visit only, with the verses tapped open.
   const [curtainOn, setCurtainOn] = useState(false)
+  // The top bar's ☰ menu.
+  const [menuOpen, setMenuOpen] = useState(false)
   const [revealed, setRevealed] = useState<Set<number>>(() => new Set())
   const [plan, setPlan] = usePlan()
   const today = useToday()
@@ -518,6 +526,22 @@ export default function App() {
     setSelected(n)
     startQueue(n, n, n, { ...r, rangeTimes: 1 })
   }
+  /** The player's ‹ › buttons: move through the queue, or, for a single verse, on to its neighbour with the same count. */
+  const playerStep = (d: 1 | -1) => {
+    if (!active) return
+    if (play.total > 1 || play.stages > 1) return player.step(d)
+    const n = Math.min(all.to, Math.max(all.from, (play.verse ?? focusVerse) + d))
+    if (n === play.verse || !timings.has(n)) return
+    setSelected(n)
+    startQueue(n, n, n, { verseTimes: play.verseTimes, rangeTimes: play.rangeTimes })
+  }
+  /** The player's repeat chip: each tap moves each verse's count on (×١ → ×٣ → ×٥ → ×١٠ → ∞), live. */
+  const cycleRepeat = () => {
+    const now = active ? play.verseTimes : repeat.verseTimes
+    const next = REPEAT_STEPS[(REPEAT_STEPS.indexOf(now) + 1) % REPEAT_STEPS.length]
+    setRepeat((r) => ({ ...r, verseTimes: next }))
+    player.setVerseTimes(next)
+  }
   /** Memorization session on a range (e.g. today's wird): repeat that range and open memorization mode. */
   const startSession = (from: number, to: number) => {
     const r = { ...repeat, scope: 'range' as const, from, to }
@@ -551,7 +575,7 @@ export default function App() {
     step,
     find: openFind,
     repeat: () => hasAudio && setPanel({ type: 'repeat', n: focusVerse }),
-    closeFind: () => (pick ? setPick(null) : setFind(null)),
+    closeFind: () => (menuOpen ? setMenuOpen(false) : pick ? setPick(null) : setFind(null)),
     busy: tab !== 'read' || !!panel || memorize,
   }
   const times = (n: number) => (n === 0 ? '∞' : toArabicDigits(n))
@@ -598,6 +622,7 @@ export default function App() {
           />
         </Drawer>
       )
+    if (panel === 'codes') return <CodesSheet onClose={close} />
     if (panel?.type === 'repeat')
       return (
         <RepeatSheet
@@ -729,7 +754,7 @@ export default function App() {
 
   return (
     <div
-      className={`app${reciters.length ? ' has-player' : ''}${settings.numberStyle === 'plain' ? ' plain-numbers' : ''}${hideBars ? ' immersed' : ''}${panel === 'look' ? ' look-open' : ''}${showStrip ? ' has-strip' : ''}${showSide ? ' side-open' : ''}${explainSheet ? ' explain-sheet' : ''}${explaining && showSide ? ' explain-side' : ''}`}
+      className={`app${active ? ' has-player' : ''}${settings.numberStyle === 'plain' ? ' plain-numbers' : ''}${hideBars ? ' immersed' : ''}${panel === 'look' ? ' look-open' : ''}${showStrip ? ' has-strip' : ''}${showSide ? ' side-open' : ''}${explainSheet ? ' explain-sheet' : ''}${explaining && showSide ? ' explain-side' : ''}`}
       style={{
         ['--verse-size' as string]: `${settings.fontSize}px`,
         ['--verse-font' as string]: FONT_FAMILY[settings.font],
@@ -753,29 +778,19 @@ export default function App() {
               <button className="icon-btn" onClick={openFind} aria-label="البحث">
                 <Search size={21} />
               </button>
-              <button className="topbar-title" onClick={() => setPanel('index')}>
-                <strong>{sectionTitle}</strong>
+              <button className="topbar-title" onClick={() => setPanel('index')} aria-label={`الفهرس — ${sectionTitle}`}>
+                <span className="tt-name">
+                  <strong>{sectionTitle}</strong>
+                  <ChevronDown size={16} className="tt-arrow" aria-hidden="true" />
+                </span>
                 {titleSection && (
                   <small>
-                    {toArabicDigits(titleSection.start)}–{toArabicDigits(titleSection.end)}
+                    {toArabicDigits(titleSection.start)}–{toArabicDigits(titleSection.end)} · {plural(titleSection.end - titleSection.start + 1, VERSES)}
                   </small>
                 )}
               </button>
-              {settings.curtain && (
-                <button
-                  className={`icon-btn${curtainOn ? ' on' : ''}`}
-                  onClick={() => {
-                    setCurtainOn((x) => !x)
-                    setRevealed(new Set())
-                  }}
-                  aria-pressed={curtainOn}
-                  aria-label={curtainOn ? 'إظهار الأشطر' : 'ستارة التسميع'}
-                >
-                  {curtainOn ? <EyeOff size={21} /> : <Eye size={21} />}
-                </button>
-              )}
-              <button className="icon-btn" onClick={() => setPanel('index')} aria-label="الفهرس">
-                <List size={22} />
+              <button className={`icon-btn${menuOpen ? ' on' : ''}`} onClick={() => setMenuOpen((x) => !x)} aria-expanded={menuOpen} aria-label="القائمة">
+                <Menu size={22} />
               </button>
             </>
           )}
@@ -783,6 +798,46 @@ export default function App() {
             <WirdStrip wird={wirdDue!} onStart={() => startSession(wirdDue!.from, wirdDue!.to)} onHide={() => setWirdHidden({ day: today })} />
           )}
         </header>
+      )}
+      {tab === 'read' && menuOpen && (
+        <div className="menu-layer" onClick={() => setMenuOpen(false)}>
+          <div className="top-menu" role="menu" aria-label="القائمة" onClick={(e) => e.stopPropagation()}>
+            <button
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false)
+                openLook()
+              }}
+            >
+              <span className="menu-glyph" aria-hidden="true">
+                أ
+              </span>
+              المظهر
+            </button>
+            <button
+              role="menuitemcheckbox"
+              aria-checked={curtainOn}
+              onClick={() => {
+                setCurtainOn((x) => !x)
+                setRevealed(new Set())
+              }}
+            >
+              {curtainOn ? <EyeOff size={20} /> : <Eye size={20} />}
+              <span className="grow">ستارة التسميع</span>
+              <span className={`menu-switch${curtainOn ? ' on' : ''}`} aria-hidden="true" />
+            </button>
+            <button
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false)
+                setPanel('codes')
+              }}
+            >
+              <ListTree size={20} />
+              جدول الرموز
+            </button>
+          </div>
+        </div>
       )}
       {tab === 'read' && find?.list && (
         <FindList
@@ -849,7 +904,8 @@ export default function App() {
           fits={fits}
           fontSize={settings.fontSize}
           layout={settings.layout}
-          look={`${settings.lineHeight}|${settings.font}|${settings.numberStyle}|${settings.colors}|${settings.pageMarks}`}
+          look={`${settings.lineHeight}|${settings.font}|${settings.numberStyle}|${settings.bothNumbers}|${settings.colors}|${settings.pageMarks}`}
+          bothNumbers={settings.bothNumbers}
           hits={find ? results.hits : null}
           veil={repeat.fade && active && play.verse != null ? { n: play.verse, share: fadeShare(play) } : null}
           slips={slipMarks}
@@ -857,7 +913,7 @@ export default function App() {
           pick={span}
           run={active ? run : null}
           count={active && play.verse != null && play.verseTimes !== 1 ? { n: play.verse, round: play.verseRound, times: play.verseTimes } : null}
-          curtain={settings.curtain && curtainOn ? { revealed } : null}
+          curtain={curtainOn ? { revealed } : null}
           pageStarts={settings.pageMarks ? pageStarts : null}
           explain={explain && explainGroup ? { ...explainGroup, n: explain.opened } : null}
           active={tab === 'read' && !panel && !memorize && !find?.list}
@@ -960,38 +1016,27 @@ export default function App() {
       )}
 
       <div className="bottom-dock">
-        {reciters.length > 0 ? (
+        {active && (
           <MiniPlayer
             state={play}
-            verse={active ? play.verse : selected}
+            verse={play.verse}
             reciterName={reciters.find((r) => r.id === reciterId)?.name ?? ''}
-            ready={hasAudio}
             summary={summary}
-            repeatLabel={`×${times(active ? play.verseTimes : repeat.verseTimes)}`}
+            repeatTimes={play.verseTimes}
             onOpen={() => setMemorize(true)}
             onPlay={togglePlay}
-            onRepeat={() => setPanel({ type: 'repeat', n: focusVerse })}
+            onStep={playerStep}
+            onCycleRepeat={cycleRepeat}
+            onRepeatMore={() => setPanel({ type: 'repeat', n: focusVerse })}
             onStop={() => player.stop()}
           />
-        ) : (
-          <div className="no-audio">لا توجد قراءة مسجّلة لهذه النسخة بعد.</div>
         )}
         <nav className="tabbar">
-          {TABS.map(([id, label, Icon], i) => (
-            <Fragment key={id}>
-              <button className={tab === id ? 'on' : ''} onClick={() => goTab(id)} aria-current={tab === id ? 'page' : undefined}>
-                <Icon size={23} strokeWidth={tab === id ? 2.2 : 1.7} />
-                <span>{label}</span>
-              </button>
-              {i === 0 && (
-                <button className={panel === 'look' ? 'on' : ''} onClick={openLook} aria-label="المظهر والخط">
-                  <span className="tab-glyph" aria-hidden="true">
-                    أ
-                  </span>
-                  <span>المظهر</span>
-                </button>
-              )}
-            </Fragment>
+          {TABS.map(([id, label, Icon]) => (
+            <button key={id} className={tab === id ? 'on' : ''} onClick={() => goTab(id)} aria-current={tab === id ? 'page' : undefined}>
+              <Icon size={23} strokeWidth={tab === id ? 2.2 : 1.7} />
+              <span>{label}</span>
+            </button>
           ))}
         </nav>
       </div>
@@ -1007,7 +1052,7 @@ export default function App() {
           colors={settings.memorizeColors ? (colors ?? null) : null}
           onMark={setOpenMark}
           canPlay={hasAudio}
-          peek={settings.curtain}
+          peek={curtainOn}
           onHide={(hide) => setSettings((s) => ({ ...s, hide }))}
           onClose={() => setMemorize(false)}
           onPlay={togglePlay}

@@ -65,6 +65,7 @@ export interface Settings {
   layout: VerseLayout
   kashida: boolean // equal half-line widths, short ones stretched with tatweel (display only)
   numberStyle: 'circle' | 'plain'
+  bothNumbers: boolean // the verse's number within its bab beside its number in the poem
   // Optional extras (الإعدادات ← مزايا إضافية)
   immersive: boolean // hide the bars while reading
   rail: boolean // fast-scroll rail

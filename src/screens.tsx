@@ -488,12 +488,11 @@ export function ColorsField({ settings, setSettings }: FieldProps) {
  * Optional extras the user can switch off (الإعدادات ← مزايا إضافية).
  * Add a line here when a new optional feature is built; `settings[key]` is its switch.
  */
-export const EXTRAS: [keyof Settings & ('immersive' | 'rail' | 'backPill' | 'curtain' | 'twins' | 'wirdStrip' | 'pageMarks' | 'sidePanel' | 'sketches'), string, string][] = [
+export const EXTRAS: [keyof Settings & ('immersive' | 'rail' | 'backPill' | 'twins' | 'wirdStrip' | 'pageMarks' | 'sidePanel' | 'sketches'), string, string][] = [
   ['sketches', 'إظهار الرسوم على الأبيات', 'ما رسمته بيدك على الأبيات يظهر فوقها في صفحة القراءة'],
   ['immersive', 'إخفاء الأشرطة أثناء القراءة', 'تختفي عند النزول في الصفحة وتعود عند الصعود أو اللمس'],
   ['rail', 'شريط التنقل السريع', 'اسحبه على حافة الصفحة للانتقال في المتن كله'],
   ['backPill', 'زر الرجوع بعد الانتقال', 'يعيدك إلى موضعك بعد الانتقال من البحث أو الفهرس'],
-  ['curtain', 'ستارة التسميع', 'زر عين في الأعلى يخفي الشطر الثاني من كل بيت لتسمّعه من حفظك'],
   ['twins', 'الأبيات المتشابهة الخواتيم', 'زر «متشابهات» للأبيات التي تنتهي بالكلمة نفسها'],
   ['wirdStrip', 'شريط ورد اليوم', 'سطر أعلى القراءة بورد اليوم من خطة الحفظ، يبدؤه بلمسة'],
   ['pageMarks', 'أرقام صفحات المطبوع', 'خط خفيف حيث تبدأ كل صفحة من الطبعة الورقية، والانتقال إلى صفحة من الفهرس'],

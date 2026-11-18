@@ -22,7 +22,7 @@ const NUMBERS: [Settings['numberStyle'], string][] = [
 const SPACING = { min: 1.6, max: 2.6, step: 0.05 }
 
 /** What «استعادة الافتراضي» puts back (the look only; edition, reciter and extras are kept). */
-export const DEFAULT_LOOK: Pick<Settings, 'theme' | 'font' | 'fontSize' | 'lineHeight' | 'layout' | 'kashida' | 'colors' | 'memorizeColors' | 'numberStyle'> = {
+export const DEFAULT_LOOK: Pick<Settings, 'theme' | 'font' | 'fontSize' | 'lineHeight' | 'layout' | 'kashida' | 'colors' | 'memorizeColors' | 'numberStyle' | 'bothNumbers'> = {
   theme: 'auto',
   font: 'amiri',
   fontSize: DEFAULT_SIZE,
@@ -32,6 +32,7 @@ export const DEFAULT_LOOK: Pick<Settings, 'theme' | 'font' | 'fontSize' | 'lineH
   colors: true,
   memorizeColors: false,
   numberStyle: 'circle',
+  bothNumbers: true,
 }
 
 export default function LookPanel(p: {
@@ -66,6 +67,7 @@ export default function LookPanel(p: {
             fits={p.fits}
             fontSize={s.fontSize}
             layout={s.layout}
+            bothNumbers={s.bothNumbers}
           />
         </div>
       }
@@ -129,6 +131,13 @@ export default function LookPanel(p: {
             ))}
           </div>
         </div>
+        <label className="field-row">
+          <span className="list-main">
+            رقم البيت في بابه
+            <small className="muted">يظهر رقم البيت في الباب بجانب رقمه في المتن، مثل «٢ | ١٠١»</small>
+          </span>
+          <input type="checkbox" className="switch" checked={s.bothNumbers} onChange={(e) => set({ bothNumbers: e.target.checked })} />
+        </label>
       </div>
 
       {p.colors && (

@@ -4,6 +4,8 @@ import { Bookmark, Check, Pencil, PenLine } from 'lucide-react'
 import { MARK_COLORS, markSlot } from './marks'
 import { SketchView, type Sketch, type Sketches } from './Sketch'
 import { toArabicDigits } from './arabic'
+import { localNumbers } from './data'
+import { plural, VERSES } from './sheets'
 import { HalfText, veilFor, type OpenMark } from './colors'
 import { DEFAULT_HALF_EM, type Fits, type HalfFit } from './kashida'
 import type { Bookmarks, Mastered, Notes, VerseLayout } from './store'
@@ -46,6 +48,8 @@ interface Props {
   pick?: { from: number; to: number } | null
   /** The range a running repeat walks: its first and last verse carry a marker. */
   run?: { from: number; to: number } | null
+  /** Show each verse's number within its bab beside its number in the poem («٢ | ١٠١»). */
+  bothNumbers?: boolean
   /** The verse repeating now and its count, shown as a ring on its number. */
   count?: { n: number; round: number; times: number } | null
   /** Recitation curtain: every second half-line veiled, except in the verses in `revealed`. */
@@ -149,8 +153,10 @@ export function VerseSample(p: {
   fits: Fits | null
   fontSize: number
   layout: VerseLayout
+  bothNumbers?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const locals = useMemo(() => (p.bothNumbers ? localNumbers(p.edition) : null), [p.bothNumbers, p.edition])
   const { width, half, g, limits } = useVerseBox(ref, p.fits, p.layout, '', false)
   const size = width ? clampSize(p.fontSize, limits) : p.fontSize
   const layout = width ? layoutFor(size, width, half, p.layout, g) : 'stack'
@@ -168,6 +174,7 @@ export function VerseSample(p: {
         <VerseRow
           key={v.n}
           n={v.n}
+          local={locals?.get(v.n)}
           a={v.a}
           b={v.b}
           sample
@@ -250,6 +257,7 @@ export default function Reader(p: Props) {
     return edition.verses.map((v) => ({ v, banners: headers.get(v.n) ?? [] }))
   }, [edition])
   const indexOf = useMemo(() => new Map(edition.verses.map((v, i) => [v.n, i])), [edition])
+  const locals = useMemo(() => localNumbers(edition), [edition])
   const topRef = useRef<HTMLDivElement>(null)
   const explainAt = p.explain && [indexOf.get(p.explain.from) ?? 0, indexOf.get(p.explain.to) ?? 0]
   const vw = useVerseWindow({
@@ -338,7 +346,10 @@ export default function Reader(p: Props) {
           )}
           {banners.map((s) => (
             <h2 key={s.id} id={`s-${s.id}`} className={`banner ${s.kind}`}>
-              <span>{s.title}</span>
+              <span>
+                {s.title}
+                <small className="banner-count">{plural(s.end - s.start + 1, VERSES)}</small>
+              </span>
             </h2>
           ))}
           <VerseRow
@@ -364,6 +375,7 @@ export default function Reader(p: Props) {
             run={roleIn(p.run, v.n, false)}
             explain={roleIn(p.explain, v.n, true)}
             explainHere={p.explain?.n === v.n}
+            local={p.bothNumbers ? locals.get(v.n) : undefined}
             round={p.count?.n === v.n ? p.count.round : undefined}
             times={p.count?.n === v.n ? p.count.times : undefined}
             below={p.bar?.n === v.n ? p.bar.el : undefined}
@@ -393,6 +405,8 @@ const ALL_WORDS = () => true
 
 interface RowProps {
   n: number
+  /** The verse's number within its bab, when shown beside the poem's number. */
+  local?: number
   a: string
   b: string
   isSelected: boolean
@@ -457,7 +471,15 @@ function Half(p: {
 }
 
 /** The verse number; while the verse repeats, its count «٢/٣» with a ring (a bar in the plain style). */
-function VerseNumber({ n, round, times }: { n: number; round?: number; times?: number }) {
+function VerseNumber({ n, local, round, times }: { n: number; local?: number; round?: number; times?: number }) {
+  if ((round == null || times == null) && local != null)
+    return (
+      <span className="vnum dual" aria-label={`البيت ${toArabicDigits(local)} من الباب، ${toArabicDigits(n)} من المتن`}>
+        <span className="vn-local">{toArabicDigits(local)}</span>
+        <span className="vn-sep" aria-hidden="true" />
+        <span className="vn-poem">{toArabicDigits(n)}</span>
+      </span>
+    )
   if (round == null || times == null) return <span className="vnum">{toArabicDigits(n)}</span>
   const label = `${toArabicDigits(round)}/${times === 0 ? '∞' : toArabicDigits(times)}`
   const share = times === 0 ? 1 : Math.min(1, round / times)
@@ -474,7 +496,7 @@ const VerseRow = memo(function VerseRow(p: RowProps) {
     <article id={p.sample ? undefined : `v-${p.n}`} className={`${cls}${p.mark != null ? ' marked' : ''}`} style={p.mark != null ? ({ '--mark': MARK_COLORS[p.mark] } as CSSProperties) : undefined}>
       <button className="verse-body" onClick={() => p.onTap(p.n)}>
         <span className="vnum-col">
-          <VerseNumber n={p.n} round={p.round} times={p.times} />
+          <VerseNumber n={p.n} local={p.local} round={p.round} times={p.times} />
           {(p.hasBookmark || p.hasNote || p.isMastered || p.sketch) && (
             <span className="marks">
               {p.hasBookmark && <Bookmark size={12} aria-label="علامة" />}

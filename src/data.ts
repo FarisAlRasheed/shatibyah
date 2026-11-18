@@ -45,6 +45,16 @@ export function sectionOf(edition: Edition, n: number): Section | undefined {
     .sort((a, b) => a.end - a.start - (b.end - b.start))[0]
 }
 
+/** Each verse's number within its own (innermost) chapter, for verses whose number there differs from the poem's. */
+export function localNumbers(edition: Edition): Map<number, number> {
+  const map = new Map<number, number>()
+  for (const v of edition.verses) {
+    const s = sectionOf(edition, v.n)
+    if (s && s.start !== 1) map.set(v.n, v.n - s.start + 1)
+  }
+  return map
+}
+
 export function verseRange(edition: Edition) {
   return { from: edition.verses[0]?.n ?? 1, to: edition.verses[edition.verses.length - 1]?.n ?? 1 }
 }

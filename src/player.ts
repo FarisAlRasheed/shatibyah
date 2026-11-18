@@ -215,6 +215,18 @@ export class RepeatPlayer {
     void this.playCurrent(true)
   }
 
+  /**
+   * Change how many times each verse repeats, while playing (the player's repeat chip).
+   * Only single-stage playback: a cumulative programme keeps the counts it was built with.
+   */
+  setVerseTimes(times: number) {
+    if (this.state.status === 'idle' || this.stages.length !== 1) return
+    this.stages[0] = { ...this.stages[0], verseTimes: times }
+    this.opts = { ...this.opts, verseTimes: times }
+    const verseRound = times === 0 ? this.state.verseRound : Math.min(this.state.verseRound, times)
+    this.set({ verseTimes: times, verseRound })
+  }
+
   /** Play the current verse again from its start, resetting its count. */
   replay() {
     if (this.state.status === 'idle') return

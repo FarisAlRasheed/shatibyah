@@ -1,0 +1,21 @@
+/* جدول الرموز (Codes.tsx): every row runs the full width; each qari on his own row, his rawis under him. */
+.codes { padding: 0 16px 20px; font-size: 14px; }
+.codes h4 { margin: 18px 0 6px; font-size: 14px; font-weight: 600; color: var(--accent); }
+.codes .code { font-family: var(--verse-font); font-weight: 400; font-size: 20px; line-height: 1.2; color: var(--code-red); min-width: 22px; text-align: center; flex: none; }
+.codes .full { color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+.cq { padding: 10px 0; border-bottom: 0.5px solid var(--line); }
+.cq-name { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; }
+.cq-name .set { font-family: var(--verse-font); font-weight: 400; color: var(--code-red); }
+.cq > .full { padding-right: 30px; }
+.rawis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; padding-right: 14px; }
+.rawi { display: flex; align-items: flex-start; gap: 4px; min-width: 0; }
+.rawi > svg { flex: none; color: var(--muted); margin-top: 6px; }
+.rawi-name { font-weight: 600; }
+.cg { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; border-bottom: 0.5px solid var(--line); }
+.cg .code { min-width: 48px; }
+.cg .full { margin-right: auto; }
+.colors-key { display: flex; gap: 20px; }
+.colors-key .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 4px; }
+.colors-key .dot.red { background: var(--code-red); }
+.colors-key .dot.green { background: var(--quran-green); }
+@media (max-width: 360px) { .rawis { grid-template-columns: 1fr; } }
