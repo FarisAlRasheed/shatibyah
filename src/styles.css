@@ -116,6 +116,10 @@ html.pinching .app { overflow-x: clip; }
 }
 .banner.bab span { font-size: calc(var(--verse-size) * 1.2); }
 
+/* One drawn block of the reader (Reader.tsx, virtual.ts): its height is measured, so its margins stay inside. */
+.vgroup { display: flow-root; }
+.vgroup > .verse { margin-block: 1px; }
+.vspacer { pointer-events: none; }
 .verse { border-radius: 14px; margin: 2px 0; scroll-margin: 90px 0 calc(var(--dock-h) + var(--player-h) + 40px); transition: background-color 0.25s; }
 .verse.selected { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); }
 .verse.playing { background: var(--playing); }
@@ -163,6 +167,12 @@ html.pinching .app { overflow-x: clip; }
 .veil * { color: transparent !important; }
 
 /* Screens */
+/* الحفظ and الإعدادات: a page over the reader with its own scrolling, so the reader underneath keeps
+   its layout and place (App.tsx goTab). */
+.tab-page {
+  position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--bg);
+}
 .screen {
   max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px;
   padding: calc(env(safe-area-inset-top) + 18px) 16px calc(var(--dock-h) + var(--player-h) + env(safe-area-inset-bottom) + 32px);

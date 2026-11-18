@@ -188,7 +188,6 @@ export default function App() {
   const [scrollTarget, setScrollTarget] = useState<{ n: number; key: number } | null>(
     settings.lastVerse ? { n: settings.lastVerse, key: 0 } : null,
   )
-  const readScroll = useRef(0)
   // Follow the recited verse until the user scrolls or jumps away; a pill brings them back.
   const [following, setFollowing] = useState(true)
   // The verse whose small action bar is showing.
@@ -321,21 +320,9 @@ export default function App() {
     if (selected) setSettings((s) => ({ ...s, lastVerse: selected }))
   }, [selected, setSettings])
 
-  const goTab = useCallback(
-    (t: Tab) => {
-      if (tab === 'read' && t !== 'read') readScroll.current = window.scrollY
-      setTab(t)
-    },
-    [tab],
-  )
-
-  // Coming back to the reader: restore where it was, unless a jump set a new target.
-  const pendingRestore = useRef(false)
-  useLayoutEffect(() => {
-    if (tab === 'read' && pendingRestore.current) window.scrollTo(0, readScroll.current)
-    else if (tab !== 'read') window.scrollTo(0, 0)
-    pendingRestore.current = tab !== 'read'
-  }, [tab])
+  // The other tabs open as pages over the reader, which stays laid out and scrolled where it was
+  // underneath: hiding it (display: none) made the phone lay out every verse again on the way back.
+  const goTab = setTab
 
   const place = useRef({ tab, selected })
   place.current = { tab, selected }
@@ -343,7 +330,6 @@ export default function App() {
   const jumpTo = useCallback((n: number, keepBack = false) => {
     const here = place.current.tab === 'read' ? verseAtCentre() : place.current.selected
     if (here && Math.abs(here - n) > 6) setBack((b) => (keepBack && b != null ? b : here))
-    pendingRestore.current = false
     setFollowing(false)
     setSelected(n)
     setBar(null)
@@ -847,7 +833,7 @@ export default function App() {
         </span>
       )}
 
-      <div hidden={tab !== 'read'}>
+      <div inert={tab !== 'read'}>
         <Reader
           edition={edition}
           selected={selected}
@@ -883,6 +869,7 @@ export default function App() {
         />
       </div>
       {tab === 'plan' && (
+        <div className="tab-page">
         <PlanScreen
           edition={edition}
           mastered={mastered}
@@ -899,8 +886,10 @@ export default function App() {
             </PracticeGroup>
           }
         />
+        </div>
       )}
       {tab === 'settings' && (
+        <div className="tab-page">
         <SettingsScreen
           hasColors={!!colors}
           onLook={openLook}
@@ -926,6 +915,7 @@ export default function App() {
             </>
           }
         />
+        </div>
       )}
 
       {explaining && (wide ? showSide : true) && (

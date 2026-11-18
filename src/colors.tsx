@@ -52,6 +52,37 @@ function paint(name: Paint): Highlight {
   return paints[name]
 }
 
+/**
+ * Only half-lines on or near the screen carry their colours, like a game that draws only what the
+ * player can see. With every verse painted at once (thousands of ranges) WebKit took seconds to
+ * hide or redraw the reader: switching tabs froze for up to a minute on an iPhone, and scrolling
+ * stuttered. One shared observer turns each half's ranges on as it nears the screen and off as it
+ * leaves; the margin is wide enough that the colours are there before the text scrolls into view.
+ */
+type Painted = { ranges: [Highlight, StaticRange][]; on: boolean }
+const painted = new WeakMap<Element, Painted>()
+const nearScreen = new WeakSet<Element>()
+const show = (p: Painted, on: boolean) => {
+  if (p.on === on) return
+  p.on = on
+  for (const [hl, r] of p.ranges) on ? hl.add(r) : hl.delete(r)
+}
+let watcher: IntersectionObserver | null = null
+function nearWatcher() {
+  watcher ??= new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) nearScreen.add(e.target)
+        else nearScreen.delete(e.target)
+        const p = painted.get(e.target)
+        if (p) show(p, e.isIntersecting)
+      }
+    },
+    { rootMargin: '150% 0px' },
+  )
+  return watcher
+}
+
 /** The text node and offset inside `root` at offset `x` of its whole text. */
 function pointAt(root: Node, x: number): [Text, number] | null {
   const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
@@ -93,27 +124,40 @@ export function HalfText(p: {
 
   // Paint the colours and hits over the drawn text. Ranges are in the drawn string (tatweels in),
   // which is exactly the text of `root`.
+  // Static ranges: the text under them only changes through a re-render, which builds them anew,
+  // and unlike live ranges the engine need not keep them up to date on every change to the page.
   useLayoutEffect(() => {
     const el = root.current
     if (!HIGHLIGHTS || !el) return
-    const added: [Highlight, Range][] = []
+    const ranges: Painted['ranges'] = []
     const add = (name: Paint, s: number, e: number) => {
       const a = pointAt(el, drawnOffset(ins, s))
       const b = pointAt(el, drawnOffset(ins, e))
       if (!a || !b) return
-      const r = new Range()
-      r.setStart(a[0], a[1])
-      r.setEnd(b[0], b[1])
-      paint(name).add(r)
-      added.push([paint(name), r])
+      ranges.push([paint(name), new StaticRange({ startContainer: a[0], startOffset: a[1], endContainer: b[0], endOffset: b[1] })])
     }
     const hidden = (s: number, e: number) => model.words.some((w) => w.s < e && w.e > s && veiled(w.i))
     for (const m of model.marks) if (!hidden(m.s, m.e)) add(m.mark.k === 'r' ? 'c-red' : 'c-green', m.s, m.e)
     for (const h of model.hits) if (!hidden(h.s, h.e)) add('hit', h.s, h.e)
+    if (!ranges.length) return
+    const p: Painted = { ranges, on: false }
+    // A half already known to be near the screen (a re-render) is painted at once, without a gap.
+    show(p, nearScreen.has(el))
+    painted.set(el, p)
     return () => {
-      for (const [hl, r] of added) hl.delete(r)
+      show(p, false)
+      if (painted.get(el) === p) painted.delete(el)
     }
   })
+  useLayoutEffect(() => {
+    const el = root.current
+    if (!HIGHLIGHTS || !el) return
+    nearWatcher().observe(el)
+    return () => {
+      watcher?.unobserve(el)
+      nearScreen.delete(el)
+    }
+  }, [])
 
   /** Wraps a finished word in its slip mark, if it has one. */
   const marked = (key: number, slip: SlipType | undefined, node: ReactNode) =>

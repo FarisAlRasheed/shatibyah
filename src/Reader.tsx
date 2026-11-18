@@ -1,5 +1,5 @@
 import type { SlipType, VerseSlips } from './slips'
-import { Fragment, memo, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
 import { Bookmark, Check, Pencil, PenLine } from 'lucide-react'
 import { MARK_COLORS, markSlot } from './marks'
 import { SketchView, type Sketch, type Sketches } from './Sketch'
@@ -9,6 +9,7 @@ import { DEFAULT_HALF_EM, type Fits, type HalfFit } from './kashida'
 import type { Bookmarks, Mastered, Notes, VerseLayout } from './store'
 import { anchorAt, clampSize, GUESS, holdAnchor, layoutFor, measureRoom, sizeLimits, usePinch, type Anchor, type Room } from './zoom'
 import type { ColorMark, Edition, EditionColors, Section } from './types'
+import { useVerseWindow } from './virtual'
 
 const NO_MARKS: ColorMark[] = []
 
@@ -238,20 +239,55 @@ export default function Reader(p: Props) {
   if (lookKey !== lastLook.current && ref.current && !lookAnchor.current) {
     lookAnchor.current = anchorAt(ref.current, TOP_Y)
   }
+
+  // Only the verses near the screen are drawn (virtual.ts). A block is a verse with the page mark
+  // and chapter titles that come just before it.
+  const blocks = useMemo(() => {
+    const headers = new Map<number, Section[]>()
+    for (const s of [...edition.sections].sort((a, b) => b.end - b.start - (a.end - a.start))) {
+      headers.set(s.start, [...(headers.get(s.start) ?? []), s])
+    }
+    return edition.verses.map((v) => ({ v, banners: headers.get(v.n) ?? [] }))
+  }, [edition])
+  const indexOf = useMemo(() => new Map(edition.verses.map((v, i) => [v.n, i])), [edition])
+  const topRef = useRef<HTMLDivElement>(null)
+  const explainAt = p.explain && [indexOf.get(p.explain.from) ?? 0, indexOf.get(p.explain.to) ?? 0]
+  const vw = useVerseWindow({
+    list: ref,
+    topEl: topRef,
+    count: blocks.length,
+    kind: (i) => `${blocks[i].banners.map((b) => b.kind).join(',')}${p.pageStarts?.has(blocks[i].v.n) ? '|p' : ''}`,
+    guess: (kind, plain) => {
+      const row = plain || size * (layout === 'side' ? 2.3 : 4.4) + 10
+      if (!kind) return row
+      const [titles, page] = kind.split('|')
+      return row + (titles ? titles.split(',').length * (size * 1.9 + 44) : 0) + (page ? 32 : 0)
+    },
+    resetKey: `${lookKey}|${Math.round(width)}`,
+    initial: indexOf.get(scrollTarget?.n ?? p.selected ?? 0) ?? 0,
+    keep: explainAt ? [explainAt[0], explainAt[1]] : null,
+  })
+  const vwRef = useRef(vw)
+  vwRef.current = vw
   useLayoutEffect(() => {
     lastLook.current = lookKey
     if (lookAnchor.current) holdAnchor(lookAnchor.current)
     lookAnchor.current = null
   }, [lookKey])
-  useFitCheck(ref, lookKey)
+  useFitCheck(ref, `${lookKey}|${vw.start}|${vw.end}`)
 
   useEffect(() => {
     if (!scrollTarget) return
-    const behavior = scrollTarget.key === 0 ? 'auto' : 'smooth'
+    const i = indexOf.get(scrollTarget.n)
+    if (i == null) return
+    // Smooth only to a verse already drawn nearby; a far one is drawn first and jumped to.
+    const behavior = scrollTarget.key === 0 || !vwRef.current.drawn(i) ? 'auto' : 'smooth'
     // A chapter's first verse: bring its banner to the top, so the title bar and the page agree.
     const opening = edition.sections.filter((s) => s.start === scrollTarget.n).sort((a, b) => b.end - a.end)[0]
-    if (opening) document.getElementById(`s-${opening.id}`)?.scrollIntoView({ block: 'start', behavior })
-    else document.getElementById(`v-${scrollTarget.n}`)?.scrollIntoView({ block: 'center', behavior })
+    vwRef.current.goTo(i, () => {
+      if (opening) document.getElementById(`s-${opening.id}`)?.scrollIntoView({ block: 'start', behavior })
+      else document.getElementById(`v-${scrollTarget.n}`)?.scrollIntoView({ block: 'center', behavior })
+    })
   }, [scrollTarget]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Report the section at the top of the screen, for the title bar.
@@ -260,11 +296,13 @@ export default function Reader(p: Props) {
     const update = () => {
       frame = 0
       let current: Section | null = null
+      // A title above the drawn verses is above the screen; one below them is below it.
+      const { start, end } = vwRef.current
       for (const s of edition.sections) {
-        const el = document.getElementById(`s-${s.id}`)
-        if (el && el.getBoundingClientRect().top < 120) {
-          if (!current || s.start >= current.start) current = s
-        }
+        const i = indexOf.get(s.start) ?? 0
+        const el = i >= start && i < end ? document.getElementById(`s-${s.id}`) : null
+        const above = i < start || (!!el && el.getBoundingClientRect().top < 120)
+        if (above && (!current || s.start >= current.start)) current = s
       }
       onSectionChange(current)
     }
@@ -277,13 +315,7 @@ export default function Reader(p: Props) {
       window.removeEventListener('scroll', onScroll)
       cancelAnimationFrame(frame)
     }
-  }, [edition, onSectionChange])
-
-  // Sections that open at each verse, outermost first.
-  const headers = new Map<number, Section[]>()
-  for (const s of [...edition.sections].sort((a, b) => b.end - b.start - (a.end - a.start))) {
-    headers.set(s.start, [...(headers.get(s.start) ?? []), s])
-  }
+  }, [edition, onSectionChange, indexOf])
 
   return (
     <main
@@ -292,16 +324,19 @@ export default function Reader(p: Props) {
       data-layout={layout}
       data-even={p.fits ? 1 : 0}
       style={{ ['--verse-size' as string]: `${size}px`, ['--half-w' as string]: `${half}em` }}
-      onClick={(e) => e.target === e.currentTarget && p.onBackgroundTap?.()}
+      onClick={(e) => (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('vgroup')) && p.onBackgroundTap?.()}
     >
-      {edition.verses.map((v, i) => (
-        <Fragment key={v.n}>
+      <div className="vspacer top" ref={topRef} style={{ height: vw.top }} />
+      {blocks.slice(vw.start, vw.end).map(({ v, banners }, k) => {
+        const i = vw.start + k
+        return (
+        <div key={v.n} className="vgroup" data-i={i}>
           {p.pageStarts?.has(v.n) && (
             <div className="page-mark" role="separator">
               <span>صفحة {toArabicDigits(p.pageStarts.get(v.n)!)}</span>
             </div>
           )}
-          {headers.get(v.n)?.map((s) => (
+          {banners.map((s) => (
             <h2 key={s.id} id={`s-${s.id}`} className={`banner ${s.kind}`}>
               <span>{s.title}</span>
             </h2>
@@ -335,8 +370,10 @@ export default function Reader(p: Props) {
             onTap={p.onTap}
             onMark={p.onMark}
           />
-        </Fragment>
-      ))}
+        </div>
+        )
+      })}
+      <div className="vspacer bottom" style={{ height: vw.bottom }} />
     </main>
   )
 }
