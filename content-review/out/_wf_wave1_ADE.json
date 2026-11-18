@@ -1,0 +1,98 @@
+[
+  {
+    "key": "A-c05-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Reviewed Track A chunk c05 (verses 365–444, 80 verses across PDF pages p066–p076). Wrote 1 low-severity finding (v.409b multi-tatweel artifact on «ءَاتَىٰنِـــــــ») to content-review/out/A/c05/run1/findings.jsonl and full 80-verse coverage (reached 444 of 444) to content-review/out/A/c05/run1/coverage.md."
+  },
+  {
+    "key": "A-c07-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Reviewed all 86 verses (546–631) of Track A chunk c07 against PDF pages p088.png–p097.png (and checked Al-Wafi and quran-uthmani.txt where needed). Wrote 13 findings across 12 verses to content-review/out/A/c07/run1/findings.jsonl and full coverage (reached 631 of 631) to content-review/out/A/c07/run1/coverage.md. Key high-severity findings: 557b (أَنِّي vs أِنِّي), 571a (وَقَٰتَلَ vs وَقَتَلَ), 586b (المِلّاَ vs المِلَا), and 621b (mid-word comma العَلَ،ا); plus 564b (ءَاتَيۡنَٰ missing final ا), six ى/ي mismatches (572b, 586b, 589a, 605b, 611b, 631a), 623a missing fatha on واخْفِضِ, and a low-confidence PDF discrepancy at 585a (قَٰتَلُواْ vs PDF قَتَلُواْ)."
+  },
+  {
+    "key": "A-c08-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Reviewed Track A chunk c08 (verses 632–737 across PDF pages p098.png–p111.png, printed pp. 96–109). Wrote 1 finding to /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/A/c08/run1/findings.jsonl (verse 635b: «وَٱلَاخِرَةُ» missing madda آ / Uthmani hamza ـٔ compared to PDF p.98 «وَالْآخِرَةُ» and 6:32 «ٱلْـَٔاخِرَةُ») and full coverage (106 verses, reached 737 of 737) to /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/A/c08/run1/coverage.md."
+  },
+  {
+    "key": "A-c09-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Reviewed all 92 verses (738–829) in Track A chunk c09 against PDF pages p112.png–p124.png and wrote 10 findings across 9 verses (741, 747, 750, 772, 773, 788, 800, 810, 828) to /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/A/c09/run1/findings.jsonl and /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/A/c09/run1/coverage.md (reached 829 of 829)."
+  },
+  {
+    "key": "A-c10-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Reviewed Track A chunk c10 (verses 830–944, 115 verses total) against PDF pages p125.png–p141.png and weak spots, writing 28 findings across 21 verses to content-review/out/A/c10/run1/findings.jsonl and full coverage (reached 944 of 944) to content-review/out/A/c10/run1/coverage.md. High-severity findings include: v.830b عِوَجࣰا (extra tanwin breaking meter vs PDF عِوَجَا), v.862b عُلَى (damma vs PDF عَلَى), v.872a طُوࣰي (dotted ي vs PDF طُوًى), v.877a وَهَٰذَۦۡنِ (small-ya diacritic instead of letter ي vs PDF وَهَٰذَيْنِ), v.898b أَذِنَ (fatha vs PDF أُذِنَ), v.926a وَلَيۡتَنِيَ (extra fatha breaking Tawil meter vs PDF وَلَيْتَنِي), and v.933a حِمَى (missing tanwin vs PDF حِمًى); medium/low findings include strayed punctuation in v.854a (دَلِيلً،ا) and v.936a (بِ«لَ»ا), hamza seat in v.855b (ٱءۡتُونِى vs PDF ائْتُونِي), fatha on bare alif in v.866b (اَبْدِلْ vs PDF ابْدِلْ), missing fatha on conjunction waw in v.873b/874b (واضْمُمْ vs PDF وَاضْمُمْ), uncertain tanwin in v.866b (رِءۡيࣰا vs PDF رِءْيَا), and Uthmani dotless ى for dotted ي in 14 words across 10 verses. Confirmed v.897b (فِي السِّينِ بِالكَسْرِ) matches the PDF image."
+  },
+  {
+    "key": "A-c11-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track A review of chunk c11 (verses 945–1058, 114 verses across PDF pp. 142–159). Wrote 9 findings to content-review/out/A/c11/run1/findings.jsonl and full verse coverage (reached 1058 of 1058) to content-review/out/A/c11/run1/coverage.md: 1 high-severity missing hamza (v.1008b النَّبَا -> النَّبَأ), 5 medium-severity dotted yā' + dagger alif encoding errors on alif maqṣūra (vv.948b, 950a, 984a, 1007a, 1018a), 1 medium-severity split word space (v.1009b يَٰ عِبَادِي -> يَٰعِبَادِي), 1 medium-severity stray fatha + sakt mark on alif (v.1047a وَمَاَۜ -> وَمَآ), and 1 low-severity multi-tatweel extraction artifact (v.1047b)."
+  },
+  {
+    "key": "A-c12-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Reviewed all 115 verses (1059–1173) of Track A chunk c12 against PDF pages p160–p175, pack/weak-spots/c12.md, and quran-uthmani.txt. Wrote 10 findings across 9 verses to content-review/out/A/c12/run1/findings.jsonl and full coverage to content-review/out/A/c12/run1/coverage.md (106 clean, 9 flagged; reached 1173 of 1173). Findings: 1 high (missing initial alif in 1125a «فْتِتَاحُهُ» -> «افْتِتَاحُهُ»), 7 medium (4 mid-word periods in 1073b, 1087b, 1105b, 1119b; missing word space in 1079a «مَاهِيَهۡ» -> «مَا هِيَهۡ»; dotted ي instead of ى in 1079a «وَيَخۡفَيٰ» and 1092b «يُمۡنَيٰ»), and 2 low (multi-tatweels in 1068a and 1084a)."
+  },
+  {
+    "key": "D-c05-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track D review of chunk c05 (verses 365–444, all 37 blocks b365 through b442) and wrote findings.jsonl (33 findings) and coverage.md (reached b442 of b442) to /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/D/c05/run1/. Summary: 0 fidelity-ours errors, 0 wrong-block/wrong-intro errors, 0 contradiction-opinion errors; 17 fidelity-source errors (including high-severity omissions/typos in b385, b387 P12, b393 P12, and b430 P2), 6 wrong-parts issues (notably b374 P10 UNASSIGNED and P14/P18 misassigned to v374 instead of v375), and 10 garbage/mid-phrase cut fragments."
+  },
+  {
+    "key": "D-c06-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track D review for chunk c06 (verses 445–545; all 66 blocks from i445 through b545). Wrote 31 findings across 13 blocks (53 blocks clean) to content-review/out/D/c06/run1/findings.jsonl and full block-by-block coverage to content-review/out/D/c06/run1/coverage.md (reached b545 of b545). Key findings: 17 wrong-parts errors (4 in b447 including mid-sentence UNASSIGNED pieces P5/P6/P8 and P1 missing v448; 1 in b480 P6 spuriously tagged v482; 12 in b526 where P2/P3/P5/P7/P8/P10–P14 shift across verses 526–534 and P40–P41 are UNASSIGNED) and 14 fidelity-source errors/omissions in Turath itself (notably b475 P1 'ونل فع' for 'ونافع', b495 P10 missing 'الدال', b495 P18 'كالكلام' for 'كاللام', b493 P0 'نافع عامر' missing 'وابن', b468 P5 'منه فتح النون' for 'مع فتح النون', b480 P20 'قبل الألف قبلها ياء', b498 P9 missing 'الواو', b538 P13 'بدل' for 'يدل'). Zero fidelity-ours, wrong-block, wrong-intro, or contradiction-opinion errors found."
+  },
+  {
+    "key": "D-c07-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track D review for chunk c07 (verses 546–631, all 67 Wafi blocks b546–b631). Wrote 44 findings to content-review/out/D/c07/run1/findings.jsonl and full block coverage to content-review/out/D/c07/run1/coverage.md (reached b631 of b631). Summary: 0 fidelity-ours, 0 wrong-block, 0 contradiction-opinion; 13 fidelity-source (3 high: b578 P1 يَحْزَنَّ* vs يَحْزُنُ, b593 P4 واللذين vs واللذان, b604 P3 بياء موحدة vs بباء موحدة), 4 wrong-parts (b550 P12–P15, b555 P14–P15 UNASSIGNED, b606 P7 UNASSIGNED, b623 P4/P5), and 27 garbage (24 blocks with stray Turath * markers + 3 mid-phrase [BREAK] splits)."
+  },
+  {
+    "key": "D-c08-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track D review of chunk c08 (verses 632–737, 70 Wafi blocks). Wrote 15 findings to /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/D/c08/run1/findings.jsonl and full block-by-block coverage (reached b737 of b737) to /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/D/c08/run1/coverage.md. Key findings: 5 high-severity issues (Turath source Qur'anic typos in b654 P0 «يجدونها», b724 P0 «ولاياتهم» and P1 «الولية», b733 P0 «الأول»; and b682 P15 left UNASSIGNED despite completing P14 for v683), 7 medium-severity issues (misplaced footnote (١) from b669 attached to b670, parts split issues in b641 P4 and b682 P13, and Turath source typos in b651 P4, b670 P15, b708 P8), and 3 low-severity Turath source typos (b646 P21, b682 P0, b682 P1)."
+  },
+  {
+    "key": "D-c09-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track D review for chunk c09 (verses 738–829, all 66 Wafi blocks b738–b829). Wrote 40 findings across 25 blocks to content-review/out/D/c09/run1/findings.jsonl and full block-by-block coverage ending with \"reached b829 of b829\" to content-review/out/D/c09/run1/coverage.md. Zero fidelity-ours word discrepancies were found against the raw Turath text; the 8 high-severity findings are all source/copyist errors in Turath itself (b778 P4, b782 P3, b785 P2, b796 P0, b797 P3, b802 P3, b806 P1, b825 P2), alongside 9 medium and 23 low findings across fidelity-source, wrong-parts, and garbage (cut/mid-phrase fragments)."
+  },
+  {
+    "key": "D-c10-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Reviewed all 81 Wafi blocks (b830–b944) in Track D chunk c10. Found 0 fidelity-ours, 0 wrong-block/wrong-intro, 20 fidelity-source (including 10 high-severity Turath typos/diacritic slips in Qur'anic words and readings: b858 P3 ينفذ->ينفد, b867 P2 ولدا->ولد, b909 P0/P1 الصاد->السين, b924 P0 يفتروا->يقتروا, b934 P0/P1/P7/P11/P20 ألا بالشدة, and b934 P20/P22 اختبارا->اختيارا), 2 contradiction-opinion copyist/printing slips in Turath (b919 P0 بنصب->برفع, b927 P3 ابن عامر->الكسائي), 9 wrong-parts, and 68 garbage items (stray periods/asterisks and mid-phrase line-break cuts). Total: 99 findings written to findings.jsonl and 81 blocks recorded in coverage.md (reached b944 of b944)."
+  },
+  {
+    "key": "D-c11-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track D review of chunk c11 (verses 945–1058, all 94 Wafi blocks from b945 through b1058) and wrote findings.jsonl (58 findings across 37 blocks; 57 blocks clean) and coverage.md to /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/D/c11/run1/.\n\nSummary of findings:\n- 0 `fidelity-ours` and 0 `wrong-block`/`wrong-intro` errors: all 94 blocks match the raw Turath text verbatim (with `[تصوير]` cleanly stripped) and sit on exact verse boundaries.\n- 16 `fidelity-source` issues present in Turath itself (including high-severity Qur'anic/reading typos in `b975` `P2` «عالِمِ» for «عَلَّامِ», `b979` `P0` «يجزى» for «يجازى», `b985` `P0` «المحفوظ» for «المخفوض», `b1003` `P2`/`P3` «اتّخذتهم» three times for «اتّخذناهم», `b1040` `P1` «وتبلوا» for «ويبلو», plus typos in `b945`, `b952`, `b956`, `b965`, `b967`, `b986`, `b993`, `b1010`, `b1031`, `b1043`, `b1046`).\n- 35 `garbage` issues: mid-phrase/mid-quote piece splits from raw line wraps or stray periods inside sentences (`b954`, `b958`, `b959`, `b964`, `b965`, `b973`, `b975`, `b978`, `b979`, `b980`, `b985`, `b992`, `b993`, `b997`, `b999`, `b1003`, `b1010`, `b1012`, `b1034`, `b1035`, `b1038`, `b1039`, `b1043`, `b1047`, `b1053`) and orphaned `*` footnote markers (`b965`, `b967`, `b971`, `b995`, `b1007`, `b1029`).\n- 7 `wrong-parts` issues: dangling cross-verse fragments (`b993` `P2`, `b1010` `P4`, `b1047` `P4`) and `UNASSIGNED` verse-specific pieces (`b1053` `P15`, `P22`, `P23`, `P24`)."
+  },
+  {
+    "key": "D-c12-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track D review of chunk c12 (verses 1059–1173, all 79 blocks b1059..b1170). Wrote 41 findings to content-review/out/D/c12/run1/findings.jsonl and full coverage to content-review/out/D/c12/run1/coverage.md (reached b1170 of b1170). Key high-severity findings: b1065 P1 (Turath prints وَيَتَناجَوْنَ instead of وَيَنْتَجُونَ for Hamza), b1096 P0 (Turath prints عَلَيْهِمْ instead of عَالِيهِمْ), b1152 P1 (Turath prints الاستقبال instead of الاستفال), b1148 P14/P17 (missing v1148 and v1149 in parts), and b1162 P10/P12–P15 (commentary parts shifted by one verse across v1162–v1165, leaving v1165 explanation P15 UNASSIGNED). Zero fidelity-ours, wrong-block, or wrong-intro errors."
+  },
+  {
+    "key": "E-all-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Track E review complete across all 79 sections (titles & ranges checked against PDF page images p017–p175 and TOC p177–p178), all 92 legend codes (checked against verses 45–66, usage in colors.json, and الوافي), all 114 SURAHS entries, and all 37 UI source files in ui-strings.md.\n\nWrote 12 findings to content-review/out/E/all/run1/findings.jsonl and full item-by-item coverage (322 items, ending with \"reached E-all of E-all\") to content-review/out/E/all/run1/coverage.md:\n- 1 high (`code-دمشقي`: labeled هشام instead of ابن عامر at v.187b)\n- 2 medium (`code-دوري` missing راوي الكسائي for v.40b; `code-المكين` narrowed to البزي وقنبل instead of القراء المكيين at v.1126a)\n- 9 low (`sec79` missing kasra on النَّبَأِ; `code-ابنالعل` / `code-ولدالعل` truncated duplicate keys; 6 Arabic count/gender agreement items in UI strings across src/App.tsx, src/Listener.tsx, src/PlanScreen.tsx, src/Quiz.tsx, and src/sheets.tsx)\n- 0 range errors and 0 surah-name errors."
+  }
+]

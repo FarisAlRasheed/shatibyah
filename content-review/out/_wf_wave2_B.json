@@ -1,0 +1,146 @@
+[
+  {
+    "key": "B-c01-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B review of chunk c01 (verses 1–94, 57 red spans across PDF pp. 17–26) and the 92-entry legend. Found 3 `wrong-label` issues (all 57 span extents and presence match the PDF, and no `not-a-code` or `legend` errors were found): (1) `B-35-a-R0` (high): «أَبُو بَكْرٍ» in v.35a refers to Imam 'Asim (أبو بكر عاصم) per v.35 and al-Wafi b34, but maps to `أبوبكر` → Shu'bah; (2) `B-40-b-R2` (high): «حَفْصٌ» in v.40b refers to Hafs b. 'Umar al-Duri (transmitter of al-Kisa'i and Abu 'Amr) per v.40 and al-Wafi b39, but maps to `حفص` → Hafs (transmitter of 'Asim); (3) `B-40-b-R3` (medium): «الدُّورِي» in v.40b maps to `دوري` → الدوري (راوي أبي عمرو) without noting his role as transmitter of al-Kisa'i in this verse. Wrote `findings.jsonl` and `coverage.md` (`reached 94 of 94`)."
+  },
+  {
+    "key": "B-c02-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B review for chunk c02 (verses 95–182, 67 red spans across PDF pp. 27–38) and wrote findings.jsonl (6 findings) and coverage.md (reached 182 of 182) to content-review/out/B/c02/run1/. Findings: (1–2) v.99 R0 «فَ» and R1 «أَ» flagged as not-a-code per الوافي (b99, pp. 43–44: «الصحيح: أن لا رمز في البيت»); (3–5) v.102 R0 «كَ», R1 «حُ», R2 «جِ» flagged as not-a-code per الوافي (b102, pp. 46–47: «لا يكون في البيت رمز لأحد، وهذا ما عليه المحققون»), also noting qasim.pdf p.28 colored all of «كَلَّا» and «حُبَّ» red; (6) v.165 R0 «لَ» flagged as low-severity span-extent mismatch with qasim.pdf p.35 which colored all of «لَهُ» red while only «لَ» (هشام) is the رمز."
+  },
+  {
+    "key": "B-c03-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B review of chunk c03 (verses 183–276, PDF pp. 39–54, all 81 red spans and the 92-entry codes legend). Found 2 high-severity issues: (1) B-legend-دمشقي (codes[\"دمشقي\"] is labeled هشام instead of ابن عامر), and (2) B-187-b-R3 (verse 187b «الدِّمَشْقِي» points to هشام alone instead of ابن عامر بتمامه, as confirmed by الوافي b186 P5–P7). Wrote findings.jsonl and coverage.md (reached 276 of 276)."
+  },
+  {
+    "key": "B-c04-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B review of chunk c04 (verses 277–364, PDF pp. 55–65, 91 red spans). Found 2 issues: (1) B-305-a-R2 (high, wrong-label): «حَفْصِ» in «لِحَفْصِهِمْ» is decoded as حفص (راوي عاصم) instead of الدوري (راوي الكسائي) — حفص بن عمر الدوري; (2) B-330-a-R2 (medium, span-extent): single-letter code «ل» (هشام) in «لَامِعٌ» covers «لَا» (33:36) instead of «لَ» (33:35). Wrote findings.jsonl and coverage.md (reached 364 of 364)."
+  },
+  {
+    "key": "B-c05-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B review for chunk c05 (verses 365–444, 168 red spans across PDF pp. 66–76, plus legend.md). Wrote 3 findings to content-review/out/B/c05/run1/findings.jsonl and full verse-by-verse coverage to content-review/out/B/c05/run1/coverage.md (reached 444 of 444):\n- B-385-b-R5 (span-extent, low): R5 covers «سَ» while qasim.pdf p.69 erroneously prints all of «سَنًا» in red («سَ» is the intended code for أبو الحارث paired with «تَ» for الدوري).\n- B-392-b-- (missing-span, high): initial «دَ» of «دَوَاءٌ،» (code د = ابن كثير) is red on qasim.pdf p.70 and confirmed by الوافي, but missing from colors.json.\n- B-392-b-R5 (extra-span, high): R5 is placed mid-word on the final «دَ» of «جَادَ» (black ink on p.70, not a code per الوافي)."
+  },
+  {
+    "key": "B-c06-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Track B review of chunk c06 (verses 445–545, PDF pp. 77–87, 196 red spans, plus 92 legend entries) completed. Found 1 span-extent issue (B-480-b-R1: single-letter code «ل» in «لَاحَ» covers «لَا» instead of «لَ» due to the lam-alif ligature). Wrote findings.jsonl and coverage.md to /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/B/c06/run1/."
+  },
+  {
+    "key": "B-c07-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B review for chunk c07 (verses 546–631, 227 red spans, PDF pp. 88–97) and legend.md. Found 1 issue: B-621-b-R2 (span-extent, medium): in verse 621b, R2 covers «ابْنِ العَلَ» with «،ا» outside the span because the comma was misplaced before the final alif, whereas PDF p. 96 shows «ابْنِ العَلَا» completely in red followed by «،». Wrote findings.jsonl and coverage.md to content-review/out/B/c07/run1/."
+  },
+  {
+    "key": "B-c08-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B review of chunk c08 (verses 632–737, PDF pp. 98–111, 271 red spans) and legend.md: 0 findings. Wrote empty findings.jsonl and full coverage.md (reached 737 of 737) in content-review/out/B/c08/run1/."
+  },
+  {
+    "key": "B-c09-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B review of chunk c09 (verses 738–829, all 240 red spans, PDF pp. 112–124, legend, and الوافي). Found 1 issue: B-777-b-R4 (span-extent on «دَلَا» instead of «دَ» in v.777b). Wrote findings.jsonl and coverage.md to content-review/out/B/c09/run1/."
+  },
+  {
+    "key": "B-c10-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed independent Track B review of chunk c10 (verses 830–944, 282 red spans across PDF pages p125.png–p141.png) against the legend, qasim.pdf pages, and الوافي commentary (pack/D/c10.md). All 92 legend entries and all 115 verses (282 red spans) verified clean with 0 findings. Wrote findings.jsonl (0 lines) and coverage.md (reached 944 of 944) to /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/B/c10/run1/."
+  },
+  {
+    "key": "B-c11-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B review of chunk c11 (verses 945–1058, all 318 red spans across PDF pages p142–p159, plus the 92-entry legend in pack/legend.md) against qasim.pdf and الوافي (pack/D/c11.md). Recorded 1 high-severity finding (B-1046-b-R4: category not-a-code, where «حُ» in «حُمَّلَا.» is colored red in p157.png and decoded as أبو عمرو, whereas الوافي states only حمزة والكسائي read وَقَوْمِ نُوحٍ with khafd). Wrote findings.jsonl and coverage.md (reached 1058 of 1058) in content-review/out/B/c11/run1/."
+  },
+  {
+    "key": "B-c12-run1",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B review for chunk c12 (verses 1059–1173, PDF pp. 160–175, 189 red spans, plus legend.md). Wrote 4 findings to findings.jsonl (3 span-extent findings where single-letter رمز «ل» covers the ligature «لَا» in 1067b R5, 1087a R1, and 1089b R4; and 1 extra-span finding in 1068b R2 where qasim.pdf p.161 prints «إِسْوَةٍ» in green ink despite Wafi p.369 confirming «إِ» is the رمز for نافع) and full coverage for all 115 verses in coverage.md (reached 1173 of 1173)."
+  },
+  {
+    "key": "B-c01-run2",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed independent Track B review of chunk c01 (verses 1–94, 57 red spans, plus 92 legend entries) for run2. Checked all 10 PDF pages (p017–p026), pack/B/c01.md, pack/legend.md, and pack/D/c01.md. Wrote 4 findings to content-review/out/B/c01/run2/findings.jsonl (B-35-a-R0 high wrong-label, B-40-b-R2 high wrong-label, B-40-b-R3 medium wrong-label, B-legend-دوري low legend) and full 94-verse coverage to content-review/out/B/c01/run2/coverage.md (reached 94 of 94)."
+  },
+  {
+    "key": "B-c02-run2",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed independent Track B review of chunk c02 (verses 95–182, PDF pp. 27–38, 67 red spans, plus 92 legend entries in pack/legend.md).\n\nOutputs written:\n- /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/B/c02/run2/findings.jsonl (6 findings across verses 99 and 102)\n- /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/B/c02/run2/coverage.md (verses 95–182, reached 182 of 182)\n\nSummary of findings:\n1. Verse 99 (R0 «فَ» in «فَصْلٌ», R1 «أَ» in «أَبَاهُ»): `not-a-code` (high, conf 0.75) — qasim.pdf p.27 colors them red, but الوافي (printed pp. 43–44) explicitly states «ولكن الصحيح: أن لا رمز في البيت».\n2. Verse 102 (R0 «كَ» in «كَلَّا»): `span-extent` (medium, conf 0.95) — qasim.pdf p.28 colors the entire word «كَلَّا» red, whereas R0 only covers «كَ» (12:14).\n3. Verse 102 (R0 «كَ», R1 «حُ» in «حُبَّ», R2 «جِ» in «جِيدُهُ»): `not-a-code` (high, conf 0.85) — qasim.pdf p.28 colors them red, but الوافي (printed pp. 46–47) states «وعلى ما تقرر لا يكون في البيت رمز لأحد، وهذا ما عليه المحققون».\n\nAll other verses (95–98, 100–101, 103–182) and all 92 entries in pack/legend.md matched qasim.pdf and الوافي with zero issues."
+  },
+  {
+    "key": "B-c03-run2",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B independent review for chunk c03 (verses 183–276, PDF pp. 39–54, all 81 red spans and 92 legend entries). Found 2 high-severity issues: (1) B-legend-دمشقي: codes[\"دمشقي\"] is labeled هشام (الدمشقي، راوي ابن عامر) instead of ابن عامر (الدمشقي); (2) B-187-b-R3: R3 «الدِّمَشْقِي» in verse 187b decodes to هشام instead of ابن عامر (both هشام and ابن ذكوان read أأن كان per الوافي p.85). All other 80 red spans in verses 183–276 match the PDF red ink, extent, and الوافي commentary. Wrote findings.jsonl and coverage.md to content-review/out/B/c03/run2/."
+  },
+  {
+    "key": "B-c04-run2",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B (Red رموز) review for chunk c04 (verses 277–364, PDF pp. 55–65, 91 red spans + legend) in run2.\n\nReviewed all 88 verses against `sources/qasim.pdf` (`p055.png`–`p065.png`), `pack/legend.md`, `pack/B/c04.md`, and الوافي (`pack/D/c04.md`). Found 3 issues:\n1. `B-305-a-R2` (`wrong-label`, high, 0.99): `حَفْصِ` in `لِحَفْصِهِمْ` (v.305a) is mapped to `حفص (راوي عاصم)`, whereas الوافي (`b304` P3) confirms it refers to حفص الدوري عن الكسائي (`الدوري (راوي الكسائي)`).\n2. `B-330-a-R2` (`span-extent`, medium, 0.95): `R2` (`code=ل`, هشام) covers `«لَا»` (positions 33:36) in `لَامِعٌ` due to the PDF's `لَا` ligature colouring, instead of only the single letter `«لَ»`.\n3. `B-340-b--` (`missing-span`, low, 0.80): `أَكْهَرُ` in `وَأَكْهَرُ` (v.340b) is printed in red ink on PDF p.62 (`p062.png`) with no `R<i>` span, though per الوافي (`b339` P22) it is a mnemonic for the letters `(أ، ك، هـ، ر)` rather than a reader رمز.\n\nWrote `content-review/out/B/c04/run2/findings.jsonl` and `content-review/out/B/c04/run2/coverage.md` (`reached 364 of 364`)."
+  },
+  {
+    "key": "B-c05-run2",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B review for chunk c05 (verses 365–444, PDF pp. 66–76, plus legend.md). Reviewed all 80 verses against p066.png–p076.png and Al-Wafi (pack/D/c05.md). Recorded 2 high-severity findings in verse 392b (missing-span on «دَ» of «دَوَاءٌ،» and not-a-code on R5 «دَ» inside «جَادَ»); all other verses, spans, and legend entries passed. Wrote findings.jsonl and coverage.md (reached 444 of 444) in content-review/out/B/c05/run2/."
+  },
+  {
+    "key": "B-c06-run2",
+    "status": "ok",
+    "model": "flash",
+    "summary": "Completed Track B review for chunk c06 (verses 445–545, PDF pp. 77–87, 196 red spans) and all 92 entries in legend.md. Found 1 issue (`B-480-b-R1`: single-letter code `ل` for هشام covers the two-letter lam-alif ligature «لَا» in «لَاحَ» on PDF p.80 / v.480b instead of «لَ»). Wrote findings.jsonl and coverage.md (`reached 545 of 545`) in /Users/faris/Documents/WebProjects/shatibiahReader/content-review/out/B/c06/run2/."
+  },
+  {
+    "key": "B-c07-run2",
+    "status": "ok_recovered",
+    "model": "flash",
+    "note": "failed to run agent \"6c48766d-a2ee-4e63-b36b-a4ff064322fb\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits."
+  },
+  {
+    "key": "B-c08-run2",
+    "status": "error",
+    "model": "flash",
+    "error": "failed to run agent \"dd9965e5-ed65-4bb0-bd44-a7e83d1f380e\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h43m34s."
+  },
+  {
+    "key": "B-c09-run2",
+    "status": "error",
+    "model": "flash",
+    "error": "failed to run agent \"a2e7935b-f245-4e37-959a-e285b6193be7\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h42m53s."
+  },
+  {
+    "key": "B-c10-run2",
+    "status": "error",
+    "model": "flash",
+    "error": "failed to run agent \"595dc140-ccca-42a4-89eb-6bcde06dfd33\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h42m37s."
+  },
+  {
+    "key": "B-c11-run2",
+    "status": "error",
+    "model": "flash",
+    "error": "failed to run agent \"a7a73eee-5651-4094-970e-eaed0a2c5fd5\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h41m54s."
+  },
+  {
+    "key": "B-c12-run2",
+    "status": "error",
+    "model": "flash",
+    "error": "failed to run agent \"a82c5276-d120-4ff9-803e-8e2f6dd70daf\": generating and executing: RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h42m45s."
+  }
+]
