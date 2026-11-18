@@ -458,11 +458,16 @@ function Downloads({ edition, reciter }: { edition: Edition; reciter: Reciter })
   )
 }
 
-/** [«نسخة القاسم», «مع القراءة»]: the editor's family name, and whether a recitation exists. */
+/** [«١- تحقيق الشيخ …», «مع القراءة»]: the editor's full name, numbered, and whether a recitation exists. */
+const EDITORS: Record<string, string> = {
+  qasim: 'الشيخ عبدالمحسن بن محمد القاسم',
+  zubi: 'الشيخ محمد بن تميم الزعبي',
+}
 function editionLabel(e: { id: string; name: string }, m: Manifest) {
-  const who = e.name.replace(/^متن الشاطبية\s*—\s*/, '').trim().split(/\s+/).pop()
+  const i = m.editions.findIndex((x) => x.id === e.id)
+  const who = EDITORS[e.id] ?? e.name.replace(/^متن الشاطبية\s*—\s*(نسخة)?\s*/, '').trim()
   const audio = m.reciters.some((r) => r.editionId === e.id)
-  return [`نسخة ${who}`, audio ? 'مع القراءة' : 'نص فقط'] as const
+  return [`${toArabicDigits(i + 1)}- تحقيق ${who}`, audio ? 'مع القراءة' : 'نص فقط'] as const
 }
 
 /** The printed colours: red reader codes and green Quranic words, tap to explain. */
