@@ -190,6 +190,7 @@ html.pinching .app { overflow-x: clip; }
 .list li.child button { padding-inline-start: 30px; }
 .list li > button { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 0; background: none; text-align: right; color: inherit; }
 .list-title { flex: 1; display: flex; align-items: center; gap: 8px; }
+.list-title.stack { flex-direction: column; align-items: flex-start; gap: 2px; }
 .list-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .list-main small { font-size: 12.5px; }
 .section-title { font-size: 19px; line-height: 1.5; }

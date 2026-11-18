@@ -551,8 +551,8 @@ export function SettingsScreen(p: FieldProps & {
           const on = e.id === p.editionId
           return (
             <button key={e.id} className="check-row" aria-pressed={on} onClick={() => setSettings((x) => ({ ...x, editionId: e.id }))}>
-              <span className="list-title">
-                {name}
+              <span className="list-title stack">
+                <span>{name}</span>
                 <small>{kind}</small>
               </span>
               {on && <Check size={20} className="check" />}
